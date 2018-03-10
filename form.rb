@@ -20,6 +20,7 @@ class Form # {{{
   # color and bgcolor for all widget, widgets that don't have color specified will inherit from form
   # If not mentioned, then global defaults will be taken
   #attr_writer :color, :bgcolor
+  # used at all NOT_SURE 
   attr_accessor :color_pair
   attr_accessor :attr
 
@@ -58,7 +59,9 @@ class Form # {{{
   # Adding to widgets, results in it being painted, and focussed.
   # removing a widget and adding can give the same ID's, however at this point we are not 
   # really using ID. But need to use an incremental int in future. (internal use)
+  # TODO allow passing several widgets
   def add_widget widget
+    widget.form = self
     @widgets << widget
     return @widgets.length-1
   end
@@ -72,6 +75,8 @@ class Form # {{{
   # decide layout of objects. User has to call this after creating components
   def pack
     @focusables = @widgets.select { |w| w.focusable? }
+    @active_index = 0 if @focusables.size > 0
+    repaint
   end
 
   public
@@ -81,7 +86,7 @@ class Form # {{{
   def repaint
     $log.debug " form repaint:#{self}, #{@name} , r #{@row} c #{@col} " if $log.debug? 
     @widgets.each do |f|
-      next unless f.visible 
+      next if f.visible == false
       f.repaint
     end
 
@@ -250,17 +255,17 @@ class Form # {{{
   # @return [nil, :NO_PREV_FIELD] nil if cyclical and it finds a field
   #  if not cyclical, and no more fields then :NO_PREV_FIELD
   def select_prev_field
-    return :UNHANDLED if @widgets.nil? or @widgets.empty?
+    return :UNHANDLED if @focusables.nil? or @focusables.empty?
     #$log.debug "insdie sele prev field :  #{@active_index} WL:#{@widgets.length}" 
     if @active_index.nil?
-      @active_index = @widgets.length 
+      @active_index = @focusables.length 
     end
 
-    f = @widgets[@active_index]
+    f = @focusables[@active_index]
     index = @active_index
     if index > 0
       index -= 1
-      f = @widgets[index]
+      f = @focusables[index]
       if f
         select_field f
         return
@@ -309,14 +314,34 @@ class Form # {{{
     return _process_key keycode, object, @window
   end
 
+  def _process_key keycode, object, window
+    return :UNHANDLED if @_key_map.nil?
+    blk = @_key_map[keycode]
+    $log.debug "XXX:  _process key keycode #{keycode} #{blk.class}, #{self.class} "
+    return :UNHANDLED if blk.nil?
+
+    if blk.is_a? Symbol
+      if respond_to? blk
+        return send(blk, *@_key_args[keycode])
+      else
+        ## 2013-03-05 - 19:50 why the hell is there an alert here, nowhere else
+        alert "This ( #{self.class} ) does not respond to #{blk.to_s} [PROCESS-KEY]"
+        # added 2013-03-05 - 19:50 so called can know
+        return :UNHANDLED 
+      end
+    else
+      $log.debug "rwidget BLOCK called _process_key " if $log.debug? 
+      return blk.call object,  *@_key_args[keycode]
+    end
+  end
   #
   # These mappings will only trigger if the current field
   #  does not use them.
   #
   def map_keys
     return if @keys_mapped
-    bind_key(KEY_F1, 'help') { hm = help_manager(); hm.display_help }
-    bind_key(FFI::NCurses::KEY_F9, "Print keys", :print_key_bindings) # show bindings, tentative on F9
+    #bind_key(FFI::NCurses::KEY_F1, 'help') { hm = help_manager(); hm.display_help }
+    #bind_key(FFI::NCurses::KEY_F9, "Print keys", :print_key_bindings) # show bindings, tentative on F9
     @keys_mapped = true
   end
 
@@ -392,7 +417,7 @@ class Form # {{{
       # some widgets like textarea and list handle up and down
       if handled == :UNHANDLED or handled == -1 or field.nil?
         case ch
-        when KEY_TAB, ?\M-\C-i.getbyte(0)  # tab and M-tab in case widget eats tab (such as Table)
+        when FFI::NCurses::KEY_TAB, ?\M-\C-i.getbyte(0)  # tab and M-tab in case widget eats tab (such as Table)
           ret = select_next_field
           return ret if ret == :NO_NEXT_FIELD
           # alt-shift-tab  or backtab (in case Table eats backtab)
@@ -412,7 +437,7 @@ class Form # {{{
           $log.debug "FORM process_key #{ch} got ret #{ret} in #{self}, flushing input "
           # 2014-06-01 - 17:01 added flush, maybe at some point we could do it only if unhandled
           #   in case some method wishes to actually push some keys
-          Ncurses.flushinp
+          FFI::NCurses.flushinp
           return :UNHANDLED if ret == :UNHANDLED
         end
       elsif handled == :NO_NEXT_FIELD || handled == :NO_PREV_FIELD # 2011-10-4 
