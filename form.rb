@@ -8,7 +8,7 @@
 # has bound the key via +bind_key+.    
 # NOTE : 2018-03-08 - now using @focusables instead of @widgets in traversal.
 #        active_index is now index into focusables.
-class Form # {{{
+class Form 
   # array of widgets
   attr_reader :widgets
 
