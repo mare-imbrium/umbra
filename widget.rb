@@ -222,6 +222,53 @@ class Widget
   def focusable?
     @focusable
   end
+
+  def bind_key keycode, *args, &blk
+    #$log.debug " #{@name} bind_key received #{keycode} "
+    @_key_map ||= {}
+    #
+    # added on 2011-12-4 so we can pass a description for a key and print it
+    # The first argument may be a string, it will not be removed
+    # so existing programs will remain as is.
+    @key_label ||= {}
+    if args[0].is_a?(String) || args[0].is_a?(Symbol)
+      @key_label[keycode] = args[0] 
+    else
+      @key_label[keycode] = :unknown
+    end
+
+    if !block_given?
+      blk = args.pop
+      raise "If block not passed, last arg should be a method symbol" if !blk.is_a? Symbol
+      #$log.debug " #{@name} bind_key received a symbol #{blk} "
+    end
+    case keycode
+    when String
+      # single assignment
+      keycode = keycode.getbyte(0) 
+    when Array
+      # 2018-03-10 - unused now delete
+      # double assignment
+      # this means that all these keys have to be pressed in succession for this block, like "gg" or "C-x C-c"
+      raise "A one key array will not work. Pass without array" if keycode.size == 1
+      ee = []
+      keycode.each do |e| 
+        e = e.getbyte(0) if e.is_a? String
+        ee << e
+      end
+      #bind_composite_mapping ee, args, blk 2018-03-04 - commented
+      return self
+      #@_key_map[a0] ||= OrderedHash.new
+      #@_key_map[a0][a1] = blk
+      #$log.debug " XX assigning #{keycode} to  _key_map " if $log.debug? 
+    else
+      $log.debug " assigning #{keycode} to  _key_map for #{self.class}, #{@name}" if $log.debug? 
+    end
+    @_key_map[keycode] = blk
+    @_key_args ||= {}
+    @_key_args[keycode] = args
+    self
+  end
   ##
   # remove a binding that you don't want
   def unbind_key keycode
