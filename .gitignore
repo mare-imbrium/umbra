@@ -1,5 +1,13 @@
 *.gem
 *.rbc
+/bak/
+*.1
+*.t
+*.2018*
+*.log
+notes
+todo
+.gitignore
 /.config
 /coverage/
 /InstalledFiles
