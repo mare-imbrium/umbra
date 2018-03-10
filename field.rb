@@ -14,24 +14,24 @@
   #   this may mean in some places field does not paint. repaint_require will have to be set
   #   to true in those cases. this was since field was overriding a popup window that was not modal.
   #  
-  class Field < Widget # {{{
-    dsl_accessor :maxlen             # maximum length allowed into field
+  class Field < Widget 
+    attr_accessor :maxlen             # maximum length allowed into field
     attr_reader :buffer              # actual buffer being used for storage
     #
   
-    dsl_accessor :values             # validate against provided list, (+include?+)
-    dsl_accessor :valid_regex        # validate against regular expression (+match()+)
-    dsl_accessor :valid_range        # validate against numeric range, should respond to +include?+
+    attr_accessor :values             # validate against provided list, (+include?+)
+    attr_accessor :valid_regex        # validate against regular expression (+match()+)
+    attr_accessor :valid_range        # validate against numeric range, should respond to +include?+
     # for numeric fields, specify lower or upper limit of entered value
     attr_accessor :below, :above
 
-    #dsl_accessor :chars_allowed           # regex, what characters to allow entry, will ignore all else
+    #attr_accessor :chars_allowed           # regex, what characters to allow entry, will ignore all else
     # character to show, earlier called +show+ which clashed with Widget method +show+
-    dsl_accessor :mask                    # what charactr to show for each char entered (password field)
-    dsl_accessor :null_allowed            # allow nulls, don't validate if null # added , boolean
+    attr_accessor :mask                    # what charactr to show for each char entered (password field)
+    attr_accessor :null_allowed            # allow nulls, don't validate if null # added , boolean
 
     # any new widget that has editable should have modified also
-    dsl_accessor :editable          # allow editing
+    attr_accessor :editable          # allow editing
 
     # +type+ is just a convenience over +chars_allowed+ and sets some basic filters 
     # @example:  :integer, :float, :alpha, :alnum
@@ -52,7 +52,7 @@
                                                # required due to labels. Is updated after printing
     #                                          # so can be nil if accessed early 2011-12-8 
 
-    def initialize form=nil, config={}, &block
+    def initialize config={}, &block
       @form = form
       @buffer = String.new
       #@type=config.fetch("type", :varchar)
@@ -63,7 +63,7 @@
       #@event_args = {}             # arguments passed at time of binding, to use when firing event
       map_keys 
       init_vars
-      register_events(:CHANGE)
+      #register_events(:CHANGE)
       super
       @width ||= 20
       @maxlen ||= @width
@@ -138,9 +138,9 @@
       # i have no way of knowing what change happened and what char was added deleted or changed
       #fire_handler :CHANGE, self    # 2008-12-09 14:51 
       if @overwrite_mode
-        fire_handler :CHANGE, InputDataEvent.new(oldcurpos,@curpos, self, :DELETE, 0, oldchar) # 2010-09-11 12:43 
+        #fire_handler :CHANGE, InputDataEvent.new(oldcurpos,@curpos, self, :DELETE, 0, oldchar) # 2010-09-11 12:43 
       end
-      fire_handler :CHANGE, InputDataEvent.new(oldcurpos,@curpos, self, :INSERT, 0, char) # 2010-09-11 12:43 
+      #fire_handler :CHANGE, InputDataEvent.new(oldcurpos,@curpos, self, :INSERT, 0, char) # 2010-09-11 12:43 
       0
     end
 
@@ -167,8 +167,7 @@
       char = @buffer.slice!(index,1)
       #$log.debug " delete at #{index}: #{@buffer.length}: #{@buffer}"
       @modified = true
-      #fire_handler :CHANGE, self    # 2008-12-09 14:51 
-      fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, char)     # 2010-09-11 13:01 
+      #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, char)     # 2010-09-11 13:01 
     end
     #
     # silently restores value without firing handlers, use if exception and you want old value
@@ -195,8 +194,8 @@
       @buffer = @buffer[0,@maxlen] if @maxlen && @buffer.length > @maxlen
       @curpos = 0
       # hope @delete_buffer is not overwritten
-      fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, @delete_buffer)     # 2010-09-11 13:01 
-      fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :INSERT, 0, @buffer)     # 2010-09-11 13:01 
+      #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, @delete_buffer)     # 2010-09-11 13:01 
+      #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :INSERT, 0, @buffer)     # 2010-09-11 13:01 
       self # 2011-10-2 
     end
     # converts back into original type
@@ -276,8 +275,8 @@
     end
     #@bgcolor ||= $def_bg_color
     #@color   ||= $def_fg_color
-    _color = color()
-    _bgcolor = bgcolor()
+    #_color = color()
+    #_bgcolor = bgcolor()
     $log.debug("repaint FIELD: #{id}, #{name}, #{row} #{col},pcol:#{@pcol},  #{focusable} st: #{@state} ")
     @width = 1 if width == 0
     printval = getvalue_for_paint().to_s # added 2009-01-06 23:27 
@@ -290,11 +289,11 @@
       end
     end
   
-    acolor = @color_pair || get_color($datacolor, _color, _bgcolor)
+    acolor = @color_pair || 0
     if @state == :HIGHLIGHTED
-      _bgcolor = @highlight_bgcolor || _bgcolor
-      _color = @highlight_color || _color
-      acolor = get_color(acolor, _color, _bgcolor)
+      #_bgcolor = @highlight_bgcolor || _bgcolor
+      #_color = @highlight_color || _color
+      acolor = @highlight_color_pair || 1
     end
     @graphic = @form.window if @graphic.nil? ## cell editor listbox hack 
     #$log.debug " Field g:#{@graphic}. r,c,displen:#{@row}, #{@col}, #{@width} c:#{@color} bg:#{@bgcolor} a:#{@attr} :#{@name} "
@@ -315,6 +314,7 @@
 
   def map_keys
     return if @keys_mapped
+    return
     bind_key(FFI::NCurses::KEY_LEFT, :cursor_backward )
     bind_key(FFI::NCurses::KEY_RIGHT, :cursor_forward )
     bind_key(FFI::NCurses::KEY_BACKSPACE, :delete_prev_char )
@@ -332,6 +332,7 @@
   # field
   # 
   def handle_key ch
+    $log.debug "inside handle key of field with #{ch}"
     @repaint_required = true 
     case ch
     when 32..126
@@ -352,7 +353,7 @@
     return if @delete_buffer.nil?
     #oldvalue = @buffer
     @buffer.insert @curpos, @delete_buffer 
-    fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :INSERT, 0, @delete_buffer)     # 2010-09-11 13:01 
+    #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :INSERT, 0, @delete_buffer)     # 2010-09-11 13:01 
   end
   ## 
   # position cursor at start of field
@@ -397,7 +398,7 @@
     @delete_buffer = @buffer[@curpos..-1]
     # if pos is 0, pos-1 becomes -1, end of line!
     @buffer = pos == -1 ? "" : @buffer[0..pos]
-    fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :DELETE, 0, @delete_buffer)
+    #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :DELETE, 0, @delete_buffer)
     return @delete_buffer
   end
   def cursor_forward
