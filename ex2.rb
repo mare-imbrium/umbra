@@ -26,7 +26,7 @@ begin
   win = Window.new
   statusline(win, " "*(win.width-0), 0)
   statusline(win, "Press q to quit #{win.height}:#{win.width}", 20)
-  title = Label.new( :text => "Demo of Labels", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
+  title = Label.new( :text => "Demo of Fields", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
                     :justify => :center, :color_pair => 0)
 
   form = Form.new win
