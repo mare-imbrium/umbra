@@ -314,7 +314,6 @@
 
   def map_keys
     return if @keys_mapped
-    return
     bind_key(FFI::NCurses::KEY_LEFT, :cursor_backward )
     bind_key(FFI::NCurses::KEY_RIGHT, :cursor_forward )
     bind_key(FFI::NCurses::KEY_BACKSPACE, :delete_prev_char )
