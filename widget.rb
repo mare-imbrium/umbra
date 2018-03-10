@@ -2,16 +2,16 @@
 # Basic widget class superclass. Anything embedded in a form should
 # extend this, if it wants to be repainted or wants focus. Otherwise.
 # form will be unaware of it.
-
-
-class Widget   # {{{
+# 2018-03-08 - 
+require './form.rb'
+class Widget   
 =begin
     require 'canis/core/include/action'          # added 2012-01-3 for add_action
     include EventHandler
     include Canis::Utils
     include Io # added 2010-03-06 13:05 
 =end
-  include ConfigSetup
+  #include ConfigSetup
   # common interface for text related to a field, label, textview, button etc
   attr_accessor :text, :width, :height
 
@@ -65,9 +65,9 @@ class Widget   # {{{
     # These are standard events for most widgets which will be fired by 
     # Form. In the case of CHANGED, form fires if it's editable property is set, so
     # it does not apply to all widgets.
-    register_events( [:ENTER, :LEAVE, :CHANGED, :PROPERTY_CHANGE])
+    #register_events( [:ENTER, :LEAVE, :CHANGED, :PROPERTY_CHANGE])
 
-    config_setup aconfig # @config.each_pair { |k,v| variable_set(k,v) }
+    aconfig.each_pair { |k,v| variable_set(k,v) }
     #instance_eval &block if block_given?
     if block_given?
       if block.arity > 0
@@ -76,6 +76,10 @@ class Widget   # {{{
         self.instance_eval(&block)
       end
     end
+  end
+
+  def variable_set var, val
+    send("#{var}=", val) 
   end
   def init_vars
     # just in case anyone does a super. Not putting anything here
@@ -320,4 +324,25 @@ class Widget   # {{{
   end
   #
   ## ADD HERE WIDGET
+  # these is duplicated in form and widget. put in module Utils and include in both
+  def _process_key keycode, object, window
+    return :UNHANDLED if @_key_map.nil?
+    blk = @_key_map[keycode]
+    $log.debug "XXX:  _process key keycode #{keycode} #{blk.class}, #{self.class} "
+    return :UNHANDLED if blk.nil?
+
+    if blk.is_a? Symbol
+      if respond_to? blk
+        return send(blk, *@_key_args[keycode])
+      else
+        ## 2013-03-05 - 19:50 why the hell is there an alert here, nowhere else
+        alert "This ( #{self.class} ) does not respond to #{blk.to_s} [PROCESS-KEY]"
+        # added 2013-03-05 - 19:50 so called can know
+        return :UNHANDLED 
+      end
+    else
+      $log.debug "rwidget BLOCK called _process_key " if $log.debug? 
+      return blk.call object,  *@_key_args[keycode]
+    end
+  end
 end #  }}}
