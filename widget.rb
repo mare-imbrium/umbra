@@ -5,6 +5,7 @@
 # 2018-03-08 - 
 require './form.rb'
 class Widget   
+    include EventHandler
 =begin
     require 'canis/core/include/action'          # added 2012-01-3 for add_action
     include EventHandler
@@ -17,11 +18,9 @@ class Widget
 
   # foreground and background colors when focussed. Currently used with buttons and field
   # Form checks and repaints on entry if these are set.
-  #attr_accessor :highlight_color, :highlight_bgcolor  # FIXME use color_pair
   attr_accessor :highlight_color_pair
 
   # NOTE: 2018-03-04 - user will have to call repaint or somthing like that if he changes color or coordinates.
-  # FIXME 2018-03-04 - if there is a color and colorpair then just use the final one, ditch other.
   attr_accessor  :row, :col            # location of object
   #attr_writer :color, :bgcolor      # normal foreground and background 2018-03-08 - now color_pair
   # moved to a method which calculates color 2011-11-12 
