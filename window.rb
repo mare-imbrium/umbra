@@ -1,6 +1,10 @@
 require 'ffi-ncurses'
 require 'ffi-ncurses/widechars'
 
+BOLD = FFI::NCurses::A_BOLD
+REVERSE = FFI::NCurses::A_REVERSE
+UNDERLINE = FFI::NCurses::A_UNDERLINE
+NORMAL = FFI::NCurses::A_NORMAL
 def init_curses
   FFI::NCurses.initscr
   FFI::NCurses.curs_set 1
@@ -12,6 +16,7 @@ def init_curses
     FFI::NCurses.start_color
     std_colors
   end
+
 end
 
 def std_colors
