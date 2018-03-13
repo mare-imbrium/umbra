@@ -240,6 +240,7 @@ class Form
     index = @active_index
     index = index ? index+1 : 0
     #f = @focusables[index]
+    index = 0 if index >= @focusables.length # CYCLICAL 2018-03-11 - 
     f = @focusables[index]
     if f
       select_field f 
@@ -265,13 +266,12 @@ class Form
     f = @focusables[@active_index]
     on_leave f
     index = @active_index
-    if index > 0
-      index -= 1
-      f = @focusables[index]
-      if f
-        select_field f
-        return
-      end
+    index -= 1
+    index = @focusables.length-1 if index < 0 # CYCLICAL 2018-03-11 - 
+    f = @focusables[index]
+    if f
+      select_field f
+      return
     end
 
     return :NO_PREV_FIELD
