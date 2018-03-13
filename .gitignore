@@ -8,6 +8,8 @@
 notes
 todo
 .gitignore
+*.tgz
+*.gz
 /.config
 /coverage/
 /InstalledFiles
