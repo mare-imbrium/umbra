@@ -5,6 +5,12 @@ BOLD = FFI::NCurses::A_BOLD
 REVERSE = FFI::NCurses::A_REVERSE
 UNDERLINE = FFI::NCurses::A_UNDERLINE
 NORMAL = FFI::NCurses::A_NORMAL
+COLOR_BLACK = FFI::NCurses::BLACK
+COLOR_WHITE = FFI::NCurses::WHITE
+COLOR_BLUE = FFI::NCurses::BLUE
+COLOR_RED = FFI::NCurses::RED
+COLOR_GREEN = FFI::NCurses::GREEN
+
 def init_curses
   FFI::NCurses.initscr
   FFI::NCurses.curs_set 1
@@ -24,7 +30,7 @@ def std_colors
   FFI::NCurses.init_pair(0,  FFI::NCurses::BLACK,   -1)
   FFI::NCurses.init_pair(1,  FFI::NCurses::WHITE,   -1)
   FFI::NCurses.init_pair(2,  FFI::NCurses::RED,     -1)
-  # statusline
+  # statusline XXX
   FFI::NCurses.init_pair(3,  FFI::NCurses::GREEN,   -1)
   FFI::NCurses.init_pair(4,  FFI::NCurses::BLUE,    -1)
   FFI::NCurses.init_pair(5,  FFI::NCurses::YELLOW,  -1)
@@ -32,7 +38,11 @@ def std_colors
   FFI::NCurses.init_pair(7,  FFI::NCurses::CYAN,    -1)
   #FFI::NCurses.init_pair(8,  FFI::NCurses::WHITE,    -1)
   #FFI::NCurses.init_pair(9,  FFI::NCurses::BLUE,    -1)
+  FFI::NCurses.init_pair(10,  FFI::NCurses::BLACK, FFI::NCurses::CYAN)
+  FFI::NCurses.init_pair(12, FFI::NCurses::BLACK,   FFI::NCurses::BLUE)
+  FFI::NCurses.init_pair(13, FFI::NCurses::BLACK,   FFI::NCurses::MAGENTA)
 
+  FFI::NCurses.init_pair(14,  FFI::NCurses::WHITE, FFI::NCurses::CYAN)
 =begin
   FFI::NCurses.init_pair(8,  FFI::NCurses::WHITE,   FFI::NCurses::BLUE)
   FFI::NCurses.init_pair(9,  FFI::NCurses::BLUE,   FFI::NCurses::BLUE)
@@ -45,7 +55,7 @@ def std_colors
 =end
 end
 #
-## window class {{{
+## window class 
 class Window 
   attr_reader :window
   attr_reader :width, :height, :top, :left
@@ -96,6 +106,7 @@ class Window
     FFI::NCurses.wrefresh(@window)
   end
   def destroy
+    FFI::NCurses.del_panel(@panel) if @panel
     FFI::NCurses.delwin(@window)
   end
   # route other methods to ffi
@@ -113,6 +124,14 @@ class Window
       return FFI::NCurses.send(test_name, @window, *args)
     end
     FFI::NCurses.send(name, @window, *args)
+  end
+  def box
+    FFI::NCurses.box(@window, 0, 0)
+  end
+  def title str, color=0, att=BOLD
+    strl = str.length
+    col = (@width - strl)/2
+    printstring(0,col, str, color, att)
   end
 
 end # window }}}
