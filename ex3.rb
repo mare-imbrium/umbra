@@ -18,21 +18,23 @@ def startup
     $log.info "Button demo #{$0} started on #{today}"
     FFI::NCurses.init_pair(10,  FFI::NCurses::BLACK,   FFI::NCurses::GREEN) # statusline
 end
-def statusline win, str, col = 0
-  win.printstring( FFI::NCurses.LINES-1, col, str, 10)
+def statusline win, str, col = 1
+  # LINES-2 prints on second last line so that box can be seen
+  win.printstring( FFI::NCurses.LINES-2, col, str, 6, REVERSE)
 end
 begin
   init_curses
   startup
-  win = Window.new
+  #win = Window.new
+  win = Window.new 20,100, 0, 20
   statusline(win, " "*(win.width-0), 0)
-  statusline(win, "Press q to quit #{win.height}:#{win.width}", 20)
-  title = Label.new( :text => "Demo of Fields", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
-                    :justify => :center, :color_pair => 0)
+  win.box
+  statusline(win, "Press C-q to quit #{win.height}:#{win.width}", 20)
+  str = " Demo of Buttons "
+  win.title str
 
   catch(:close) do
   form = Form.new win
-  form.add_widget title
   labels = ["Name: ", "Address: ","Mobile No.", "Email Id:","Hobbies: "]
   labs = []
   row = 3
@@ -62,6 +64,7 @@ begin
   cancel_butt = Button.new( :name => 'cancel', :text => 'Cancel', :row => row+2, :col => col + 20, :width => 10 , :color_pair => 1)
   form.add_widget ok_butt
   form.add_widget cancel_butt
+  FFI::NCurses.mvwhline(win.getwin, ok_butt.row-1, 1, FFI::NCurses::ACS_HLINE, win.width-2)
   cancel_butt.command do
     throw :close
   end
@@ -80,7 +83,7 @@ begin
   win.wrefresh
 
   y = x = 1
-  while (ch = win.getkey) != 113
+  while (ch = win.getkey) != FFI::NCurses::KEY_CTRL_Q
     begin
       form.handle_key ch
     rescue => e
