@@ -5,12 +5,12 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-03-10 09:22
+#  Last update: 2018-03-11 22:47
 # ----------------------------------------------------------------------------- #
 #  label.rb  Copyright (C) 2018-2020 j kepler
 #
 require './widget.rb'
-class Label < Widget # {{{
+class Label < Widget 
 
   # justify required a display length, esp if center.
   attr_accessor   :justify        #:right, :left, :center
