@@ -1,10 +1,28 @@
 require './window.rb'
+# ----------------------------------------------------------------------------- #
+#         File: menu.rb
+#  Description: a popup menu like mc/midnight commander 
+#       Author: j kepler  http://github.com/mare-imbrium/canis/
+#         Date: 2018-03-13
+#      License: MIT
+#  Last update: 2018-03-13 22:33
+# ----------------------------------------------------------------------------- #
+#  menu.rb  Copyright (C) 2012-2018 j kepler
 
 # a midnight commander like mc_menu
 # Pass a hash of key and label.
 # menu will only accept keys or arrow keys or C-c Esc to cancel
-# returns nill if C-c or Esc pressed.
+# returns nil if C-c or Esc pressed.
 # Otherwise returns character pressed.
+# == TODO 
+# depends on our window class which is minimal.
+# [ ] cursor should show on the row that is highlighted
+# [ ] Can we remove that dependency so this is independent
+# Currently, we paint window each time user pressed up or down, but we can just repaint the attribute
+# [ ] width of array items not checked. We could do that or have user pass it in.
+# [ ] we are not scrolling if user sends in a large number of items. we should cap it to 10 or 20
+# == CHANGELOG
+#
 class Menu
 
   def initialize title, hash, config={}
@@ -16,7 +34,7 @@ class Menu
     @attr = BOLD
     @color_pair = config[:color_pair] || 14
     ht = @list.size+2
-    wid = 40
+    wid = config[:width] || 40
     top = (FFI::NCurses.LINES - ht)/2
     left = (FFI::NCurses.COLS - wid)/2
     @window = Window.new(ht, wid, top, left)
