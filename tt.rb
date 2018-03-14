@@ -5,17 +5,19 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-03-13 12:31
+#  Last update: 2018-03-14 12:43
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
 # [x] open files on RIGHT arrow in view (?)
+# [ ] in a long listing, how to get to a file name. first char or pattern
 # [ ] pressing p should open PAGER, e EDITOR, m MOST, v - view
 # [ ] on zip file show contents in pager. x to extract.
-# [ ] when going up a directory keep cursor on the directory we came from XXX
-# [ ] space bar to page down. also page up on c-n c-p top bottom
+# [x] when going up a directory keep cursor on the directory we came from XXX
+# [x] space bar to page down. also page up on c-n c-p top bottom
 # [x] hide dot files 
 # [ ] reveal dot files on toggle TODO
+# [ ] long listing files on toggle TODO
 # [ ] long file names not getting cleared FIXME
 # [ ] allow entry of command and page output or show in PAGER
 # [x] pressing ENTER should invoke EDITOR
@@ -28,8 +30,55 @@
 require './window.rb'
 require './menu.rb'
 
+$sorto = "on"
+$hidden = nil
+$long_listing = false
+$patt = nil
+_LINES = FFI::NCurses.LINES-1
 def create_footer_window h = 2 , w = FFI::NCurses.COLS, t = FFI::NCurses.LINES-2, l = 0
   ewin = Window.new(h, w , t, l)
+end
+def create_input_window h = 1 , w = FFI::NCurses.COLS, t = FFI::NCurses.LINES-1, l = 0
+  ewin = Window.new(h, w , t, l)
+end
+# accepts user input in current window
+# and returns characters after RETURN pressed
+# TODO check for arrow keys and 
+# TODO check for C-c or ESC
+# TODO check for backspace
+def getchars win, max=20
+  str = ""
+  pos = 0
+  filler = " "*20
+  y, x = win.getyx()
+  while (ch = win.getkey) != FFI::NCurses::KEY_RETURN
+    #str << ch.chr
+    if ch > 27 and ch < 127
+      str.insert(pos, ch.chr)
+      pos += 1
+      #FFI::NCurses.waddstr(win.getwin, ch.chr)
+    end
+    case ch
+    when FFI::NCurses::KEY_LEFT 
+      pos -= 1
+      pos = 0 if pos < 0
+    when FFI::NCurses::KEY_RIGHT
+      pos += 1
+      pos = str.size if pos >= str.size
+    when 127
+      pos -= 1 if pos > 0
+      str.slice!(pos,1) if pos >= 0 # no backspace if on first pos
+    when 27, FFI::NCurses::KEY_CTRL_C
+      return nil
+    end
+    FFI::NCurses.wmove(win.getwin, y,x)
+    FFI::NCurses.waddstr(win.getwin, filler)
+    FFI::NCurses.wmove(win.getwin, y,x)
+    FFI::NCurses.waddstr(win.getwin, str)
+    FFI::NCurses.wmove(win.getwin, y,pos+1) # set cursor to correct position
+    break if str.size >= max
+  end
+  str
 end
 def shell_out command
       FFI::NCurses.endwin
@@ -37,6 +86,31 @@ def shell_out command
       FFI::NCurses.refresh
 end
 
+## code related to long listing of files
+GIGA_SIZE = 1073741824.0
+MEGA_SIZE = 1048576.0
+KILO_SIZE = 1024.0
+
+# Return the file size with a readable style.
+def readable_file_size(size, precision)
+  case
+    #when size == 1 : "1 B"
+  when size < KILO_SIZE then "%d B" % size
+  when size < MEGA_SIZE then "%.#{precision}f K" % (size / KILO_SIZE)
+  when size < GIGA_SIZE then "%.#{precision}f M" % (size / MEGA_SIZE)
+  else "%.#{precision}f G" % (size / GIGA_SIZE)
+  end
+end
+## format date for file given stat
+def date_format t
+  t.strftime "%Y/%m/%d"
+end
+# clears window but leaves top line
+def clearwin(win)
+      win.wmove(1,0)
+      win.wclrtobot
+end
+## 
 def file_edit win, fp 
   #$log.debug " edit #{fp}"
   editor = ENV['EDITOR'] || 'vi'
@@ -83,9 +157,11 @@ def file_page win, fp
 end
 def get_files
   #files = Dir.glob("*")
-  $sorto = "on"
-  $hidden = nil
   files = `zsh -c 'print -rl -- *(#{$sorto}#{$hidden}M)'`.split("\n")
+  if $patt
+    files = files.grep(/#{$patt}/)
+  end
+  return files
 end
 # a quick simple list with highlight row, and scrolling
 # clear the rest of the rows DONE 2018-03-09 - 
@@ -93,7 +169,7 @@ end
 # entire window should have same color as bkgd - DONE
 #
   def listing win, path, files, cur=0
-    width = 50
+    width = win.width-1
     y = x = 1
     ht = win.height-2
     st = 0
@@ -118,11 +194,27 @@ end
         attr = FFI::NCurses::A_NORMAL
       end
       fullp = path + "/" + f
+
+      if $long_listing
+        begin
+          unless File.exist? f
+            last = f[-1]
+            if last == " " || last == "@" || last == '*'
+              stat = File.stat(f.chop)
+            end
+          else
+            stat = File.stat(f)
+          end
+          f = "%10s  %s  %s" % [readable_file_size(stat.size,1), date_format(stat.mtime), f]
+        rescue Exception => e
+          f = "%10s  %s  %s" % ["?", "??????????", f]
+        end
+      end
       if File.directory? fullp
         #ff = "#{mark} #{f}/"
         # 2018-03-12 - removed slash at end since zsh puts it there
         ff = "#{mark} #{f}"
-        colr = 4 # blue on background
+        colr = 4 # blue on background color_pair COLOR_PAIR
         attr = attr | FFI::NCurses::A_BOLD
       else
         ff = "#{mark} #{f}"
@@ -131,16 +223,18 @@ end
       win.printstring(ctr, x, ff, colr, attr)
       break if ctr >= ht
     }
-    statusline(win, "#{cur+1}/#{files.size} #{files[cur]}. cur, ht = #{ht} , hl #{hl}")
+    curpos = cur + 1
+    if curpos > ht
+      curpos = ht 
+    end
+    #statusline(win, "#{cur+1}/#{files.size} #{files[cur]}. cur = #{cur}, pos:#{curpos},ht = #{ht} , hl #{hl}")
+    statusline(win, "#{cur+1}/#{files.size} #{files[cur]}.                                 ")
+    win.wmove( curpos , 0) # +1 depends on offset of ctr 
     win.wrefresh
     #return cur
   end
   def statusline win, str
-    win.printstring(win.height-1, 2, str, 2)
-  end
-  def OLDalert win, str
-    statusline win, str
-    win.getkey
+    win.printstring(win.height-1, 2, str, 1) # white on default
   end
   def alert str 
     win = create_footer_window
@@ -182,6 +276,7 @@ begin
       fullp = path + "/" + files[current]
       if File.directory? fullp
         Dir.chdir(files[current])
+        $patt = nil
         path = Dir.pwd
         win.printstring(0,0, "DIR: #{path}                 ",0)
         files = get_files
@@ -199,6 +294,7 @@ begin
       oldpath = path
       Dir.chdir("..")
       path = Dir.pwd
+      $patt = nil
       win.printstring(0,0, "DIR: #{path}                 ",0)
       files = get_files
       # when going up, keep focus on the dir we came from
@@ -211,6 +307,7 @@ begin
       fullp = path + "/" + files[current]
       if File.directory? fullp
         Dir.chdir(files[current])
+        $patt = nil
         path = Dir.pwd
         win.printstring(0,0, "DIR: #{path}                 ",0)
         files = get_files
@@ -230,25 +327,47 @@ begin
       current +=1
     when FFI::NCurses::KEY_CTRL_N
       current += $pagecols
+    when FFI::NCurses::KEY_CTRL_P
+      current -= $pagecols
     when 32
       current += $spacecols
     when FFI::NCurses::KEY_BACKSPACE, 127
       current -= $spacecols
-    when FFI::NCurses::KEY_CTRL_A
-      list = ["x this", "y that","z other","a foo", "b bar"]
-      list = { "x" => "this", "y" => "that", "z" => "the other", "a" => "another one", "b" => "yet another" }
-      m = Menu.new "A menu", list
+    when FFI::NCurses::KEY_CTRL_X
+    when ?=.getbyte(0)
+      #list = ["x this", "y that","z other","a foo", "b bar"]
+      list = { "h" => "hidden files toggle", "l" => "long listing toggle", "z" => "the other", "a" => "another one", "b" => "yet another" }
+      m = Menu.new "Toggle Options", list
       key = m.getkey
       win.wrefresh # otherwise menu popup remains till next key press.
-      alert("Received #{key} from menu")
+      case key
+      when 'h'
+        $hidden = $hidden ? nil : "D"
+        files = get_files
+        clearwin(win)
+      when 'l'
+        $long_listing = !$long_listing 
+        clearwin(win)
+      end
+    when ?/.getbyte(0)
+      # search grep
+      # this is writing over the last line of the listing
+      ewin = create_input_window
+      ewin.printstr("/", 0, 0)
+      #win.wmove(1, _LINES-1)
+      str = getchars(ewin, 10)
+      ewin.destroy
+      #alert "Got #{str}"
+      $patt = str #if str
+      files = get_files
+      clearwin(win)
     else
       alert("key #{ch} not known")
     end
-    #FIXME after scrolling, pointer is showing wrong file here
-    win.printstr("Pressed #{ch} on #{files[current]}    ", 0, 70)
+    #win.printstr("Pressed #{ch} on #{files[current]}    ", 0, 70)
     current = 0 if current < 0
     current = files.size-1 if current >= files.size
-    win.printstr(ch.to_s + ":" + current.to_s, 0, 40)
+    #win.printstr(ch.to_s + ":" + current.to_s, 0, 40)
     listing(win, path, files, current)
     win.wrefresh
   end
