@@ -25,17 +25,19 @@ def init_curses
 
 end
 
+# defining various colors
+# NOTE this should be done by application or else we will be changing this all the time.
 def std_colors
   FFI::NCurses.use_default_colors
   FFI::NCurses.init_pair(0,  FFI::NCurses::BLACK,   -1)
   FFI::NCurses.init_pair(1,  FFI::NCurses::WHITE,   -1)
   FFI::NCurses.init_pair(2,  FFI::NCurses::RED,     -1)
-  # statusline XXX
   FFI::NCurses.init_pair(3,  FFI::NCurses::GREEN,   -1)
   FFI::NCurses.init_pair(4,  FFI::NCurses::BLUE,    -1)
   FFI::NCurses.init_pair(5,  FFI::NCurses::YELLOW,  -1)
   FFI::NCurses.init_pair(6,  FFI::NCurses::MAGENTA, -1)
   FFI::NCurses.init_pair(7,  FFI::NCurses::CYAN,    -1)
+  # ideally the rest should be done by application
   #FFI::NCurses.init_pair(8,  FFI::NCurses::WHITE,    -1)
   #FFI::NCurses.init_pair(9,  FFI::NCurses::BLUE,    -1)
   FFI::NCurses.init_pair(10,  FFI::NCurses::BLACK, FFI::NCurses::CYAN)
