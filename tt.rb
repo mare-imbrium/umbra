@@ -5,20 +5,20 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-03-14 12:43
+#  Last update: 2018-03-14 23:09
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
 # [x] open files on RIGHT arrow in view (?)
 # [ ] in a long listing, how to get to a file name. first char or pattern
 # [ ] pressing p should open PAGER, e EDITOR, m MOST, v - view
-# [ ] on zip file show contents in pager. x to extract.
-# [x] when going up a directory keep cursor on the directory we came from XXX
+# [x] on zip file show contents in pager. x to extract.
+# [x] when going up a directory keep cursor on the directory we came from 
 # [x] space bar to page down. also page up on c-n c-p top bottom
 # [x] hide dot files 
-# [ ] reveal dot files on toggle TODO
-# [ ] long listing files on toggle TODO
-# [ ] long file names not getting cleared FIXME
+# [x] reveal dot files on toggle 
+# [x] long listing files on toggle 
+# [x] long file names not getting cleared 
 # [ ] allow entry of command and page output or show in PAGER
 # [x] pressing ENTER should invoke EDITOR
 #  ----------
@@ -43,13 +43,10 @@ def create_input_window h = 1 , w = FFI::NCurses.COLS, t = FFI::NCurses.LINES-1,
 end
 # accepts user input in current window
 # and returns characters after RETURN pressed
-# TODO check for arrow keys and 
-# TODO check for C-c or ESC
-# TODO check for backspace
 def getchars win, max=20
   str = ""
   pos = 0
-  filler = " "*20
+  filler = " "*max
   y, x = win.getyx()
   while (ch = win.getkey) != FFI::NCurses::KEY_RETURN
     #str << ch.chr
@@ -80,6 +77,8 @@ def getchars win, max=20
   end
   str
 end
+# runs given command and returns.
+# Does not wait, so command should be like an editor or be paged to less.
 def shell_out command
       FFI::NCurses.endwin
       ret = system command
@@ -228,7 +227,7 @@ end
       curpos = ht 
     end
     #statusline(win, "#{cur+1}/#{files.size} #{files[cur]}. cur = #{cur}, pos:#{curpos},ht = #{ht} , hl #{hl}")
-    statusline(win, "#{cur+1}/#{files.size} #{files[cur]}.                                 ")
+    statusline(win, "#{cur+1}/#{files.size} #{files[cur]}. (#{$sorto})                                ")
     win.wmove( curpos , 0) # +1 depends on offset of ctr 
     win.wrefresh
     #return cur
@@ -244,6 +243,53 @@ end
     win.wrefresh
     win.getkey
     win.destroy
+  end
+  def main_menu
+    h = { :s => :sort_menu, :M => :newdir, "%" => :newfile }
+    m = Menu.new "Main Menu", h
+    ch = m.getkey
+
+    binding = h[ch]
+    binding = h[ch.to_sym] unless binding
+    if binding
+      if respond_to?(binding, true)
+        send(binding)
+      end
+    end
+    return ch, binding
+  end
+
+  def sort_menu
+    lo = nil
+    h = { :n => :newest, :a => :accessed, :o => :oldest, 
+          :l => :largest, :s => :smallest , :m => :name , :r => :rname, :d => :dirs, :c => :clear }
+      m = Menu.new "Sort Menu", h
+      ch = m.getkey
+      menu_text = h[ch.to_sym]
+      case menu_text
+      when :newest
+        lo="om"
+      when :accessed
+        lo="oa"
+      when :oldest
+        lo="Om"
+      when :largest
+        lo="OL"
+      when :smallest
+        lo="oL"
+      when :name
+        lo="on"
+      when :rname
+        lo="On"
+      when :dirs
+        lo="/"
+      when :clear
+        lo=""
+      end
+      ## This needs to persist and be a part of all listings, put in change_dir.
+      $sorto = lo
+      #$files = `zsh -c 'print -rl -- *(#{lo}#{$hidden}M)'`.split("\n") if lo
+      #$title = nil
   end
 
 begin
@@ -361,13 +407,17 @@ begin
       $patt = str #if str
       files = get_files
       clearwin(win)
+    when ?`.getbyte(0)
+      main_menu
+      files = get_files
+      clearwin(win)
     else
       alert("key #{ch} not known")
     end
     #win.printstr("Pressed #{ch} on #{files[current]}    ", 0, 70)
     current = 0 if current < 0
     current = files.size-1 if current >= files.size
-    #win.printstr(ch.to_s + ":" + current.to_s, 0, 40)
+    # listing does not refresh files, so if files has changed, you need to refresh
     listing(win, path, files, current)
     win.wrefresh
   end
