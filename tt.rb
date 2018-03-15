@@ -5,12 +5,12 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-03-14 23:09
+#  Last update: 2018-03-15 22:37
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
 # [x] open files on RIGHT arrow in view (?)
-# [ ] in a long listing, how to get to a file name. first char or pattern
+# [ ] in a long listing, how to get to a file name. first char or pattern TODO
 # [ ] pressing p should open PAGER, e EDITOR, m MOST, v - view
 # [x] on zip file show contents in pager. x to extract.
 # [x] when going up a directory keep cursor on the directory we came from 
@@ -21,6 +21,8 @@
 # [x] long file names not getting cleared 
 # [ ] allow entry of command and page output or show in PAGER
 # [x] pressing ENTER should invoke EDITOR
+# [ ] scrolling up behavior not correct. we should scroll up from first row not last. TODO
+#     see vifm for correct way. mc has different behavior
 #  ----------
 #  == CHANGELOG
 #
@@ -166,7 +168,7 @@ end
 # clear the rest of the rows DONE 2018-03-09 - 
 # mark directories in color or / DONE
 # entire window should have same color as bkgd - DONE
-#
+# If current is visible do not scroll up or down. TODO 
   def listing win, path, files, cur=0
     width = win.width-1
     y = x = 1
