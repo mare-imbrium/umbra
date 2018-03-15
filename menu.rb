@@ -5,7 +5,7 @@ require './window.rb'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-13
 #      License: MIT
-#  Last update: 2018-03-13 22:33
+#  Last update: 2018-03-14 14:53
 # ----------------------------------------------------------------------------- #
 #  menu.rb  Copyright (C) 2012-2018 j kepler
 
@@ -28,7 +28,7 @@ class Menu
   def initialize title, hash, config={}
 
     @list = hash.values
-    @keys = hash.keys
+    @keys = hash.keys.collect { |x| x.to_s }
     @hash = hash
     bkgd = config[:bkgd] || FFI::NCurses.COLOR_PAIR(14) | BOLD
     @attr = BOLD
