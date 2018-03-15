@@ -60,7 +60,6 @@
     def initialize config={}, &block
       @form = form
       @buffer = String.new
-      #@type=config.fetch("type", :varchar)
       @row = 0
       @col = 0
       @editable = true
@@ -220,47 +219,9 @@
       end
     end
   
-    # create a label linked to this field
-    # Typically one passes a Label, but now we can pass just a String, a label 
-    # is created. This differs from +label+ in positioning. The +Field+ is printed on 
-    # +row+ and +col+ and the label before it. Thus, all fields are aligned on column,
-    # however you must leave adequate columns for the label to be printed to the left of the field.
-    #
-    # NOTE: 2011-10-20 when field attached to some container, label won't be attached
-    # In such cases, use just +label()+ not +set_label()+.
-    # @param [Label, String] label object to be associated with this field
-    # @return label created which can be further customized.
-    # FIXME this may not work since i have disabled -1, now i do not set row and col 2011-11-5 
-    def set_label label
-      # added case for user just using a string
-      case label
-      when String
-        # what if no form at this point
-        @label_unattached = true unless @form
-        label = Label.new @form, {:text => label}
-      end
-      @label = label
-      # in the case of app it won't be set yet FIXME
-      # So app sets label to 0 and t his won't trigger
-      # can this be delayed to when paint happens XXX
-      if @row
-        position_label
-      else
-        @label_unplaced = true
-      end
-      label
-    end
     def label *val
       return @label if val.empty?
       raise "Field does not allow setting of label. Please use LabeledField instead with lcol for label column"
-    end
-    # FIXME this may not work since i have disabled -1, now i do not set row and col
-    def position_label
-      $log.debug "XXX: LABEL row #{@label.row}, #{@label.col} "
-      @label.row  @row unless @label.row #if @label.row == -1
-      @label.col  @col-(@label.name.length+1) unless @label.col #if @label.col == -1
-      @label.label_for(self) # this line got deleted when we redid stuff !
-      $log.debug "   XXX: LABEL row #{@label.row}, #{@label.col} "
     end
 
   ## Note that some older widgets like Field repaint every time the form.repaint
@@ -269,20 +230,6 @@
 
   def repaint
     return unless @repaint_required  # 2010-11-20 13:13 its writing over a window i think TESTING
-    if @label_unattached
-      alert "came here unattachd"
-      @label.set_form(@form)
-      @label_unattached = nil
-    end
-    if @label_unplaced
-      alert "came here unplaced"
-      position_label
-      @label_unplaced = nil
-    end
-    #@bgcolor ||= $def_bg_color
-    #@color   ||= $def_fg_color
-    #_color = color()
-    #_bgcolor = bgcolor()
     $log.debug("repaint FIELD: #{id}, #{name}, #{row} #{col},pcol:#{@pcol},  #{focusable} st: #{@state} ")
     @width = 1 if width == 0
     printval = getvalue_for_paint().to_s # added 2009-01-06 23:27 
@@ -309,14 +256,6 @@
     @field_col = c
     @repaint_required = false
   end
-
-  # deprecated
-  # set or unset focusable 
-  def set_focusable(tf)
-    $log.warn "pls don't use, deprecated. use focusable(boolean)"
-    focusable tf
-  end
- 
 
   def map_keys
     return if @keys_mapped
