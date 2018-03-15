@@ -48,14 +48,19 @@ begin
  
   row = 3
   col = 30
+  fhash = {}
   labels.each_with_index {|lab, ix| 
     w = Field.new( :name => lab, :row => row, :col => col , :width => 50)
-    labs << w
+    fhash[lab] = w
     row += 2
     w.color_pair = 1
     w.attr = FFI::NCurses::A_REVERSE
     form.add_widget w
   }
+  #fhash["mobile"].type = :integer
+  fhash["mobile"].chars_allowed = /[\d\-]/
+  fhash["mobile"].maxlen = 10
+  fhash["email"].chars_allowed = /[\w\+\.\@]/
   form.pack
   form.select_first_field
   win.wrefresh
