@@ -1,5 +1,9 @@
   ##
   # Text edit field
+#  TODO :
+#  - remove datatype, just use strings.
+#  - remove the old method *val type. use attr_accessor or similar.
+#  - labeled stuff, remove. 
   # NOTE: +width+ is the length of the display whereas +maxlen+ is the maximum size that the value 
   # can take. Thus, +maxlen+ can exceed +width+. Currently, +maxlen+ defaults to +width+ which 
   # defaults to 20.
@@ -25,6 +29,7 @@
     # for numeric fields, specify lower or upper limit of entered value
     attr_accessor :below, :above
 
+    # aliased to type
     #attr_accessor :chars_allowed           # regex, what characters to allow entry, will ignore all else
     # character to show, earlier called +show+ which clashed with Widget method +show+
     attr_accessor :mask                    # what charactr to show for each char entered (password field)
@@ -83,11 +88,12 @@
     #  standard chars_allowed will be used. Otherwise you may pass a regexp.
     #
     # @param symbol :integer, :float, :alpha, :alnum, Float, Integer, Numeric, Regexp
-    def type *val
-      return @chars_allowed if val.empty?
+    def type=(val)
+      #return @chars_allowed if val.empty?
 
-      dtype = val[0]
+      dtype = val
       #return self if @chars_allowed # disallow changing
+      # send in a regexp, we just save it.
       if dtype.is_a? Regexp 
         @chars_allowed = dtype
         return self
@@ -107,7 +113,7 @@
       end
       self
     end
-    alias :chars_allowed :type
+    alias :chars_allowed= :type=
 
     #
     # add a char to field, and validate
