@@ -109,7 +109,7 @@ class Window
   end
   def destroy
     FFI::NCurses.del_panel(@panel) if @panel
-    FFI::NCurses.delwin(@window)
+    FFI::NCurses.delwin(@window)   if @window
   end
   # route other methods to ffi
   def method_missing(name, *args)
