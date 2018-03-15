@@ -4,15 +4,11 @@
 # form will be unaware of it.
 # 2018-03-08 - 
 require './form.rb'
+
+class FieldValidationException < RuntimeError
+end
 class Widget   
     include EventHandler
-=begin
-    require 'canis/core/include/action'          # added 2012-01-3 for add_action
-    include EventHandler
-    include Canis::Utils
-    include Io # added 2010-03-06 13:05 
-=end
-  #include ConfigSetup
   # common interface for text related to a field, label, textview, button etc
   attr_accessor :text, :width, :height
 
