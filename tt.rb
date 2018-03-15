@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-03-15 22:37
+#  Last update: 2018-03-15 23:19
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
@@ -169,17 +169,27 @@ end
 # mark directories in color or / DONE
 # entire window should have same color as bkgd - DONE
 # If current is visible do not scroll up or down. TODO 
-  def listing win, path, files, cur=0
+# Add pstart is the previous start position, which is used to determine scrolling
+# It is returned by this method to caller and sent back as-is.
+  def listing win, path, files, cur=0, pstart
+    curpos = 1
     width = win.width-1
     y = x = 1
     ht = win.height-2
-    st = 0
-    hl = cur
-    if cur >= ht
-      st = (cur - ht ) +1
-      hl = cur
-      # we need to scroll the rows
+    #st = 0
+    st = pstart           # previous start
+    pend = pstart + ht -1 # previous end
+    if cur > pend
+      st = (cur -ht) +1
+    elsif cur < pstart
+      st = cur
     end
+    hl = cur
+    #if cur >= ht
+      #st = (cur - ht ) +1
+      #hl = cur
+      ## we need to scroll the rows
+    #end
     y = 0
     ctr = 0
     filler = " "*width
@@ -191,6 +201,7 @@ end
       if y == hl
         attr = FFI::NCurses::A_REVERSE
         mark = ">"
+        curpos = ctr
       else
         attr = FFI::NCurses::A_NORMAL
       end
@@ -224,15 +235,15 @@ end
       win.printstring(ctr, x, ff, colr, attr)
       break if ctr >= ht
     }
-    curpos = cur + 1
-    if curpos > ht
-      curpos = ht 
-    end
+    #curpos = cur + 1
+    #if curpos > ht
+      #curpos = ht 
+    #end
     #statusline(win, "#{cur+1}/#{files.size} #{files[cur]}. cur = #{cur}, pos:#{curpos},ht = #{ht} , hl #{hl}")
     statusline(win, "#{cur+1}/#{files.size} #{files[cur]}. (#{$sorto})                                ")
     win.wmove( curpos , 0) # +1 depends on offset of ctr 
     win.wrefresh
-    #return cur
+    return st
   end
   def statusline win, str
     win.printstring(win.height-1, 2, str, 1) # white on default
@@ -309,7 +320,7 @@ begin
   win.printstring(0,0, "DIR: #{path}                 ",0)
   files = get_files
   current = 0
-  listing(win, path, files, current)
+  prevstart = listing(win, path, files, current, 0)
 
   ch = 0
   xx = 1
@@ -420,7 +431,7 @@ begin
     current = 0 if current < 0
     current = files.size-1 if current >= files.size
     # listing does not refresh files, so if files has changed, you need to refresh
-    listing(win, path, files, current)
+    prevstart = listing(win, path, files, current, prevstart)
     win.wrefresh
   end
 
