@@ -1,4 +1,33 @@
   ##
+#
+
+class InputDataEvent
+  attr_accessor :index0, :index1, :source, :type, :row, :text
+  def initialize index0, index1, source, type, row, text
+    @index0 = index0
+    @index1 = index1
+    @source = source
+    @type = type
+    @row = row
+    @text = text
+  end
+  # until now to_s was returning inspect, but to make it easy for users let us return the value
+  # they most expect which is the text that was changed
+  def to_s
+    inspect
+  end
+  def inspect
+    ## now that textarea.to_s prints content we shouldn pass it here.
+    #"#{@type.to_s}, #{@source}, ind0:#{@index0}, ind1:#{@index1}, row:#{@row}, text:#{@text}"
+    "#{@type.to_s}, ind0:#{@index0}, ind1:#{@index1}, row:#{@row}, text:#{@text}"
+  end
+  # this is so that earlier applications were getting source in the block, not an event. they 
+  # were doing a fld.getvalue, so we must keep those apps running
+  # @since 1.2.0  added 2010-09-11 12:25 
+  def getvalue
+    @source.getvalue
+  end
+end
   # Text edit field
 #  TODO :
 #  - remove datatype, just use strings.
@@ -67,7 +96,7 @@
       #@event_args = {}             # arguments passed at time of binding, to use when firing event
       map_keys 
       init_vars
-      #register_events(:CHANGE)
+      register_events(:CHANGE)
       super
       @width ||= 20
       @maxlen ||= @width
@@ -140,12 +169,10 @@
       @curpos += 1 if @curpos < @maxlen
       @modified = true
       #$log.debug " FIELD FIRING CHANGE: #{char} at new #{@curpos}: bl:#{@buffer.length} buff:[#{@buffer}]"
-      # i have no way of knowing what change happened and what char was added deleted or changed
-      #fire_handler :CHANGE, self    # 2008-12-09 14:51 
       if @overwrite_mode
-        #fire_handler :CHANGE, InputDataEvent.new(oldcurpos,@curpos, self, :DELETE, 0, oldchar) # 2010-09-11 12:43 
+        fire_handler :CHANGE, InputDataEvent.new(oldcurpos,@curpos, self, :DELETE, 0, oldchar) # 2010-09-11 12:43 
       end
-      #fire_handler :CHANGE, InputDataEvent.new(oldcurpos,@curpos, self, :INSERT, 0, char) # 2010-09-11 12:43 
+      fire_handler :CHANGE, InputDataEvent.new(oldcurpos,@curpos, self, :INSERT, 0, char) # 2010-09-11 12:43 
       0
     end
 
@@ -172,7 +199,7 @@
       char = @buffer.slice!(index,1)
       #$log.debug " delete at #{index}: #{@buffer.length}: #{@buffer}"
       @modified = true
-      #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, char)     # 2010-09-11 13:01 
+      fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, char)     # 2010-09-11 13:01 
     end
     #
     # silently restores value without firing handlers, use if exception and you want old value
@@ -199,8 +226,8 @@
       @buffer = @buffer[0,@maxlen] if @maxlen && @buffer.length > @maxlen
       @curpos = 0
       # hope @delete_buffer is not overwritten
-      #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, @delete_buffer)     # 2010-09-11 13:01 
-      #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :INSERT, 0, @buffer)     # 2010-09-11 13:01 
+      fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, @delete_buffer)     # 2010-09-11 13:01 
+      fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :INSERT, 0, @buffer)     # 2010-09-11 13:01 
       self # 2011-10-2 
     end
     # converts back into original type
@@ -242,11 +269,11 @@
       end
     end
   
-    acolor = @color_pair || 0
+    acolor = @color_pair || CP_WHITE
     if @state == :HIGHLIGHTED
       #_bgcolor = @highlight_bgcolor || _bgcolor
       #_color = @highlight_color || _color
-      acolor = @highlight_color_pair || 1
+      acolor = @highlight_color_pair || CP_RED
     end
     @graphic = @form.window if @graphic.nil? ## cell editor listbox hack 
     #$log.debug " Field g:#{@graphic}. r,c,displen:#{@row}, #{@col}, #{@width} c:#{@color} bg:#{@bgcolor} a:#{@attr} :#{@name} "
@@ -297,7 +324,7 @@
     return if @delete_buffer.nil?
     #oldvalue = @buffer
     @buffer.insert @curpos, @delete_buffer 
-    #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :INSERT, 0, @delete_buffer)     # 2010-09-11 13:01 
+    fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :INSERT, 0, @delete_buffer)     # 2010-09-11 13:01 
   end
   ## 
   # position cursor at start of field
@@ -342,7 +369,7 @@
     @delete_buffer = @buffer[@curpos..-1]
     # if pos is 0, pos-1 becomes -1, end of line!
     @buffer = pos == -1 ? "" : @buffer[0..pos]
-    #fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :DELETE, 0, @delete_buffer)
+    fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :DELETE, 0, @delete_buffer)
     return @delete_buffer
   end
   def cursor_forward
