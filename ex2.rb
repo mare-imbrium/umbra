@@ -10,7 +10,9 @@ def create_footer_window h = 2 , w = FFI::NCurses.COLS, t = FFI::NCurses.LINES-2
 end
 def _alert str 
   win = create_footer_window
-  win.wbkgd(FFI::NCurses.COLOR_PAIR(12))
+  #FFI::NCurses.init_pair(12,  COLOR_WHITE, FFI::NCurses::RED)
+  cp = create_color_pair(COLOR_RED, COLOR_WHITE)
+  win.wbkgd(FFI::NCurses.COLOR_PAIR(cp)) # white on red, defined here
   win.printstring(0,1, str)
   win.wrefresh
   win.getkey
@@ -34,12 +36,12 @@ end
 begin
   init_curses
   startup
-  FFI::NCurses.init_pair(12,  COLOR_WHITE, FFI::NCurses::RED)
+  #FFI::NCurses.init_pair(12,  COLOR_WHITE, FFI::NCurses::RED)
   win = Window.new
   statusline(win, " "*(win.width-0), 0)
   statusline(win, "Press q to quit #{win.height}:#{win.width}", 20)
   title = Label.new( :text => "Demo of Fields", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
-                    :justify => :center, :color_pair => 0)
+                    :justify => :center, :color_pair => CP_BLACK)
 
   form = Form.new win
   form.add_widget title
@@ -51,7 +53,7 @@ begin
     w = Label.new( :text => lab, :row => row, :col => col , :width => 20)
     labs << w
     row += 2
-    w.color_pair = 1
+    w.color_pair = CP_WHITE
     w.justify = :right
     w.attr = FFI::NCurses::A_BOLD
     form.add_widget w
@@ -66,14 +68,23 @@ begin
     w = Field.new( :name => lab, :row => row, :col => col , :width => 50)
     fhash[lab] = w
     row += 2
-    w.color_pair = 1
+    w.color_pair = CP_CYAN
     w.attr = FFI::NCurses::A_REVERSE
     w.null_allowed = true
     form.add_widget w
   }
+  message_label = Label.new({text: "Message comes here C-q to quit",
+                             :name=>"message_label",:row => win.height-2, :col => 2, :width => 60,
+                             :height => 2, :color_pair => CP_MAGENTA})
+  form.add_widget message_label
   #fhash["mobile"].type = :integer
   fhash["mobile"].chars_allowed = /[\d\-]/
   fhash["mobile"].maxlen = 10
+  fhash["mobile"].bind(:CHANGE) do |f|
+    message_label.text = "#{f.getvalue.size()} chars entered"
+    statusline(win, "#{f.getvalue.size()} chars entered")
+    message_label.repaint_required
+  end
   fhash["email"].chars_allowed = /[\w\+\.\@]/
   fhash["email"].valid_regex = /\w+\@\w+\.\w+/
   fhash["age"].valid_range = (18..100)
@@ -84,13 +95,14 @@ begin
   win.wrefresh
 
   y = x = 1
-  while (ch = win.getkey) != 113
+  while (ch = win.getkey) != FFI::NCurses::KEY_CTRL_Q
     begin
       form.handle_key ch
     rescue => e
       _alert(e.to_s)
       $log.error e
       $log.error e.backtrace.join("\n")
+      e = nil
     end
     win.wrefresh
   end
@@ -98,12 +110,15 @@ begin
 rescue => e
   win.destroy if win
   FFI::NCurses.endwin
+  puts "printing inside rescue"
   puts e
   puts e.backtrace.join("\n")
+  e = nil
 ensure
   win.destroy if win
   FFI::NCurses.endwin
   if e
+    puts "printing inside ensure"
     puts e 
     puts e.backtrace.join("\n")
   end
