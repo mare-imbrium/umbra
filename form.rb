@@ -98,7 +98,7 @@ class Form
     setpos 
     @window.wrefresh
     # 2018-03-07 - commented next off NOT_SURE
-    #Ncurses::Panel.update_panels ## added 2010-11-05 00:30 to see if clears the stdscr problems
+    #FFI::NCurses::Panel.update_panels ## added 2010-11-05 00:30 to see if clears the stdscr problems
   end
   ## 
   # move cursor to where the fields row and col are
@@ -214,8 +214,8 @@ class Form
       $log.error "form: validate_field caught EXCEPTION #{err}"
       $log.error(err.backtrace.join("\n")) 
       #        $error_message = "#{err}" # changed 2010  
-      $error_message.value = "#{err}"
-      Ncurses.beep
+      #$error_message.value = "#{err}" # 2018-03-18 - commented off since no Variable any longer
+      FFI::NCurses.beep
       return -1
     end
     return 0
@@ -391,15 +391,15 @@ class Form
     when FFI::NCurses::KEY_RESIZE  # SIGWINCH 
       # note that in windows that have dialogs or text painted on window such as title or 
       #  box, the clear call will clear it out. these are not redrawn.
-      lines = Ncurses.LINES
-      cols = Ncurses.COLS
-      x = Ncurses.stdscr.getmaxy
-      y = Ncurses.stdscr.getmaxx
+      lines = FFI::NCurses.LINES
+      cols = FFI::NCurses.COLS
+      x = FFI::NCurses.stdscr.getmaxy
+      y = FFI::NCurses.stdscr.getmaxx
       $log.debug " form RESIZE HK #{ch} #{self}, #{@name}, #{ch}, x #{x} y #{y}  lines #{lines} , cols: #{cols} "
       #alert "SIGWINCH WE NEED TO RECALC AND REPAINT resize #{lines}, #{cols}: #{x}, #{y} "
 
       # next line may be causing flicker, can we do without.
-      Ncurses.endwin
+      FFI::NCurses.endwin
       @window.wrefresh
       @window.wclear
       if @layout_manager
@@ -460,6 +460,7 @@ end # }}}
 
 module EventHandler # {{{
   # widgets may register their events prior to calling super
+  # This ensures that caller programs don't use wrong event names.
   #
   def register_events eves
     @_events ||= []
@@ -508,7 +509,7 @@ module EventHandler # {{{
       if @_events
         raise ArgumentError, "fire_handler: #{self.class} does not support this event: #{event}. #{@_events} " if !event? event
       else
-        $log.debug "bIND #{self.class}  XXXXX TEMPO no events defined in @_events "
+        $log.debug "fire_handler #{self.class}  XXXXX no events defined in @_events "
       end
       ablk = @handler[event]
       if !ablk.nil?
@@ -522,19 +523,20 @@ module EventHandler # {{{
             # added 2011-09-26 1.3.0 so a user raised exception on LEAVE
             # keeps cursor in same field.
             raise fve
-          rescue PropertyVetoException => pve
+          #rescue PropertyVetoException => pve
+            # 2018-03-18 - commented off
             # added 2011-09-26 1.3.0 so a user raised exception on LEAVE
             # keeps cursor in same field.
-            raise pve
+            #raise pve
           rescue => ex
             ## some don't have name
-            #$log.error "======= Error ERROR in block event #{self}: #{name}, #{event}"
+            # FIXME this should be displayed somewhere. It just goes into log file quietly.
             $log.error "======= Error ERROR in block event #{self}:  #{event}"
             $log.error ex
             $log.error(ex.backtrace.join("\n")) 
             #$error_message = "#{ex}" # changed 2010  
-            $error_message.value = "#{ex.to_s}"
-            Ncurses.beep
+            #$error_message.value = "#{ex.to_s}" # 2018-03-18 - commented off
+            FFI::NCurses.beep
           end
         end
       else
