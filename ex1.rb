@@ -58,7 +58,7 @@ begin
 
   y = x = 1
   while (ch = win.getkey) != 113
-    #y, x = win.getbegyx(win.getwin)
+    #y, x = win.getbegyx(win.pointer)
     old_y, old_x = y, x
     case ch
     when FFI::NCurses::KEY_RIGHT
