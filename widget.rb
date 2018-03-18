@@ -60,7 +60,8 @@ class Widget
     # These are standard events for most widgets which will be fired by 
     # Form. In the case of CHANGED, form fires if it's editable property is set, so
     # it does not apply to all widgets.
-    #register_events( [:ENTER, :LEAVE, :CHANGED, :PROPERTY_CHANGE])
+    # 2018-03-18 - proporty change is deprecated since we don't use dsl_property any longer
+    register_events( [:ENTER, :LEAVE, :CHANGED, :PROPERTY_CHANGE])
 
     aconfig.each_pair { |k,v| variable_set(k,v) }
     #instance_eval &block if block_given?
