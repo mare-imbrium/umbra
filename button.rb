@@ -9,7 +9,8 @@
       @editable = false
       # hotkey denotes we should bind the key itself not alt-key (for menulinks)
       @hotkey = config.delete(:hotkey) 
-      #register_events([:PRESS, :FORM_ATTACHED])
+      # 2018-03-18 - FORM_ATTACHED deprecated to keep things simple
+      register_events([:PRESS, :FORM_ATTACHED])
       @default_chars = ['> ', ' <'] 
       super
 
