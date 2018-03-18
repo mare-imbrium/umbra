@@ -5,6 +5,7 @@ require './window.rb'
 require './label.rb'
 require './field.rb'
 require './button.rb'
+require './togglebutton.rb'
 
 def startup
   require 'logger'
@@ -60,11 +61,34 @@ begin
     w.attr = REVERSE
     form.add_widget w
   }
+
+  message_label = Label.new({text: "Message comes here C-q to quit",
+                             :name=>"message_label",:row => win.height-2, :col => 2, :width => 60,
+                             :height => 2, :color_pair => 5})
+
+  row += 1
+  togglebutton = ToggleButton.new()
+  togglebutton.value = true
+  togglebutton.onvalue = " Toggle Down "
+  togglebutton.offvalue ="  Untoggle   "
+  togglebutton.row = row
+  togglebutton.col = col
+  togglebutton.command do
+    if togglebutton.value
+      message_label.text = "Toggle button was pressed"
+    else
+      message_label.text = "UNToggle button was pressed"
+    end
+    # we need this since we have done away with dsl_property
+    message_label.repaint_required true
+  end
+  form.add_widget togglebutton 
+
   ok_butt = Button.new( :name => 'ok', :text => 'Ok', :row => row+2, :col => col, :width => 10 , :color_pair => 1)
   cancel_butt = Button.new( :name => 'cancel', :text => 'Cancel', :row => row+2, :col => col + 20, :width => 10 , :color_pair => 1)
   form.add_widget ok_butt
   form.add_widget cancel_butt
-  FFI::NCurses.mvwhline(win.getwin, ok_butt.row-1, 1, FFI::NCurses::ACS_HLINE, win.width-2)
+  FFI::NCurses.mvwhline(win.pointer, ok_butt.row-1, 1, FFI::NCurses::ACS_HLINE, win.width-2)
   cancel_butt.command do
     throw :close
   end
@@ -78,6 +102,10 @@ begin
     }
     throw :close
   end
+
+
+  form.add_widget message_label
+
   form.pack
   form.select_first_field
   win.wrefresh
@@ -96,6 +124,7 @@ begin
 
 rescue => e
   win.destroy if win
+  win = nil
   FFI::NCurses.endwin
   puts e
   puts e.backtrace.join("\n")
