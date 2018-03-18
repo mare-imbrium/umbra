@@ -1,14 +1,20 @@
 #!/usr/bin/env ruby
 # ----------------------------------------------------------------------------- #
 #         File: tt.rb
-#  Description: a quick small directory lister aimed at being simple and fast.
-#       Author: j kepler  http://github.com/mare-imbrium/canis/
+#  Description: a quick small directory lister aimed at being simple fast with minimal
+#       features, and mostly for viewing files quickly through PAGER
+#       Author: j kepler  http://github.com/mare-imbrium/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-03-15 23:19
+#  Last update: 2018-03-16 23:17
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
+#  [ ] make a help screen on ?
+#  [ ] move to lyra or some gem and publish
+#  [ ] pop directories
+#  [ ] go back to start directory
+#  [ ] go to given directory
 # [x] open files on RIGHT arrow in view (?)
 # [ ] in a long listing, how to get to a file name. first char or pattern TODO
 # [ ] pressing p should open PAGER, e EDITOR, m MOST, v - view
@@ -21,7 +27,7 @@
 # [x] long file names not getting cleared 
 # [ ] allow entry of command and page output or show in PAGER
 # [x] pressing ENTER should invoke EDITOR
-# [ ] scrolling up behavior not correct. we should scroll up from first row not last. TODO
+# [x] scrolling up behavior not correct. we should scroll up from first row not last. 
 #     see vifm for correct way. mc has different behavior
 #  ----------
 #  == CHANGELOG
@@ -50,12 +56,13 @@ def getchars win, max=20
   pos = 0
   filler = " "*max
   y, x = win.getyx()
+  pointer = win.pointer
   while (ch = win.getkey) != FFI::NCurses::KEY_RETURN
     #str << ch.chr
     if ch > 27 and ch < 127
       str.insert(pos, ch.chr)
       pos += 1
-      #FFI::NCurses.waddstr(win.getwin, ch.chr)
+      #FFI::NCurses.waddstr(win.pointer, ch.chr)
     end
     case ch
     when FFI::NCurses::KEY_LEFT 
@@ -70,11 +77,11 @@ def getchars win, max=20
     when 27, FFI::NCurses::KEY_CTRL_C
       return nil
     end
-    FFI::NCurses.wmove(win.getwin, y,x)
-    FFI::NCurses.waddstr(win.getwin, filler)
-    FFI::NCurses.wmove(win.getwin, y,x)
-    FFI::NCurses.waddstr(win.getwin, str)
-    FFI::NCurses.wmove(win.getwin, y,pos+1) # set cursor to correct position
+    FFI::NCurses.wmove(pointer, y,x)
+    FFI::NCurses.waddstr(pointer, filler)
+    FFI::NCurses.wmove(pointer, y,x)
+    FFI::NCurses.waddstr(pointer, str)
+    FFI::NCurses.wmove(pointer, y,pos+1) # set cursor to correct position
     break if str.size >= max
   end
   str
@@ -165,12 +172,9 @@ def get_files
   return files
 end
 # a quick simple list with highlight row, and scrolling
-# clear the rest of the rows DONE 2018-03-09 - 
-# mark directories in color or / DONE
-# entire window should have same color as bkgd - DONE
-# If current is visible do not scroll up or down. TODO 
-# Add pstart is the previous start position, which is used to determine scrolling
-# It is returned by this method to caller and sent back as-is.
+# 
+# mark directories in color 
+# @return start row
   def listing win, path, files, cur=0, pstart
     curpos = 1
     width = win.width-1
@@ -327,7 +331,7 @@ begin
   yy = 1
   y = x = 1
   while (ch = win.getkey) != 113
-    #y, x = win.getbegyx(win.getwin)
+    #y, x = win.getbegyx(pointer)
     old_y, old_x = y, x
     case ch
     when FFI::NCurses::KEY_RIGHT
@@ -340,7 +344,7 @@ begin
         win.printstring(0,0, "DIR: #{path}                 ",0)
         files = get_files
         current = 0
-        #FFI::NCurses.wclrtobot(win.getwin)
+        #FFI::NCurses.wclrtobot(pointer)
         win.wclrtobot
       elsif File.readable? fullp
         file_page win, fullp
