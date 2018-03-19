@@ -27,6 +27,7 @@ class Widget
   attr_accessor :curpos              # cursor position inside object - column, not row.
   attr_reader  :config             # can be used for popping user objects too
   attr_accessor  :form              # made accessor 2008-11-27 22:32 so menu can set
+  attr_accessor  :graphic          # window which should be set by form when adding 2018-03-19
   attr_accessor :state              # normal, selected, highlighted
   attr_reader  :row_offset, :col_offset # where should the cursor be placed to start with
   attr_accessor  :visible # boolean     # 2008-12-09 11:29 
@@ -178,10 +179,6 @@ class Widget
   def show
     raise "is show called ? from where? why not just visible"
     @visible = true
-  end
-  def remove
-    raise "is remove called ? from where? why not call on the form"
-    @form.remove_widget(self)
   end
   # is this required can we remove
   def move row, col
