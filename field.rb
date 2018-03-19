@@ -38,7 +38,7 @@ end
   # defaults to 20.
   # NOTE: Use +text(val)+ to set value, and +text()+ to retrieve value
   # == Example
-  #     f = Field.new @form, text: "Some value", row: 10, col: 2
+  #     f = Field.new  text: "Some value", row: 10, col: 2
   #
   # Field introduces an event :CHANGE which is fired for each character deleted or inserted
   # TODO: some methods should return self, so chaining can be done. Not sure if the return value of the 
@@ -87,7 +87,7 @@ end
     #                                          # so can be nil if accessed early 2011-12-8 
 
     def initialize config={}, &block
-      @form = form
+      #@form = form
       @buffer = String.new
       @row = 0
       @col = 0
