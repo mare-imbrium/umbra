@@ -61,7 +61,8 @@ class Form
   # really using ID. But need to use an incremental int in future. (internal use)
   # TODO allow passing several widgets
   def add_widget widget
-    widget.form = self
+    widget.form = self       # 2018-03-19 - can we avoid giving this handle
+    widget.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
     @widgets << widget
     return @widgets.length-1
   end
