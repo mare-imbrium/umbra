@@ -1,4 +1,18 @@
-
+# ----------------------------------------------------------------------------- #
+#         File: button.rb
+#  Description: button widget that has an action associated with :PRESS event
+#     which by default is the SPACE key.
+#       Author: j kepler  http://github.com/mare-imbrium/canis/
+#         Date: 2018-03-16 
+#      License: MIT
+#  Last update: 2018-03-19 10:42
+# ----------------------------------------------------------------------------- #
+#  button.rb  Copyright (C) 2012-2018 j kepler
+#  == TODO 
+#  - mnemonics with highlighting
+#  - default button
+#
+#  ----------------
   class Button < Widget 
     attr_accessor :surround_chars   # characters to use to surround the button, def is square brackets
     # char to be underlined, and bound to Alt-char
@@ -162,43 +176,9 @@
     def handle_key ch
       super
     end
-=begin
-      case ch
-      when FFI::NCurses::KEY_LEFT, FFI::NCurses::KEY_UP
-        return :UNHANDLED
-        #  @form.select_prev_field
-      when FFI::NCurses::KEY_RIGHT, FFI::NCurses::KEY_DOWN
-        return :UNHANDLED
-        #  @form.select_next_field
-      # 2014-05-07 - 12:26 removed ENTER on buttons
-        #  CANIS : button only responds to SPACE, ENTER will only work on default button.
-      #when FFI::NCurses::KEY_ENTER, 10, 13, 32  # added space bar also
-        # I am really confused about this. Default button really confuses things in some 
-        # situations, but is great if you are not on the buttons.
-        # shall we keep ENTER for default button
-      when 32  # added space bar also
-        if respond_to? :fire
-          fire
-        end
-      else
-        if $key_map_type == :vim
-          case ch
-          when ?j.getbyte(0)
-            @form.window.ungetch(KEY_DOWN)
-            return 0
-          when ?k.getbyte(0)
-            @form.window.ungetch(KEY_UP)
-            return 0
-          end
 
-        end
-        return :UNHANDLED
-      end
-    end
-=end
-
-    # temporary method, shoud be a proper class
-    def self.button_layout buttons, row, startcol=0, cols=Ncurses.COLS-1, gap=5
+    # layout an array of buttons horizontally
+    def self.button_layout buttons, row, startcol=0, cols=FFI::NCurses.COLS-1, gap=5
       col = startcol
       buttons.each_with_index do |b, ix|
         $log.debug " BUTTON #{b}: #{b.col} "
