@@ -4,6 +4,7 @@
 require './window.rb'
 require './label.rb'
 require './listbox.rb'
+require './togglebutton.rb'
 
 def startup
   require 'logger'
@@ -32,14 +33,36 @@ begin
   str = " Demo of listbox "
   win.title str
   alist = ["one item", "another item", "yet another item"]
+  alist = []
+  (1..20).each do |i|
+    alist << "#{i} entry"
+  end
 
+  # check with only a few rows - DONE
+  # check with exactly 20 rows
+  # check with long lines
   catch(:close) do
     form = Form.new win
+    win.printstring(3,1,"Just testing that listbox is correctly positioned")
     lb = Listbox.new list: alist, row: 4, col: 2, width: 50, height: 20
+    win.printstring(lb.row+1,0,"XX")
+    win.printstring(lb.row+1,lb.col+lb.width,"XX")
+    win.printstring(lb.row+lb.height,1,"This prints below the listbox")
+    brow = lb.row+lb.height+3
+    tb = ToggleButton.new onvalue: "Border", offvalue: "No Border", row: brow, col: 10, value: true
 
+    tb.command do
+      if tb.value
+        lb.border true
+      else
+        lb.border false
+      end
+      lb.repaint_required true
+    end
     form.add_widget lb
+    form.add_widget tb
     form.pack
-    #form.select_first_field
+    form.select_first_field
     win.wrefresh
 
     y = x = 1
