@@ -4,60 +4,98 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-03-19 12:18
+#  Last update: 2018-03-20 23:35
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
-#  border
 #  keys
+#  events
+#  insert/delete a row
 #  ----------------
 class Listbox < Widget 
   attr_reader :list  # list containing data 
+  attr_accessor :selection_key  # key used to select a row
+  attr_accessor :selected_index  # row selected, may change to plural
+  attr_accessor :selected_color_pair  # row selected color_pair
+  attr_accessor :selected_attr  # row selected color_pair
 
   def initialize config={}, &block
     @focusable = true
     @editable = false
     @pstart = 0    # which row does printing start from
     @current_index = 0 # index of row on which cursor is
-    #@list = config.fetch(:list)
-    register_events([:LEAVE_ROW, :ENTER_ROW, :LIST_SELECTION_EVENT])
+    @selected_index = nil # index of row selected
+    @selection_key = 32    # SPACE used to select/deselect
+    @selected_color_pair = CP_RED 
+    @selected_attr = REVERSE
+    @to_print_border = true
+    @row_offset = 0
+    register_events([:LEAVE_ROW, :ENTER_ROW, :LIST_SELECTION_EVENT]) # TODO events
     super
 
     map_keys
+    @row_offset = 2 if @to_print_border
+    @repaint_required = true
   end
+  # set list of data to be displayed.
+  # NOTE this can be called again and again, so we need to take care of change in size of data
+  # as well as things like current_index and selected_index or indices.
   def list=(alist)
     @list = alist
+    @repaint_required = true
+    @pstart = @current_index = 0
+    @selected_index = nil
+  end
+  # should a border be printed on the listbox
+  def border flag=true
+    @to_print_border = flag
+    @row_offset = 2
+    @row_offset = 0 unless flag
+    @pstart = 0
+    @repaint_required = true
   end
 
   def repaint 
+    return unless @repaint_required
     win = @graphic
     r,c = @row, @col 
     _attr = @attr || NORMAL
-    _color = @color_pair
+    _color = @color_pair || CP_WHITE
+    _bordercolor = @border_color_pair || CP_BLUE
     curpos = 1
-    x = 1
+    coffset = 0
     #width = win.width-1
     width = @width
     files = @list
     
     #ht = win.height-2
     ht = @height
+    border_offset = 0
+    if @to_print_border
+      print_border r, c, ht, width, _bordercolor, _attr
+      border_offset = 1
+      coffset = 1 # same as border offset I think from left
+      ht -= 2
+      width -= 2
+      r += 1
+    end
     cur = @current_index
     st = pstart = @pstart           # previous start
-    pend = pstart + ht -1 # previous end
+    pend = pstart + ht -1  #-border_offset -border_offset           # previous end
     if cur > pend
-      st = (cur -ht) +1
+      st = (cur -ht) + 1 #+ border_offset + border_offset
     elsif cur < pstart
       st = cur
     end
+    $log.debug "LISTBOX: cur = #{cur} st = #{st} pstart = #{pstart} pend = #{pend} listsize = #{@list.size} "
     hl = cur
     y = 0
     ctr = 0
-    filler = " "*width
+    # 2 is for col offset  and border
+    filler = "."*(width)
     files.each_with_index {|f, y| 
       next if y < st
       colr = CP_WHITE # white on bg -1
-      ctr += 1
       mark = " "
       if y == hl
         attr = FFI::NCurses::A_REVERSE
@@ -66,14 +104,27 @@ class Listbox < Widget
       else
         attr = FFI::NCurses::A_NORMAL
       end
+      if y == @selected_index
+        colr = @selected_color_pair
+        attr = @selected_attr
+        mark = 'x'
+      end
       ff = "#{mark} #{f}"
 
-      win.printstring(ctr + r, x+c, filler, colr )
-      win.printstring(ctr + r, x+c, ff, colr, attr)
-      break if ctr >= ht
+      win.printstring(ctr + r, coffset+c, filler, colr )
+      win.printstring(ctr + r, coffset+c, ff, colr, attr)
+      ctr += 1 
+      @pstart = st
+      break if ctr >= ht #-border_offset
     }
-    #win.wmove( curpos , 0) # +1 depends on offset of ctr 
-    win.wrefresh
+    # wmove won't work since form does this after repaint
+    #win.wmove( curpos+r , coffset+c) # +1 depends on offset of ctr 
+    #setformrowcol( curpos+r , coffset+c)  # TODO is this the right place. NOPE THIS IS GRABBING CURSOR XXX
+    setformrowcol( curpos+r , coffset+c)  if @focussed
+    @row_offset = curpos + border_offset
+    @col_offset = coffset # this way form can pick it up
+    @repaint_required = false
+    #win.wrefresh
   end
 
   def getvalue
@@ -84,49 +135,8 @@ class Listbox < Widget
   def getvalue_for_paint
     raise
     ret = getvalue
-    @text_offset = @surround_chars[0].length
-    @surround_chars[0] + ret + @surround_chars[1]
-  end
-
-  # FIXME 2014-05-31 since form checks for highlight color and sets repaint on on_enter, we shoul not set it.
-  #   but what if it is set at form level ?
-  #    also it is not correct to set colors now that form's defaults are taken
-  def OLDrepaint  # button
-
-    $log.debug("BUTTON repaint : #{self}  r:#{@row} c:#{@col} , cp:#{@color_pair}, st:#{@state}, #{getvalue_for_paint}" )
-    r,c = @row, @col 
-    _attr = @attr || NORMAL
-    _color = @color_pair
-    if @state == :HIGHLIGHTED
-      _color = @highlight_color_pair || @color_pair
-      _attr = REVERSE #if _color == @color_pair
-    elsif selected? # only for certain buttons lie toggle and radio
-      _color = @selected_color_pair || @color_pair
-    end
-    $log.debug "XXX: button #{text}   STATE is #{@state} color #{_color} , attr:#{_attr}"
-    value = getvalue_for_paint
-    $log.debug("button repaint :#{self} r:#{r} c:#{c} col:#{_color} v: #{value} ul #{@underline} mnem #{@mnemonic} ")
-    len = @width || value.length
-    @graphic = @form.window if @graphic.nil? ## cell editor listbox hack 
-    @graphic.printstring r, c, "%-*s" % [len, value], _color, _attr
-    #       @form.window.mvchgat(y=r, x=c, max=len, Ncurses::A_NORMAL, bgcolor, nil)
-    # in toggle buttons the underline can change as the text toggles
-    if @underline || @mnemonic
-      uline = @underline && (@underline + @text_offset) ||  value.index(@mnemonic) || 
-        value.index(@mnemonic.swapcase)
-      # if the char is not found don't print it
-      if uline
-        y=r #-@graphic.top
-        x=c+uline #-@graphic.left
-        #
-        # NOTE: often values go below zero since root windows are defined 
-        # with 0 w and h, and then i might use that value for calcaluting
-        #
-        $log.error "XXX button underline location error #{x} , #{y} " if x < 0 or c < 0
-        raise " #{r} #{c}  #{uline} button underline location error x:#{x} , y:#{y}. left #{@graphic.left} top:#{@graphic.top} " if x < 0 or c < 0
-        @graphic.mvchgat(y, x, max=1, Ncurses::A_BOLD|Ncurses::A_UNDERLINE, _color, nil)
-      end
-    end
+    #@text_offset = @surround_chars[0].length
+    #@surround_chars[0] + ret + @surround_chars[1]
   end
 
 
@@ -135,27 +145,57 @@ class Listbox < Widget
   end
 
   # listbox key handling
-  # TODO selection
-  # goes off above and below FIXME
+  # preferably move this to mappings, so caller can bind keys to methods TODO
   def handle_key ch
-    @repaint_required = true 
-    pagecols = 20
-    spacecols = 30
+    old_current_index = @current_index
+    pagecols = @height/2  # fix these to be perhaps half and one of ht
+    spacecols = @height
     case ch
-    when FFI::NCurses::KEY_UP
+    when FFI::NCurses::KEY_UP, ?k.getbyte(0)
       @current_index -=1
-    when FFI::NCurses::KEY_DOWN
+    when FFI::NCurses::KEY_DOWN, ?j.getbyte(0)
       @current_index +=1
+    when ?g.getbyte(0)
+      @current_index = 0
+    when ?G.getbyte(0)
+      @current_index = @list.size-1
     when FFI::NCurses::KEY_CTRL_N
+      # why are these paging ones not reflecing immediately ?
       @current_index += pagecols
     when FFI::NCurses::KEY_CTRL_P
       @current_index -= pagecols
-    when 32
-      @current_index += spacecols
-    when FFI::NCurses::KEY_BACKSPACE, 127
+    when @selection_key
+      # actually this is a toggle # FIXME
+      if @selected_index == @current_index 
+        @selected_index = nil
+      else
+        @selected_index = @current_index 
+      end
+    when FFI::NCurses::KEY_BACKSPACE, 127, FFI::NCurses::KEY_CTRL_B
       @current_index -= spacecols
-    super
+    when FFI::NCurses::KEY_CTRL_D
+      @current_index += spacecols
+    else
+      ret = super
+      return ret
     end
+    @current_index = 0 if @current_index < 0
+    @current_index = @list.size-1 if @current_index >= @list.size
+    @repaint_required = true  if @current_index != old_current_index
   end
 
+  def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
+    pointer = @graphic.pointer
+    FFI::NCurses.wattron(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
+    FFI::NCurses.mvwaddch pointer, row, col, FFI::NCurses::ACS_ULCORNER
+    FFI::NCurses.mvwhline( pointer, row, col+1, FFI::NCurses::ACS_HLINE, width-2)
+    FFI::NCurses.mvwaddch pointer, row, col+width-1, FFI::NCurses::ACS_URCORNER
+    FFI::NCurses.mvwvline( pointer, row+1, col, FFI::NCurses::ACS_VLINE, height-2)
+
+    FFI::NCurses.mvwaddch pointer, row+height-1, col, FFI::NCurses::ACS_LLCORNER
+    FFI::NCurses.mvwhline(pointer, row+height-1, col+1, FFI::NCurses::ACS_HLINE, width-2)
+    FFI::NCurses.mvwaddch pointer, row+height-1, col+width-1, FFI::NCurses::ACS_LRCORNER
+    FFI::NCurses.mvwvline( pointer, row+1, col+width-1, FFI::NCurses::ACS_VLINE, height-2)
+    FFI::NCurses.wattroff(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
+  end
 end 
