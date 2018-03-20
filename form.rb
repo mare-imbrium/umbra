@@ -15,7 +15,7 @@ class Form
   # related window used for printing
   attr_accessor :window
 
-  # cursor row and col
+  # cursor row and col # 2018-03-20 - this is bad as widgets update it. it should be picked up from focussed widget
   attr_accessor :row, :col
   # color and bgcolor for all widget, widgets that don't have color specified will inherit from form
   # If not mentioned, then global defaults will be taken
@@ -24,7 +24,7 @@ class Form
   attr_accessor :color_pair
   attr_accessor :attr
 
-  # has the form been modified
+  # has the form been modified UNUSED 2018-03-20 - remove and see how it goes
   attr_accessor :modified
 
   # index of active widget inside focusables array
@@ -91,15 +91,8 @@ class Form
       f.repaint
     end
 
-    ###  this can bomb if someone sets row. We need a better way!
-    #if @row == -1 and @_firsttime == true
-    #select_first_field
-    #@_firsttime = false
-    #end
     setpos 
     @window.wrefresh
-    # 2018-03-07 - commented next off NOT_SURE
-    #FFI::NCurses::Panel.update_panels ## added 2010-11-05 00:30 to see if clears the stdscr problems
   end
   ## 
   # move cursor to where the fields row and col are
@@ -165,12 +158,11 @@ class Form
     f.state = :HIGHLIGHTED
     # If the widget has a color defined for focussed, set repaint
     #  otherwise it will not be repainted unless user edits !
-    if f.highlight_color_pair
+    if f.highlight_color_pair || f.highlight_attr
       f.repaint_required true
     end
 
     f.modified false
-    #f.set_modified false
     f.on_enter if f.respond_to? :on_enter
   end
 
@@ -190,10 +182,8 @@ class Form
       @active_index = ix0
       @row, @col = f.rowcol
       on_enter f
-      @window.wmove @row, @col # added RK FFI 2011-09-7 = setpos
-
-      #f.set_form_row # added 2011-10-5 so when embedded in another form it can get the cursor
-      #f.set_form_col # this can wreak havoc in containers, unless overridden
+      # the wmove will be overwritten by repaint later, better to set row col
+      setrowcol @row, @col
 
       repaint
       @window.refresh
