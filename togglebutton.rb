@@ -1,3 +1,4 @@
+require './button.rb'
 ##
 # ----------------------------------------------------------------------------- #
 #         File: togglebutton.rb
@@ -5,7 +6,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-03-17 - 22:50
 #      License: MIT
-#  Last update: 2018-03-18 09:34
+#  Last update: 2018-03-20 23:41
 # ----------------------------------------------------------------------------- #
 #  togglebutton.rb Copyright (C) 2012-2018 j kepler
 #
@@ -94,6 +95,7 @@ class ToggleButton < Button
   def handle_key ch
     if ch == 32
       toggle
+      @repaint_required = true # need to change the label
     else
       super
     end
