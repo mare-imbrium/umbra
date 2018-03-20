@@ -15,6 +15,7 @@ class Widget
   # foreground and background colors when focussed. Currently used with buttons and field
   # Form checks and repaints on entry if these are set.
   attr_accessor :highlight_color_pair
+  attr_accessor :highlight_attr
 
   # NOTE: 2018-03-04 - user will have to call repaint or somthing like that if he changes color or coordinates.
   attr_accessor  :row, :col            # location of object
@@ -63,6 +64,7 @@ class Widget
     # it does not apply to all widgets.
     # 2018-03-18 - proporty change is deprecated since we don't use dsl_property any longer
     register_events( [:ENTER, :LEAVE, :CHANGED, :PROPERTY_CHANGE])
+    @repaint_required = true # added 2018-03-20 - 
 
     aconfig.each_pair { |k,v| variable_set(k,v) }
     #instance_eval &block if block_given?
@@ -96,7 +98,8 @@ class Widget
   end
   alias :modified :set_modified
 
-  ## got left out by mistake 2008-11-26 20:20 
+  # triggered whenever a widget is entered.
+  # TODO should we not fix cursor at this point ?
   def on_enter
     @state = :HIGHLIGHTED    # duplicating since often these are inside containers
     @focussed = true
@@ -154,11 +157,7 @@ class Widget
 
   # puts cursor on correct row.
   def set_form_row
-    #  @form.row = @row + 1 + @winrow
-    #@form.row = @row + 1 
     r, c = rowcol
-    #$log.warn " empty set_form_row in widget #{self} r = #{r} , c = #{c}  "
-    #raise "trying to set 0, maybe called repaint before container has set value" if row <= 0
     setrowcol row, nil
   end
   # set cursor on correct column, widget
@@ -318,28 +317,12 @@ class Widget
   def setformrowcol r, c
     @form.row = r unless r.nil?
     @form.col = c unless c.nil?
-    # this is stupid, going through this route i was losing windows top and left
-    # And this could get repeated if there are mult objects. 
-    if !@parent_component.nil? and @parent_component != self
-      r+= @parent_component.form.window.top unless  r.nil?
-      c+= @parent_component.form.window.left unless c.nil?
-      $log.debug " (#{@name}) calling parents setformrowcol #{r}, #{c} pa: #{@parent_component.name} self: #{name}, #{self.class}, poff #{@parent_component.row_offset}, #{@parent_component.col_offset}, top:#{@form.window.left} left:#{@form.window.left} "
-      @parent_component.setformrowcol r, c
-    else
-      # no more parents, now set form
-      $log.debug " name NO MORE parents setting #{r}, #{c}    in #{@form} "
-      @form.setrowcol r, c
-    end
+    @form.setrowcol r, c
   end
   ## widget: i am putting one extra level of indirection so i can switch here
   # between form#setrowcol and setformrowcol, since i am not convinced either
   # are giving the accurate result. i am not sure what the issue is.
   def setrowcol r, c
-    # 2010-02-07 21:32 is this where i should add ext_offsets
-    #$log.debug " #{@name}  w.setrowcol #{r} + #{@ext_row_offset}, #{c} + #{@ext_col_offset}  "
-    # commented off 2010-02-15 18:22 
-    #r += @ext_row_offset unless r.nil?
-    #c += @ext_col_offset unless c.nil?
     if @form
       @form.setrowcol r, c
       #elsif @parent_component
