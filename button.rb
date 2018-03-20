@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-03-19 10:42
+#  Last update: 2018-03-20 23:37
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -21,6 +21,7 @@
       #require 'canis/core/include/ractionevent'
       @focusable = true
       @editable = false
+      @highlight_attr = REVERSE
       # hotkey denotes we should bind the key itself not alt-key (for menulinks)
       @hotkey = config.delete(:hotkey) 
       # 2018-03-18 - FORM_ATTACHED deprecated to keep things simple
@@ -32,6 +33,7 @@
       @surround_chars ||= ['[ ', ' ]'] 
       @col_offset = @surround_chars[0].length 
       @text_offset = 0
+      @repaint_required = true
       map_keys
     end
     ##
@@ -117,6 +119,7 @@
     #   but what if it is set at form level ?
     #    also it is not correct to set colors now that form's defaults are taken
     def repaint  # button
+      return unless @repaint_required
 
         $log.debug("BUTTON repaint : #{self}  r:#{@row} c:#{@col} , cp:#{@color_pair}, st:#{@state}, #{getvalue_for_paint}" )
         r,c = @row, @col 
@@ -124,7 +127,7 @@
         _color = @color_pair
         if @state == :HIGHLIGHTED
           _color = @highlight_color_pair || @color_pair
-          _attr = REVERSE #if _color == @color_pair
+          _attr = @highlight_attr || _attr
         elsif selected? # only for certain buttons lie toggle and radio
           _color = @selected_color_pair || @color_pair
         end
@@ -136,7 +139,7 @@
         @graphic.printstring r, c, "%-*s" % [len, value], _color, _attr
 #       @form.window.mvchgat(y=r, x=c, max=len, Ncurses::A_NORMAL, bgcolor, nil)
         # in toggle buttons the underline can change as the text toggles
-        if @underline || @mnemonic
+        if @underline || @mnemonic # {{{ TODO
           uline = @underline && (@underline + @text_offset) ||  value.index(@mnemonic) || 
             value.index(@mnemonic.swapcase)
           # if the char is not found don't print it
@@ -151,7 +154,9 @@
             raise " #{r} #{c}  #{uline} button underline location error x:#{x} , y:#{y}. left #{@graphic.left} top:#{@graphic.top} " if x < 0 or c < 0
             @graphic.mvchgat(y, x, max=1, Ncurses::A_BOLD|Ncurses::A_UNDERLINE, _color, nil)
           end
-        end
+        end # }}}
+        setformrowcol r, c if @state == :HIGHLIGHTED # otherwise it once again shows cursor on exit should be on on_enter FIXME
+        @repaint_required = false
     end
 
     ## command of button (invoked on press, hotkey, space)
