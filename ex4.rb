@@ -32,9 +32,9 @@ begin
   statusline(win, "Press C-q to quit #{win.height}:#{win.width}", 20)
   str = " Demo of listbox "
   win.title str
-  alist = ["one item", "another item", "yet another item"]
-  alist = []
-  (1..20).each do |i|
+  alist = ["one item"*4, "another item"*10, "yet another item"*15]
+  #alist = []
+  (1..50).each do |i|
     alist << "#{i} entry"
   end
 
