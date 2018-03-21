@@ -31,7 +31,10 @@ class Widget
   attr_accessor  :graphic          # window which should be set by form when adding 2018-03-19
   attr_accessor :state              # normal, selected, highlighted
   attr_reader  :row_offset, :col_offset # where should the cursor be placed to start with
-  attr_accessor  :visible # boolean     # 2008-12-09 11:29 
+  attr_accessor  :visible          # boolean     # 2008-12-09 11:29 
+  # if changing focusable property of a field after form creation, you may need to call
+  # pack again, or atl east update_focusables
+  attr_accessor  :focusable        # boolean     can this get focus # 2018-03-21 - 23:13 
   # 2018-03-04 - we should use modified as accessor unless it is due to setting forms modified
   #attr_accessor :modified          # boolean, value modified or not (moved from field 2009-01-18 00:14 )
   attr_accessor  :help_text          # added 2009-01-22 17:41 can be used for status/tooltips
@@ -54,11 +57,9 @@ class Widget
   def initialize aconfig={}, &block
     @row_offset ||= 0
     @col_offset ||= 0
-    #@ext_row_offset = @ext_col_offset = 0 # 2010-02-07 20:18  # removed on 2011-09-29 
     @state = :NORMAL
 
     @handler = nil # we can avoid firing if nil
-    #@event_args = {} # 2014-04-22 - 18:47 declared in bind_key
     # These are standard events for most widgets which will be fired by 
     # Form. In the case of CHANGED, form fires if it's editable property is set, so
     # it does not apply to all widgets.
@@ -94,7 +95,8 @@ class Widget
   end
   def set_modified tf=true
     @modified = tf
-    @form.modified = true if tf
+    # 2018-03-21 - removed calls to @form
+    #@form.modified = true if tf
   end
   alias :modified :set_modified
 
@@ -189,11 +191,15 @@ class Widget
   # moves focus to this field
   # we must look into running on_leave of previous field
   def focus
+    # 2018-03-21 - removing methods that call form
+    raise "focus being called. deprecated since it calls form"
     return if !@focusable
     if @form.validate_field != -1
       @form.select_field @id
     end
   end
+  # 2018-03-21 - replaced this with attr_accessor
+=begin
   # set or unset focusable (boolean). Whether a widget can get keyboard focus.
   # 
   # 2018-03-04 - NOT_SURE
@@ -208,6 +214,7 @@ class Widget
     # actually i should only set the forms focusable_modified flag rather than call this. FIXME
     self
   end
+=end
 
   # is this widget accessible from keyboard or not.
   # 2018-03-04 - NOT_SURE why not attr_accessor  
@@ -315,7 +322,8 @@ class Widget
   ##+ for each cursor display
   # @see Form#setrowcol
   # 2018-03-21 - currently called only by button and listbox, so we can remove and see.
-  def setformrowcol r, c
+  def _setformrowcol r, c
+    raise "trying to deprecate"
     @form.row = r unless r.nil?
     @form.col = c unless c.nil?
     @form.setrowcol r, c
@@ -323,7 +331,8 @@ class Widget
   ## widget: i am putting one extra level of indirection so i can switch here
   # between form#setrowcol and setformrowcol, since i am not convinced either
   # are giving the accurate result. i am not sure what the issue is.
-  def setrowcol r, c
+  def _setrowcol r, c
+    raise "trying to deprecate this setrowcol in widget"
     if @form
       @form.setrowcol r, c
       #elsif @parent_component
