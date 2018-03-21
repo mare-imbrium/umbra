@@ -9,10 +9,10 @@
 # NOTE : 2018-03-08 - now using @focusables instead of @widgets in traversal.
 #        active_index is now index into focusables.
 class Form 
-  # array of widgets
+  # array of widgets, and those that can be traversed
   attr_reader :widgets, :focusables
 
-  # related window used for printing
+  # related window pointer used for printing or other FFI calls
   attr_accessor :window
 
   # cursor row and col # 2018-03-20 - this is bad as widgets update it. it should be picked up from focussed widget
@@ -21,11 +21,11 @@ class Form
   # If not mentioned, then global defaults will be taken
   #attr_writer :color, :bgcolor
   # used at all NOT_SURE 
-  attr_accessor :color_pair
-  attr_accessor :attr
+  #attr_accessor :color_pair
+  #attr_accessor :attr
 
   # has the form been modified UNUSED 2018-03-20 - remove and see how it goes
-  attr_accessor :modified
+  #attr_accessor :modified
 
   # index of active widget inside focusables array
   attr_accessor :active_index
@@ -42,8 +42,8 @@ class Form
     @active_index = nil                  # 2018-03-07 - if a form has no focusable field
     #@row = @col = -1
     @row = @col = 0                    # 2018-03-07 - umbra
-    @modified = false
-    @resize_required = true
+    #@modified = false
+    #@resize_required = true
     @focusables = []                   # focusable components
     #@focusable = true                # not used i think 2018-03-08 - 
     instance_eval &block if block_given?
@@ -57,9 +57,8 @@ class Form
   ##
   # Add given widget to widget list and returns an incremental id.
   # Adding to widgets, results in it being painted, and focussed.
-  # removing a widget and adding can give the same ID's, however at this point we are not 
-  # really using ID. But need to use an incremental int in future. (internal use)
   # TODO allow passing several widgets
+  # TODO: return self so can chain adds
   def add_widget widget
     widget.form = self       # 2018-03-19 - can we avoid giving this handle
     widget.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
@@ -72,23 +71,31 @@ class Form
   # (internal use)
   def remove_widget widget
     @widgets.delete widget
+    # 2018-03-21 - remove from focusables - UNTESTED
+    @focusables.delete widget
   end
   # decide layout of objects. User has to call this after creating components
+  # More may come here.
   def pack
     @focusables = @widgets.select { |w| w.focusable? }
     @active_index = 0 if @focusables.size > 0
     repaint
   end
 
-  public
 
   # form repaint,calls repaint on each widget which will repaint it only if it has been modified since last call.
-  # called after each keypress.
+  # called after each keypress and on select_field.
+  # TODO maybe we should call only if repaint_required and then set it to false.
   def repaint
     $log.debug " form repaint:#{self}, #{@name} , r #{@row} c #{@col} " if $log.debug? 
     @widgets.each do |f|
       next if f.visible == false
-      f.repaint
+      #f.repaint 
+      # changed on 2018-03-21 - so widgets don't need to do this.
+      if f.repaint_required
+        f.repaint 
+        f.repaint_required = false
+      end
     end
 
     setpos 
@@ -96,7 +103,7 @@ class Form
   end
   ## 
   # move cursor to where the fields row and col are
-  # private
+  # @private
   def setpos r=@row, c=@col
     #$log.debug "setpos : (#{self.name}) #{r} #{c} XXX"
     ## adding just in case things are going out of bounds of a parent and no cursor to be shown
@@ -128,25 +135,18 @@ class Form
   end
 
 
-  ## do not override
   # form's trigger, fired when any widget loses focus
+  # NOTE: Do NOT override
   #  This wont get called in editor components in tables, since  they are formless 
   def on_leave f
     return if f.nil? || !f.focusable # added focusable, else label was firing
     $log.debug "Form setting state of #{f.name} to NORMAL"
     f.state = :NORMAL
-      f.repaint_required true # 2018-03-11 - trying out
-    # on leaving update text_variable if defined. Should happen on modified only
-    # should this not be f.text_var ... f.buffer ?  2008-11-25 18:58 
-    #f.text_variable.value = f.buffer if !f.text_variable.nil? # 2008-12-20 23:36 
+    # 2018-03-11 - trying out, there can be other things a widget may want to do on entry and exit
+    if f.highlight_color_pair || f.highlight_attr
+      f.repaint_required true
+    end
     f.on_leave if f.respond_to? :on_leave
-    # 2014-04-24 - 17:42 NO MORE ENTER LEAVE at FORM LEVEL
-    #fire_handler :LEAVE, f 
-    ## to test XXX in combo boxes the box may not be editable by be modified by selection.
-    #if f.respond_to? :editable and f.modified?
-    #$log.debug " Form about to fire CHANGED for #{f} "
-    #f.fire_handler(:CHANGED, f) 
-    #end
   end
   # form calls on_enter of each object.
   # However, if a multicomponent calls on_enter of a widget, this code will
@@ -183,9 +183,9 @@ class Form
       @row, @col = f.rowcol
       on_enter f
       # the wmove will be overwritten by repaint later, better to set row col
-      setrowcol @row, @col
+      _setrowcol @row, @col # 2018-03-21 - maybe this should be set after the repaint
 
-      repaint
+      repaint # 2018-03-21 - handle_key calls repaint, is this for cases not involving keypress ?
       @window.refresh
     else
       $log.debug "inside select field ENABLED FALSE :   act #{@active_index} ix0 #{ix0}" 
@@ -269,35 +269,27 @@ class Form
   end
   ##
   # move cursor by num columns. Form
+  # Only called by Field. Is it really required then ? 2018-03-21 - ??? FIXME XXX
   def addcol num
     return if @col.nil? || @col == -1
     @col += num
     @window.wmove @row, @col
-    ## 2010-01-30 23:45 exchange calling parent with calling this forms setrow
-    # since in tabbedpane with table i am not gietting this forms offset. 
-    #setrowcol nil, col
   end
   ##
-  # move cursor by given rows and columns, can be negative.
-  # 2010-01-30 23:47 FIXME, if this is called we should call setrowcol like in addcol
-  def addrowcol row,col
-    return if @col.nil? or @col == -1   # contradicts comment on top - "can be negative"
-    return if @row.nil? or @row == -1
-    @col += col
-    @row += row
-    @window.wmove @row, @col
-  end
 
   ## Form
   # New attempt at setting cursor using absolute coordinates
   # Also, trying NOT to go up. let this pad or window print cursor.
-  def setrowcol r, c
+  # 2018-03-21 - we should prevent other widgets from calling this. Tehy need to set their own offsets
+  # so form picks up the correct one.
+  # 2018-03-21 - renamed to _setrowcol so other programs calling it will bork.
+  def _setrowcol r, c
     @row = r unless r.nil?
     @col = c unless c.nil?
   end
   ##
 
-  # e.g. process_key ch, self
+  # e.g. process_key ch, self {{{
   # returns UNHANDLED if no block for it
   # after form handles basic keys, it gives unhandled key to current field, if current field returns
   # unhandled, then it checks this map.
@@ -326,10 +318,10 @@ class Form
       $log.debug "rwidget BLOCK called _process_key " if $log.debug? 
       return blk.call object,  *@_key_args[keycode]
     end
-  end
+  end # }}}
   #
-  # These mappings will only trigger if the current field
-  #  does not use them.
+  # NOTE: These mappings will only trigger if the current field
+  #  does not use them in handle_key
   #
   def map_keys
     return if @keys_mapped
@@ -338,6 +330,7 @@ class Form
     @keys_mapped = true
   end
 
+  # repaint all # {{{
   # this forces a repaint of all visible widgets and has been added for the case of overlapping
   # windows, since a black rectangle is often left when a window is destroyed. This is internally
   # triggered whenever a window is destroyed, and currently only for root window.
@@ -356,9 +349,9 @@ class Form
     $log.debug "  REPAINT ALL in FORM complete "
     #  place cursor on current_widget 
     setpos
-  end
+  end # }}}
 
-  ## forms handle keys
+  ## forms handle keys {{{
   # mainly traps tab and backtab to navigate between widgets.
   # I know some widgets will want to use tab, e.g edit boxes for entering a tab
   #  or for completion.
@@ -440,13 +433,13 @@ class Form
     $log.debug " form before repaint #{self} , #{@name}, ret #{ret}"
     repaint
     ret || 0  # 2011-10-17 
-  end
+  end # }}}
 
   # 2010-02-07 14:50 to aid in debugging and comparing log files.
   def to_s; @name || self; end
 
   ## ADD HERE FORM
-end # }}}
+end 
 
 
 module EventHandler # {{{
