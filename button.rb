@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-03-21 22:37
+#  Last update: 2018-03-21 22:40
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -156,7 +156,7 @@
           end
         end # }}}
         # the next line works to put cursor on button on entry but I am removing since trying not to call form
-        setformrowcol r, c if @state == :HIGHLIGHTED # otherwise it once again shows cursor on exit should be on on_enter FIXME
+        #setformrowcol r, c if @state == :HIGHLIGHTED # otherwise it once again shows cursor on exit should be on on_enter FIXME
         @repaint_required = false
     end
 
