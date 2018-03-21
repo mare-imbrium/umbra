@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-03-21 09:20
+#  Last update: 2018-03-21 22:45
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -129,7 +129,8 @@ class Listbox < Widget
     # wmove won't work since form does this after repaint
     #win.wmove( curpos+r , coffset+c) # +1 depends on offset of ctr 
     #setformrowcol( curpos+r , coffset+c)  # TODO is this the right place. NOPE THIS IS GRABBING CURSOR XXX
-    setformrowcol( curpos+r , coffset+c)  if @focussed
+    # 2018-03-21 - commenting off so we don't call form. trying out.
+    #setformrowcol( curpos+r , coffset+c)  if @focussed
     @row_offset = curpos + border_offset
     @col_offset = coffset # this way form can pick it up
     @repaint_required = false
