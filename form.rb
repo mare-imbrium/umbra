@@ -77,6 +77,8 @@ class Form
   # decide layout of objects. User has to call this after creating components
   # More may come here.
   def pack
+    # creation of this array should be a separate method, so if property is changed after form creation
+    # then user can call this method and have it reflect. FIXME
     @focusables = @widgets.select { |w| w.focusable? }
     @active_index = 0 if @focusables.size > 0
     repaint
@@ -94,11 +96,16 @@ class Form
       # changed on 2018-03-21 - so widgets don't need to do this.
       if f.repaint_required
         f.repaint 
-        f.repaint_required = false
+        f.repaint_required false
       end
     end
 
-    setpos 
+    # get curpos of active widget
+    f = get_current_field
+    if f
+      @row, @col = f.rowcol
+      setpos 
+    end
     @window.wrefresh
   end
   ## 
@@ -271,6 +278,7 @@ class Form
   # move cursor by num columns. Form
   # Only called by Field. Is it really required then ? 2018-03-21 - ??? FIXME XXX
   def addcol num
+    raise "deprecated, can remove"
     return if @col.nil? || @col == -1
     @col += num
     @window.wmove @row, @col
@@ -338,6 +346,7 @@ class Form
   # the window itself may need recreating ? 2014-08-18 - 21:03 
   def repaint_all_widgets
     $log.debug "  REPAINT ALL in FORM called "
+    raise "it has come to repaint_all"
     @widgets.each do |w|
       next if w.visible == false
       #next if w.class.to_s == "Canis::MenuBar"
