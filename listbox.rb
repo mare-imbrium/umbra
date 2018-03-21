@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-03-20 23:35
+#  Last update: 2018-03-21 09:20
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -18,6 +18,9 @@ class Listbox < Widget
   attr_accessor :selected_index  # row selected, may change to plural
   attr_accessor :selected_color_pair  # row selected color_pair
   attr_accessor :selected_attr  # row selected color_pair
+  attr_accessor :selected_mark  # row selected character
+  attr_accessor :unselected_mark  # row unselected character (usually blank)
+  attr_accessor :current_mark  # row current character (default is >)
 
   def initialize config={}, &block
     @focusable = true
@@ -30,6 +33,9 @@ class Listbox < Widget
     @selected_attr = REVERSE
     @to_print_border = true
     @row_offset = 0
+    @selected_mark    = 'x' # row selected character
+    @unselected_mark  = ' ' # row unselected character (usually blank)
+    @current_mark     = '>' # row current character (default is >)
     register_events([:LEAVE_ROW, :ENTER_ROW, :LIST_SELECTION_EVENT]) # TODO events
     super
 
@@ -92,14 +98,14 @@ class Listbox < Widget
     y = 0
     ctr = 0
     # 2 is for col offset  and border
-    filler = "."*(width)
+    filler = " "*(width)
     files.each_with_index {|f, y| 
       next if y < st
       colr = CP_WHITE # white on bg -1
-      mark = " "
+      mark = @unselected_mark
       if y == hl
         attr = FFI::NCurses::A_REVERSE
-        mark = ">"
+        mark = @current_mark
         curpos = ctr
       else
         attr = FFI::NCurses::A_NORMAL
@@ -107,9 +113,12 @@ class Listbox < Widget
       if y == @selected_index
         colr = @selected_color_pair
         attr = @selected_attr
-        mark = 'x'
+        mark = @selected_mark
       end
       ff = "#{mark} #{f}"
+      if ff.size > width
+        ff = ff[0...width]
+      end
 
       win.printstring(ctr + r, coffset+c, filler, colr )
       win.printstring(ctr + r, coffset+c, ff, colr, attr)
@@ -165,7 +174,7 @@ class Listbox < Widget
     when FFI::NCurses::KEY_CTRL_P
       @current_index -= pagecols
     when @selection_key
-      # actually this is a toggle # FIXME
+      @repaint_required = true  
       if @selected_index == @current_index 
         @selected_index = nil
       else
