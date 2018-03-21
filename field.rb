@@ -421,9 +421,16 @@ end
       set_modified 
     end
     ## add a column to cursor position. Field
+    ## 2018-03-21 - removed call to update form, but still have to remove this @form.col FIXME XXX
     def addcol num
+      x = @col_offset + num
+      return -1 if x < 0
+      return -1 if x > @width
+      @col_offset += num 
+=begin
       if num < 0
         if @form.col <= @col + @col_offset
+          raise "reached ths checj XXX"
          # $log.debug " error trying to cursor back #{@form.col}"
           return -1
         end
@@ -433,7 +440,10 @@ end
           return -1
         end
       end
-      @form.addcol num
+=end
+
+      #@form.addcol num
+      # addcol is surpossed and won't work now so now we have to update @col_offset 2018-03-21 - 
     end
     # upon leaving a field
     # returns false if value not valid as per values or valid_regex
