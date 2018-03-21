@@ -314,6 +314,7 @@ class Widget
   ## I would rather pass the value down and store it than do this recursive call
   ##+ for each cursor display
   # @see Form#setrowcol
+  # 2018-03-21 - currently called only by button and listbox, so we can remove and see.
   def setformrowcol r, c
     @form.row = r unless r.nil?
     @form.col = c unless c.nil?
