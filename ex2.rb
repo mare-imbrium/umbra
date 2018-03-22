@@ -70,6 +70,8 @@ begin
     row += 2
     w.color_pair = CP_CYAN
     w.attr = FFI::NCurses::A_REVERSE
+    w.highlight_color_pair = CP_YELLOW
+    w.highlight_attr = REVERSE
     w.null_allowed = true
     form.add_widget w
   }
