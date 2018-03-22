@@ -103,7 +103,7 @@ end
     end
     def init_vars
       @pcol = 0                    # needed for horiz scrolling
-      @curpos = 0                  # current cursor position in buffer
+      @curpos = 0                  # current cursor position in buffer (NOT screen/window/field)
                                    # this is the index where characters are put or deleted
       #                            # when user edits
       @modified = false
@@ -188,7 +188,7 @@ end
               @pcol += 1 if @pcol < @width 
             end
           end
-          set_modified 
+          @modified = true
           return 0 # 2010-09-11 12:59 else would always return -1
         end
       end
@@ -257,7 +257,7 @@ end
 
   def repaint
     return unless @repaint_required  # 2010-11-20 13:13 its writing over a window i think TESTING
-    $log.debug("repaint FIELD: #{id}, #{name}, #{row} #{col},pcol:#{@pcol},  #{focusable} st: #{@state} ")
+    $log.debug("repaint FIELD: #{name}, #{row} #{col},pcol:#{@pcol},  #{focusable} st: #{@state} ")
     @width = 1 if width == 0
     printval = getvalue_for_paint().to_s # added 2009-01-06 23:27 
     printval = mask()*printval.length unless @mask.nil?
@@ -271,11 +271,8 @@ end
   
     acolor = @color_pair || CP_WHITE
     if @state == :HIGHLIGHTED
-      #_bgcolor = @highlight_bgcolor || _bgcolor
-      #_color = @highlight_color || _color
       acolor = @highlight_color_pair || CP_RED
     end
-    @graphic = @form.window if @graphic.nil? ## cell editor listbox hack 
     #$log.debug " Field g:#{@graphic}. r,c,displen:#{@row}, #{@col}, #{@width} c:#{@color} bg:#{@bgcolor} a:#{@attr} :#{@name} "
     r = row
     c = col
@@ -353,15 +350,25 @@ end
   # sets the visual cursor on the window at correct place
   # added here since we need to account for pcol. 2011-12-7 
   # NOTE be careful of curpos - pcol being less than 0
-  def set_form_col col1=@curpos
-    @curpos = col1 || 0 # NOTE we set the index of cursor here
+  def set_form_col x=@curpos
+    @curpos = x || 0 # NOTE we set the index of cursor here
+    #return -1 if x < 0
+    #return -1 if x > @width
+    if x > @width
+      x = @width
+    end
+    @col_offset = x
+    # TODO maybe do some sanity check about going below 0 or above width
+    return
+=begin
     c = @col + @col_offset + @curpos - @pcol
     min = @col + @col_offset
     max = min + @width
     c = min if c < min
     c = max if c > max
     #$log.debug " #{@name} FIELD set_form_col #{c}, curpos #{@curpos}  , #{@col} + #{@col_offset} pcol:#{@pcol} "
-    setrowcol nil, c
+    #setrowcol nil, c  # this does not exist since it called form
+=end
   end
   def delete_eol
     return -1 unless @editable
@@ -384,11 +391,12 @@ end
   def cursor_backward
     if @curpos > 0
       @curpos -= 1
-      if @pcol > 0 and @form.col == @col + @col_offset
-        @pcol -= 1
-      end
+      #if @pcol > 0 #and @form.col == @col + @col_offset
+        #@pcol -= 1
+      #end
       addcol -1
-    elsif @pcol > 0 #  added 2008-11-26 23:05 
+    elsif @pcol > 0 
+      # pan left only when cursor pos is 0
       @pcol -= 1   
     end
  #   $log.debug " crusor back cp:#{@curpos} pcol:#{@pcol} b.l:#{@buffer.length} d_l:#{@display_length} fc:#{@form.col}"
@@ -403,7 +411,7 @@ end
     def delete_curr_char
       return -1 unless @editable
       delete_at
-      set_modified 
+      @modified = true
     end
     def delete_prev_char
       return -1 if !@editable 
@@ -418,7 +426,7 @@ end
       @curpos -= 1 if @curpos > 0
       delete_at
       addcol -1 if adjust # move visual cursor back
-      set_modified 
+      @modified = true
     end
     ## add a column to cursor position. Field
     ## 2018-03-21 - removed call to update form, but still have to remove this @form.col FIXME XXX
@@ -470,7 +478,7 @@ end
       end
       # here is where we should set the forms modified to true - 2009-01
       if modified?
-        set_modified true
+        @modified = true
       end
       # if super fails we would have still set modified to true
       super
@@ -496,7 +504,6 @@ end
     end
     ##
     # overriding widget, check for value change
-    #  2009-01-18 12:25 
     def modified?
       getvalue() != @original_value
     end
