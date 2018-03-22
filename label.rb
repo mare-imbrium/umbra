@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-03-11 22:47
+#  Last update: 2018-03-22 14:40
 # ----------------------------------------------------------------------------- #
 #  label.rb  Copyright (C) 2018-2020 j kepler
 #
@@ -41,11 +41,13 @@ class Label < Widget
   # for a button, fire it when label invoked without changing focus
   # for other widgets, attempt to change focus to that field
   def bind_hotkey
+    raise "calls to form"
     if @mnemonic
       ch = @mnemonic.downcase()[0].ord   ##  1.9 DONE 
       # meta key 
       mch = ?\M-a.getbyte(0) + (ch - ?a.getbyte(0))  ## 1.9
       if (@label_for.is_a? Canis::Button ) && (@label_for.respond_to? :fire)
+        # FIXME call to form XXX
         @form.bind_key(mch, "hotkey for button #{@label_for.text} ") { |_form, _butt| @label_for.fire }
       else
         $log.debug " bind_hotkey label for: #{@label_for}"
@@ -78,7 +80,7 @@ class Label < Widget
     acolor = @color_pair  || 0
     str = @justify.to_sym == :right ? "%*s" : "%-*s"  # added 2008-12-22 19:05 
 
-    @graphic ||= @form.window
+    #@graphic ||= @form.window
     # clear the area
     @graphic.printstring r, c, " " * len , acolor, @attr
     if @justify.to_sym == :center
