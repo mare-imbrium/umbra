@@ -24,10 +24,10 @@ class Widget
   attr_accessor  :color_pair           # instead of colors give just color_pair
   attr_accessor  :attr                 # attribute bold, normal, reverse
   attr_accessor  :name                 # name to refr to or recall object by_name
-  attr_accessor :id #, :zorder
+  #attr_accessor :id #, :zorder   UNUSED REMOVE
   attr_accessor :curpos              # cursor position inside object - column, not row.
   attr_reader  :config             # can be used for popping user objects too
-  attr_accessor  :form              # made accessor 2008-11-27 22:32 so menu can set
+  #attr_accessor  :form              # made accessor 2008-11-27 22:32 so menu can set
   attr_accessor  :graphic          # window which should be set by form when adding 2018-03-19
   attr_accessor :state              # normal, selected, highlighted
   attr_reader  :row_offset, :col_offset # where should the cursor be placed to start with
@@ -36,7 +36,8 @@ class Widget
   # pack again, or atl east update_focusables
   attr_accessor  :focusable        # boolean     can this get focus # 2018-03-21 - 23:13 
   # 2018-03-04 - we should use modified as accessor unless it is due to setting forms modified
-  #attr_accessor :modified          # boolean, value modified or not (moved from field 2009-01-18 00:14 )
+  # 2018-03-22 - making it accessor
+  attr_accessor :modified          # boolean, value modified or not (moved from field 2009-01-18 00:14 )
   attr_accessor  :help_text          # added 2009-01-22 17:41 can be used for status/tooltips
 
   #attr_accessor :parent_component  # added 2010-01-12 23:28 BUFFERED - to bubble up
@@ -53,6 +54,9 @@ class Widget
   # 2018-03-07 - NOT_SURE
   attr_reader :key_label
   attr_reader :handler                       # event handler
+  # adding as attr_accessor  2018-03-22 - 
+  # is a repaint required or not, boolean
+  attr_accessor  :repaint_required
 
   def initialize aconfig={}, &block
     @row_offset ||= 0
@@ -93,12 +97,10 @@ class Widget
   def modified?
     @modified
   end
-  def set_modified tf=true
-    @modified = tf
-    # 2018-03-21 - removed calls to @form
-    #@form.modified = true if tf
-  end
-  alias :modified :set_modified
+  #def set_modified tf=true
+    #@modified = tf
+  #end
+  #alias :modified :set_modified
 
   # triggered whenever a widget is entered.
   # TODO should we not fix cursor at this point ?
@@ -146,8 +148,6 @@ class Widget
     len = @width || value.length
     acolor = @color_pair 
     @graphic.printstring r, c, "%-*s" % [len, value], acolor, attr()
-    # next line should be in same color but only have @att so we can change att is nec
-    #@form.window.mvchgat(y=r, x=c, max=len, Ncurses::A_NORMAL, @bgcolor, nil)
   end
 
   def destroy
@@ -159,13 +159,15 @@ class Widget
 
   # puts cursor on correct row.
   def set_form_row
+    raise "uncalled set_form_row"
     r, c = rowcol
-    setrowcol row, nil
+    setrowcol row, nil  # does not exist any longer
   end
   # set cursor on correct column, widget
   # Ideally, this should be overriden, as it is not likely to be correct.
   # NOTE: this is okay for some widgets but NOT for containers
   # that will call their own components SFR and SFC
+  #Currently, Field has overriden this. +setrowcol+ does not exist any longer.
   def set_form_col col1=@curpos
     @curpos = col1 || 0 # 2010-01-14 21:02 
     #@form.col = @col + @col_offset + @curpos
@@ -187,6 +189,7 @@ class Widget
     @row = row
     @col = col
   end
+=begin
   ##
   # moves focus to this field
   # we must look into running on_leave of previous field
@@ -198,6 +201,7 @@ class Widget
       @form.select_field @id
     end
   end
+=end
   # 2018-03-21 - replaced this with attr_accessor
 =begin
   # set or unset focusable (boolean). Whether a widget can get keyboard focus.
@@ -215,12 +219,6 @@ class Widget
     self
   end
 =end
-
-  # is this widget accessible from keyboard or not.
-  # 2018-03-04 - NOT_SURE why not attr_accessor  
-  def focusable?
-    @focusable
-  end
 
   def bind_key keycode, *args, &blk
     #$log.debug " #{@name} bind_key received #{keycode} "
@@ -294,53 +292,16 @@ class Widget
 
   # to give simple access to other components, (eg, parent) to tell a comp to either
   # paint its data, or to paint all - borders, headers, footers due to a big change (ht/width)
-  def repaint_required(tf=true)
-    @repaint_required = tf
-  end
-  def repaint_all(tf=true)
+  # earlier this was defaulting to true, but I am not using it as a question, not realizing that it is setting 
+  #the value as true !
+  #def repaint_required(tf)
+    #@repaint_required = tf
+  #end
+  # is the entire widget to be repainted including things like borders and titles
+  # earlier took a default of true, now must be explicit
+  def repaint_all(tf)
     @repaint_all = tf
     @repaint_required = tf
-  end
-
-  ## 
-  # When an enclosing component creates a pad (buffer) and the child component
-  #+ should write onto the same pad, then the enclosing component should override
-  #+ the default graphic of child. This applies mainly to editor components in
-  #+ listboxes and tables. 
-  # @param graphic graphic object to use for writing contents
-  # @see prepare_editor in rlistbox.
-  # added 2010-01-05 15:25 
-  #
-  #2018-03-04 - NOT_SURE
-  def override_graphic gr
-    @graphic = gr
-  end
-
-  ## passing a cursor up and adding col and row offsets
-  ## Added 2010-01-13 13:27 I am checking this out.
-  ## I would rather pass the value down and store it than do this recursive call
-  ##+ for each cursor display
-  # @see Form#setrowcol
-  # 2018-03-21 - currently called only by button and listbox, so we can remove and see.
-  def _setformrowcol r, c
-    raise "trying to deprecate"
-    @form.row = r unless r.nil?
-    @form.col = c unless c.nil?
-    @form.setrowcol r, c
-  end
-  ## widget: i am putting one extra level of indirection so i can switch here
-  # between form#setrowcol and setformrowcol, since i am not convinced either
-  # are giving the accurate result. i am not sure what the issue is.
-  def _setrowcol r, c
-    raise "trying to deprecate this setrowcol in widget"
-    if @form
-      @form.setrowcol r, c
-      #elsif @parent_component
-    else
-      raise "Parent component not defined for #{self}, #{self.class} " unless @parent_component
-      @parent_component.setrowcol r, c
-    end
-    #setformrowcol r,c 
   end
 
 
