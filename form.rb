@@ -16,16 +16,8 @@ class Form
   attr_accessor :window
 
   # cursor row and col # 2018-03-20 - this is bad as widgets update it. it should be picked up from focussed widget
-  attr_accessor :row, :col
-  # color and bgcolor for all widget, widgets that don't have color specified will inherit from form
-  # If not mentioned, then global defaults will be taken
-  #attr_writer :color, :bgcolor
-  # used at all NOT_SURE 
-  #attr_accessor :color_pair
-  #attr_accessor :attr
-
-  # has the form been modified UNUSED 2018-03-20 - remove and see how it goes
-  #attr_accessor :modified
+  # 2018-03-22 - removing access to it
+  #attr_accessor :row, :col
 
   # index of active widget inside focusables array
   attr_accessor :active_index
@@ -35,17 +27,10 @@ class Form
 
   def initialize win, &block
     @window = win
-    ## added 2014-05-01 - 20:43 so that a window can update its form, during overlapping forms.
-    #@window.form = self if win
     @widgets = []
-    #@active_index = -1
     @active_index = nil                  # 2018-03-07 - if a form has no focusable field
-    #@row = @col = -1
     @row = @col = 0                    # 2018-03-07 - umbra
-    #@modified = false
-    #@resize_required = true
     @focusables = []                   # focusable components
-    #@focusable = true                # not used i think 2018-03-08 - 
     instance_eval &block if block_given?
     @name ||= ""
 
@@ -55,39 +40,49 @@ class Form
     map_keys unless @keys_mapped
   end
   ##
-  # Add given widget to widget list and returns an incremental id.
-  # Adding to widgets, results in it being painted, and focussed.
-  # TODO allow passing several widgets
-  # TODO: return self so can chain adds
+  # Add given widget to widget list and returns self
+  # A widget must be added to a Form for it to be painted and focussed.
+  # @param [Widget] widget to display on form
+  # @return [Form] pointer to self
   def add_widget widget
-    widget.form = self       # 2018-03-19 - can we avoid giving this handle
-    widget.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
-    @widgets << widget
-    return @widgets.length-1
+    case widget
+    when Array
+      widget.each do |w|
+        w.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
+        @widgets << w
+      end
+    else
+      #widget.form = self       # 2018-03-19 - can we avoid giving this handle
+      widget.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
+      @widgets << widget
+    end
+    return self
   end
-  #alias :add :add_widget
+  alias :add :add_widget
 
-  # remove a widget
-  # (internal use)
+  # remove a widget from form. 
+  # Will not be displayed or focussed.
+  # @param [Widget] widget to remove from form
   def remove_widget widget
     @widgets.delete widget
     # 2018-03-21 - remove from focusables - UNTESTED
     @focusables.delete widget
   end
-  # decide layout of objects. User has to call this after creating components
+  # Decide layout of objects. User has to call this after creating components
   # More may come here.
   def pack
     # creation of this array should be a separate method, so if property is changed after form creation
     # then user can call this method and have it reflect. FIXME
-    @focusables = @widgets.select { |w| w.focusable? }
+    @focusables = @widgets.select { |w| w.focusable }
     @active_index = 0 if @focusables.size > 0
     repaint
+    self
   end
 
 
   # form repaint,calls repaint on each widget which will repaint it only if it has been modified since last call.
   # called after each keypress and on select_field.
-  # TODO maybe we should call only if repaint_required and then set it to false.
+
   def repaint
     $log.debug " form repaint:#{self}, #{@name} , r #{@row} c #{@col} " if $log.debug? 
     @widgets.each do |f|
@@ -96,27 +91,17 @@ class Form
       # changed on 2018-03-21 - so widgets don't need to do this.
       if f.repaint_required
         f.repaint 
-        f.repaint_required false
+        f.repaint_required = false
       end
     end
 
-    # get curpos of active widget
+    # get curpos of active widget 2018-03-21 - form is taking control of this now.
     f = get_current_field
     if f
       @row, @col = f.rowcol
-      setpos 
+      _setpos 
     end
     @window.wrefresh
-  end
-  ## 
-  # move cursor to where the fields row and col are
-  # @private
-  def setpos r=@row, c=@col
-    #$log.debug "setpos : (#{self.name}) #{r} #{c} XXX"
-    ## adding just in case things are going out of bounds of a parent and no cursor to be shown
-    return if r.nil? or c.nil?  # added 2009-12-29 23:28 BUFFERED
-    return if r<0 or c<0  # added 2010-01-02 18:49 stack too deep coming if goes above screen
-    @window.wmove r,c
   end
   # @return [Widget, nil] current field, nil if no focusable field
   def get_current_field
@@ -142,36 +127,6 @@ class Form
   end
 
 
-  # form's trigger, fired when any widget loses focus
-  # NOTE: Do NOT override
-  #  This wont get called in editor components in tables, since  they are formless 
-  def on_leave f
-    return if f.nil? || !f.focusable # added focusable, else label was firing
-    $log.debug "Form setting state of #{f.name} to NORMAL"
-    f.state = :NORMAL
-    # 2018-03-11 - trying out, there can be other things a widget may want to do on entry and exit
-    if f.highlight_color_pair || f.highlight_attr
-      f.repaint_required true
-    end
-    f.on_leave if f.respond_to? :on_leave
-  end
-  # form calls on_enter of each object.
-  # However, if a multicomponent calls on_enter of a widget, this code will
-  # not be triggered. The highlighted part
-  # 2018-03-07 - NOT_SURE
-  def on_enter f
-    return if f.nil? || !f.focusable # added focusable, else label was firing 2010-09
-
-    f.state = :HIGHLIGHTED
-    # If the widget has a color defined for focussed, set repaint
-    #  otherwise it will not be repainted unless user edits !
-    if f.highlight_color_pair || f.highlight_attr
-      f.repaint_required true
-    end
-
-    f.modified false
-    f.on_enter if f.respond_to? :on_enter
-  end
 
   ##
   # puts focus on the given field/widget index
@@ -184,8 +139,8 @@ class Form
     return if @focusables.nil? or @focusables.empty?
     #$log.debug "inside select_field :  #{ix0} ai #{@active_index}" 
     f = @focusables[ix0]
-    return if !f.focusable?
-    if f.focusable?
+    return if !f.focusable
+    if f.focusable
       @active_index = ix0
       @row, @col = f.rowcol
       on_enter f
@@ -274,18 +229,8 @@ class Form
 
     return :NO_PREV_FIELD
   end
-  ##
-  # move cursor by num columns. Form
-  # Only called by Field. Is it really required then ? 2018-03-21 - ??? FIXME XXX
-  def addcol num
-    raise "deprecated, can remove"
-    return if @col.nil? || @col == -1
-    @col += num
-    @window.wmove @row, @col
-  end
-  ##
 
-  ## Form
+  private
   # New attempt at setting cursor using absolute coordinates
   # Also, trying NOT to go up. let this pad or window print cursor.
   # 2018-03-21 - we should prevent other widgets from calling this. Tehy need to set their own offsets
@@ -295,16 +240,46 @@ class Form
     @row = r unless r.nil?
     @col = c unless c.nil?
   end
+  private
+  ## 
+  # move cursor to where the fields row and col are
+  def _setpos r=@row, c=@col
+    #$log.debug "setpos : (#{self.name}) #{r} #{c} XXX"
+    ## adding just in case things are going out of bounds of a parent and no cursor to be shown
+    return if r.nil? or c.nil?  # added 2009-12-29 23:28 BUFFERED
+    return if r<0 or c<0  # added 2010-01-02 18:49 stack too deep coming if goes above screen
+    @window.wmove r,c
+  end
   ##
+  # form's trigger, fired when any widget loses focus
+  # NOTE: Do NOT override
+  #  This wont get called in editor components in tables, since  they are formless 
+  def on_leave f
+    return if f.nil? || !f.focusable # added focusable, else label was firing
+    $log.debug "Form setting state of #{f.name} to NORMAL"
+    f.state = :NORMAL
+    # 2018-03-11 - trying out, there can be other things a widget may want to do on entry and exit
+    if f.highlight_color_pair || f.highlight_attr
+      f.repaint_required = true
+    end
+    f.on_leave if f.respond_to? :on_leave
+  end
+  # form calls on_enter of each object.
+  # However, if a multicomponent calls on_enter of a widget, this code will
+  # not be triggered. The highlighted part
+  # 2018-03-07 - NOT_SURE
+  def on_enter f
+    return if f.nil? || !f.focusable # added focusable, else label was firing 2010-09
 
-  # e.g. process_key ch, self {{{
-  # returns UNHANDLED if no block for it
-  # after form handles basic keys, it gives unhandled key to current field, if current field returns
-  # unhandled, then it checks this map.
-  # Please update widget with any changes here. TODO: match regexes as in mapper
+    f.state = :HIGHLIGHTED
+    # If the widget has a color defined for focussed, set repaint
+    #  otherwise it will not be repainted unless user edits !
+    if f.highlight_color_pair || f.highlight_attr
+      f.repaint_required = true
+    end
 
-  def process_key keycode, object
-    return _process_key keycode, object, @window
+    f.modified = false
+    f.on_enter if f.respond_to? :on_enter
   end
 
   def _process_key keycode, object, window
@@ -327,6 +302,18 @@ class Form
       return blk.call object,  *@_key_args[keycode]
     end
   end # }}}
+
+  public
+  # e.g. process_key ch, self {{{
+  # returns UNHANDLED if no block for it
+  # after form handles basic keys, it gives unhandled key to current field, if current field returns
+  # unhandled, then it checks this map.
+  # Please update widget with any changes here. TODO: match regexes as in mapper
+
+  def process_key keycode, object
+    return _process_key keycode, object, @window
+  end
+
   #
   # NOTE: These mappings will only trigger if the current field
   #  does not use them in handle_key
@@ -338,6 +325,7 @@ class Form
     @keys_mapped = true
   end
 
+=begin
   # repaint all # {{{
   # this forces a repaint of all visible widgets and has been added for the case of overlapping
   # windows, since a black rectangle is often left when a window is destroyed. This is internally
@@ -357,9 +345,9 @@ class Form
     end
     $log.debug "  REPAINT ALL in FORM complete "
     #  place cursor on current_widget 
-    setpos
+    _setpos
   end # }}}
-
+=end
   ## forms handle keys {{{
   # mainly traps tab and backtab to navigate between widgets.
   # I know some widgets will want to use tab, e.g edit boxes for entering a tab
@@ -368,12 +356,12 @@ class Form
   # NOTE : please rescue exceptions when you use this in your main loop and alert() user
   #
   def handle_key(ch)
-    # 2014-08-19 - 21:10 moving to init, so that user may override or remove
-    handled = :UNHANDLED # 2011-10-4 
+    handled = :UNHANDLED 
 
     case ch
     when -1
       return
+=begin
     when 1000, 12
       # NOTE this works if widgets cover entire screen like text areas and lists but not in 
       #  dialogs where there is blank space. only widgets are painted.
@@ -381,7 +369,7 @@ class Form
       $log.debug " form REFRESH_ALL repaint_all HK #{ch} #{self}, #{@name} "
       repaint_all_widgets
       return
-    when FFI::NCurses::KEY_RESIZE  # SIGWINCH 
+    when FFI::NCurses::KEY_RESIZE  # SIGWINCH # UNTESTED XXX
       # note that in windows that have dialogs or text painted on window such as title or 
       #  box, the clear call will clear it out. these are not redrawn.
       lines = FFI::NCurses.LINES
@@ -404,6 +392,7 @@ class Form
       ## added RESIZE on 2012-01-5 
       ## stuff that relies on last line such as statusline dock etc will need to be redrawn.
       fire_handler :RESIZE, self 
+=end
     else
       field =  get_current_field
       handled = :UNHANDLED 
