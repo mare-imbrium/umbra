@@ -1,7 +1,15 @@
-  ##
+# ----------------------------------------------------------------------------- #
+#         File: field.rb
+#  Description: text input field or widget
+#       Author: j kepler  http://github.com/mare-imbrium/canis/
+#         Date: 2018-03
+#      License: MIT
+#  Last update: 2018-03-23 12:44
+# ----------------------------------------------------------------------------- #
+#  field.rb  Copyright (C) 2012-2018 j kepler
 #
 
-class InputDataEvent
+class InputDataEvent # {{{
   attr_accessor :index0, :index1, :source, :type, :row, :text
   def initialize index0, index1, source, type, row, text
     @index0 = index0
@@ -27,30 +35,25 @@ class InputDataEvent
   def getvalue
     @source.getvalue
   end
-end
+end # }}}
   # Text edit field
 #  TODO :
-#  - remove datatype, just use strings.
-#  - remove the old method *val type. use attr_accessor or similar.
-#  - labeled stuff, remove. 
+#  ? remove datatype, just use strings.
+#  x remove the old method *val type. use attr_accessor or similar.
+#  x labeled stuff, remove. 
   # NOTE: +width+ is the length of the display whereas +maxlen+ is the maximum size that the value 
   # can take. Thus, +maxlen+ can exceed +width+. Currently, +maxlen+ defaults to +width+ which 
   # defaults to 20.
-  # NOTE: Use +text(val)+ to set value, and +text()+ to retrieve value
+  # NOTE: Use +text=(val)+ to set value of field, and +text()+ to retrieve value.
   # == Example
   #     f = Field.new  text: "Some value", row: 10, col: 2
   #
   # Field introduces an event :CHANGE which is fired for each character deleted or inserted
-  # TODO: some methods should return self, so chaining can be done. Not sure if the return value of the 
-  #   fire_handler is being checked.
-  #   NOTE: i have just added repain_required check in Field before repaint
-  #   this may mean in some places field does not paint. repaint_require will have to be set
-  #   to true in those cases. this was since field was overriding a popup window that was not modal.
   #  
   class Field < Widget 
     attr_accessor :maxlen             # maximum length allowed into field
     attr_reader :buffer              # actual buffer being used for storage
-    #
+    
   
     attr_accessor :values             # validate against provided list, (+include?+)
     attr_accessor :valid_regex        # validate against regular expression (+match()+)
@@ -64,7 +67,7 @@ end
     attr_accessor :mask                    # what charactr to show for each char entered (password field)
     attr_accessor :null_allowed            # allow nulls, don't validate if null # added , boolean
 
-    # any new widget that has editable should have modified also
+    # any new widget that has +editable+ should have +modified+ also
     attr_accessor :editable          # allow editing
 
     # +type+ is just a convenience over +chars_allowed+ and sets some basic filters 
@@ -76,7 +79,7 @@ end
     #attr_reader :label
     # this is the class of the field set in +text()+, so value is returned in same class
     # @example : Integer, Integer, Float
-    attr_accessor :datatype                    # crrently set during set_buffer
+    attr_accessor :datatype                    # currently set during set_buffer
     attr_reader :original_value                # value on entering field
     attr_accessor :overwrite_mode              # true or false INSERT OVERWRITE MODE
 
@@ -87,13 +90,12 @@ end
     #                                          # so can be nil if accessed early 2011-12-8 
 
     def initialize config={}, &block
-      #@form = form
       @buffer = String.new
       @row = 0
       @col = 0
       @editable = true
       @focusable = true
-      #@event_args = {}             # arguments passed at time of binding, to use when firing event
+    
       map_keys 
       init_vars
       register_events(:CHANGE)
@@ -107,7 +109,6 @@ end
                                    # this is the index where characters are put or deleted
       #                            # when user edits
       @modified = false
-      @repaint_required = true
     end
 
     # NOTE: earlier there was some confusion over type, chars_allowed and datatype
@@ -115,9 +116,8 @@ end
     # If you pass a symbol such as :integer, :float or Float Integer then some
     #  standard chars_allowed will be used. Otherwise you may pass a regexp.
     #
-    # @param symbol :integer, :float, :alpha, :alnum, Float, Integer, Numeric, Regexp
+    # @param [symbol] :integer, :float, :alpha, :alnum, Float, Integer, Numeric, Regexp
     def type=(val)
-      #return @chars_allowed if val.empty?
 
       dtype = val
       #return self if @chars_allowed # disallow changing
@@ -145,7 +145,6 @@ end
 
     #
     # add a char to field, and validate
-    # NOTE: this should return self for chaining operations and throw an exception
     # if disabled or exceeding size
     # @param [char] a character to add
     # @return [Integer] 0 if okay, -1 if not editable or exceeding length
@@ -177,11 +176,13 @@ end
     end
 
     ##
-    # TODO : sending c>=0 allows control chars to go. Should be >= ?A i think.
+    # add character to field, adjust scrolling.
+    # NOTE: handlekey only calls this if between 32 and 126.
     def putc c
       if c >= 0 and c <= 127
         ret = putch c.chr
         if ret == 0
+          # character is valid
           if addcol(1) == -1  # if can't go forward, try scrolling
             # scroll if exceeding display len but less than max len
             if @curpos > @width && @curpos <= @maxlen
@@ -189,11 +190,13 @@ end
             end
           end
           @modified = true
-          return 0 # 2010-09-11 12:59 else would always return -1
+          return 0 
         end
       end
       return -1
     end
+    # delete a character from the buffer at given position
+    # Called by +delete_curr_char+ and +delete_prev_char+.
     def delete_at index=@curpos
       return -1 if !@editable 
       char = @buffer.slice!(index,1)
@@ -202,8 +205,8 @@ end
       fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :DELETE, 0, char)     # 2010-09-11 13:01 
     end
     #
-    # silently restores value without firing handlers, use if exception and you want old value
-    # @since 1.4.0 2011-10-2 
+    # silently restores earlier value without firing handlers, use if exception and you want old value
+    # Called when pressing <ESC> or <c-g>.
     def restore_original_value
       @buffer = @original_value.dup
       # earlier commented but trying again, since i am getting IndexError in insert 2188
@@ -217,7 +220,7 @@ end
     # fires CHANGE handler
     # Please don't use this directly, use +text+
     # This name is from ncurses field, added underscore to emphasize not to use
-    def _set_buffer value   #:nodoc:
+    private def _set_buffer value   #:nodoc:
       @repaint_required = true
       @datatype = value.class
       @delete_buffer = @buffer.dup
@@ -230,6 +233,31 @@ end
       fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos, self, :INSERT, 0, @buffer)     # 2010-09-11 13:01 
       self # 2011-10-2 
     end
+    ## add a column to cursor position. Field
+    private def addcol num
+      x = @col_offset + num
+      return -1 if x < 0
+      return -1 if x > @width
+      @col_offset += num 
+=begin
+      if num < 0
+        if @form.col <= @col + @col_offset
+          raise "reached ths checj XXX"
+         # $log.debug " error trying to cursor back #{@form.col}"
+          return -1
+        end
+      elsif num > 0
+        if @form.col >= @col + @col_offset + @width
+      #    $log.debug " error trying to cursor forward #{@form.col}"
+          return -1
+        end
+      end
+=end
+
+      #@form.addcol num
+      # addcol is surpossed and won't work now so now we have to update @col_offset 2018-03-21 - 
+    end
+    private
     # converts back into original type
     #  changed to convert on 2009-01-06 23:39 
     def getvalue
@@ -246,10 +274,14 @@ end
       end
     end
   
+=begin
+    # 2018-03-23 - NOT_SURE 
     def label *val
       return @label if val.empty?
       raise "Field does not allow setting of label. Please use LabeledField instead with lcol for label column"
     end
+=end
+    public
 
   ## Note that some older widgets like Field repaint every time the form.repaint
   ##+ is called, whether updated or not. I can't remember why this is, but
@@ -293,22 +325,19 @@ end
     bind_key(?\C-k, :delete_eol )
     bind_key(?\C-_, :undo_delete_eol )
     #bind_key(27){ text @original_value }
-    bind_key(?\C-g, 'revert'){ text @original_value } # 2011-09-29 V1.3.1 ESC did not work
+    bind_key(?\C-g, 'revert'){ restore_original_value } 
     @keys_mapped = true
   end
 
-  # field
+  # field - handle a key sent for form
   # 
   def handle_key ch
     $log.debug "inside handle key of field with #{ch}"
     @repaint_required = true 
     case ch
     when 32..126
-      #$log.debug("FIELD: ch #{ch} ,at #{@curpos}, buffer:[#{@buffer}] bl: #{@buffer.to_s.length}")
       putc ch
-    when 27 # cannot bind it
-      #text @original_value 
-      # commented above and changed 2014-05-12 - 20:05 I think above creates positioning issues. TEST XXX
+    when 27 # cannot bind it, so hardcoding it here
       restore_original_value
     else
       ret = super
@@ -328,29 +357,25 @@ end
   def cursor_home
     @curpos = 0
     @pcol = 0
-    set_form_col 0
+    set_col_offset 0
   end
   ##
   # goto end of field, "end" is a keyword so could not use it.
   def cursor_end
     blen = @buffer.rstrip.length
     if blen < @width
-      set_form_col blen
+      set_col_offset blen
     else
-      # there is a problem here FIXME. 
       @pcol = blen-@width
       #set_form_col @width-1
-      set_form_col blen
+      set_col_offset blen
     end
     @curpos = blen # this is position in array where editing or motion is to happen regardless of what you see
                    # regardless of pcol (panning)
-    #  $log.debug " crusor END cp:#{@curpos} pcol:#{@pcol} b.l:#{@buffer.length} d_l:#{@width} fc:#{@form.col}"
-    #set_form_col @buffer.length
   end
   # sets the visual cursor on the window at correct place
-  # added here since we need to account for pcol. 2011-12-7 
   # NOTE be careful of curpos - pcol being less than 0
-  def set_form_col x=@curpos
+  private def set_col_offset x=@curpos
     @curpos = x || 0 # NOTE we set the index of cursor here
     #return -1 if x < 0
     #return -1 if x > @width
@@ -358,7 +383,6 @@ end
       x = @width
     end
     @col_offset = x
-    # TODO maybe do some sanity check about going below 0 or above width
     return
 =begin
     c = @col + @col_offset + @curpos - @pcol
@@ -379,6 +403,7 @@ end
     fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :DELETE, 0, @delete_buffer)
     return @delete_buffer
   end
+  # move cursor forward one character, called with KEY_RIGHT action.
   def cursor_forward
     if @curpos < @buffer.length 
       if addcol(1)==-1  # go forward if you can, else scroll
@@ -388,6 +413,7 @@ end
     end
    # $log.debug " crusor FORWARD cp:#{@curpos} pcol:#{@pcol} b.l:#{@buffer.length} d_l:#{@display_length} fc:#{@form.col}"
   end
+  # move cursor back one character, called with KEY_LEFT action.
   def cursor_backward
     if @curpos > 0
       @curpos -= 1
@@ -413,6 +439,8 @@ end
       delete_at
       @modified = true
     end
+    # called when user presses backspace.
+    # Delete character on left of cursor
     def delete_prev_char
       return -1 if !@editable 
       return if @curpos <= 0
@@ -427,31 +455,6 @@ end
       delete_at
       addcol -1 if adjust # move visual cursor back
       @modified = true
-    end
-    ## add a column to cursor position. Field
-    ## 2018-03-21 - removed call to update form, but still have to remove this @form.col FIXME XXX
-    def addcol num
-      x = @col_offset + num
-      return -1 if x < 0
-      return -1 if x > @width
-      @col_offset += num 
-=begin
-      if num < 0
-        if @form.col <= @col + @col_offset
-          raise "reached ths checj XXX"
-         # $log.debug " error trying to cursor back #{@form.col}"
-          return -1
-        end
-      elsif num > 0
-        if @form.col >= @col + @col_offset + @width
-      #    $log.debug " error trying to cursor forward #{@form.col}"
-          return -1
-        end
-      end
-=end
-
-      #@form.addcol num
-      # addcol is surpossed and won't work now so now we have to update @col_offset 2018-03-21 - 
     end
     # upon leaving a field
     # returns false if value not valid as per values or valid_regex
@@ -507,6 +510,11 @@ end
     def modified?
       getvalue() != @original_value
     end
+    # 2018-03-22 - replaced the old style text(val) with attr style
+    def text
+      getvalue
+    end
+=begin
     #
     # Set the value in the field.
     # @param if none given, returns value existing
@@ -526,12 +534,13 @@ end
         _set_buffer(s)
       end
     end
-    alias :default :text
+=end
     def text=(val)
       return unless val # added 2010-11-17 20:11, dup will fail on nil
       # will bomb on integer or float etc !!
       #_set_buffer(val.dup)
       _set_buffer(val)
     end
+    alias :default= :text=
   # ADD HERE FIELD
   end # }}}
