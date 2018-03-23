@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-03-21 22:40
+#  Last update: 2018-03-22 23:15
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -18,90 +18,30 @@
     # char to be underlined, and bound to Alt-char
     attr_accessor :mnemonic
     def initialize config={}, &block
-      #require 'canis/core/include/ractionevent'
       @focusable = true
       @editable = false
       @highlight_attr = REVERSE
       # hotkey denotes we should bind the key itself not alt-key (for menulinks)
-      @hotkey = config.delete(:hotkey) 
+      #@hotkey = config.delete(:hotkey)  2018-03-22 - 
       # 2018-03-18 - FORM_ATTACHED deprecated to keep things simple
       register_events([:PRESS, :FORM_ATTACHED])
-      @default_chars = ['> ', ' <'] 
+      @default_chars = ['> ', ' <'] # a default button is painted differently
       super
 
 
       @surround_chars ||= ['[ ', ' ]'] 
       @col_offset = @surround_chars[0].length 
-      @text_offset = 0
-      @repaint_required = true
+      @text_offset = 0      # used to determine where underline should fall TODO ???
       map_keys
     end
     ##
     # set button based on Action
+    # 2018-03-22 - is this still used ?
+    # This allows action objects to be used in multiple places such as buttons, menus, popups etc.
     def action a
       text a.name
       mnemonic a.mnemonic unless a.mnemonic.nil?
       command { a.call }
-    end
-    ##
-    # button:  sets text, checking for ampersand, uses that for hotkey and underlines
-    def OLDtext(*val)
-      if val.empty?
-        return @text
-      else
-        s = val[0].dup
-        s = s.to_s if !s.is_a? String  # 2009-01-15 17:32 
-        if (( ix = s.index('&')) != nil)
-          s.slice!(ix,1)
-          @underline = ix #unless @form.nil? # this setting a fake underline in messageboxes
-          @text = s # mnemo needs this for setting description
-          mnemonic s[ix,1]
-        end
-        @text = s
-      end
-      return self 
-    end
-
-    ## 
-    # FIXME this will not work in messageboxes since no form available
-    # if already set mnemonic, then unbind_key, ??
-    # NOTE: Some buttons like checkbox directly call mnemonic, so if they have no form
-    # then this processing does not happen
-
-    # set mnemonic for button, this is a hotkey that triggers +fire+ upon pressing Alt+char
-    def mnemonic char=nil
-      return @mnemonic unless char  # added 2011-11-24 so caller can get mne
-
-      unless @form
-        # we have some processing for when a form is attached, registering a hotkey
-        bind(:FORM_ATTACHED) { mnemonic char }
-        return self # added 2014-03-23 - 22:59 so that we can chain methods
-      end
-      @mnemonic = char
-      ch = char.downcase()[0].ord ##  1.9 
-      # meta key 
-      ch = ?\M-a.getbyte(0) + (ch - ?a.getbyte(0)) unless @hotkey
-      $log.debug " #{self} setting MNEMO to #{char} #{ch}, #{@hotkey} "
-      _t = self.text || self.name || "Unnamed #{self.class} "
-      @form.bind_key(ch, "hotkey for button #{_t} ") { |_form, _butt| self.fire }
-      return self # added 2015-03-23 - 22:59 so that we can chain methods
-    end
-
-    def default_button tf=nil
-      return @default_button unless tf
-      raise ArgumentError, "default button must be true or false" if ![false,true].include? tf
-      unless @form
-        bind(:FORM_ATTACHED){ default_button(tf) }
-        return self
-      end
-      $log.debug "XXX:  BUTTON DEFAULT setting to true : #{tf} "
-      @default_button = tf
-      if tf
-        @surround_chars = @default_chars
-        @form.bind_key(13, "fire #{self.text} ") { |_form, _butt| self.fire }
-      else
-        # i have no way of reversing the above
-      end
     end
 
     def getvalue
@@ -115,9 +55,6 @@
       @surround_chars[0] + ret + @surround_chars[1]
     end
 
-    # FIXME 2014-05-31 since form checks for highlight color and sets repaint on on_enter, we shoul not set it.
-    #   but what if it is set at form level ?
-    #    also it is not correct to set colors now that form's defaults are taken
     def repaint  # button
       return unless @repaint_required
 
@@ -133,10 +70,10 @@
         end
         $log.debug "XXX: button #{text}   STATE is #{@state} color #{_color} , attr:#{_attr}"
         value = getvalue_for_paint
-        $log.debug("button repaint :#{self} r:#{r} c:#{c} col:#{_color} v: #{value} ul #{@underline} mnem #{@mnemonic} ")
+        #$log.debug("button repaint :#{self} r:#{r} c:#{c} col:#{_color} v: #{value} ul #{@underline} mnem #{@mnemonic} ")
         len = @width || value.length
-        @graphic = @form.window if @graphic.nil? ## cell editor listbox hack 
         @graphic.printstring r, c, "%-*s" % [len, value], _color, _attr
+=begin
 #       @form.window.mvchgat(y=r, x=c, max=len, Ncurses::A_NORMAL, bgcolor, nil)
         # in toggle buttons the underline can change as the text toggles
         if @underline || @mnemonic # {{{ TODO
@@ -155,8 +92,7 @@
             @graphic.mvchgat(y, x, max=1, Ncurses::A_BOLD|Ncurses::A_UNDERLINE, _color, nil)
           end
         end # }}}
-        # the next line works to put cursor on button on entry but I am removing since trying not to call form
-        #setformrowcol r, c if @state == :HIGHLIGHTED # otherwise it once again shows cursor on exit should be on on_enter FIXME
+=end
         @repaint_required = false
     end
 
@@ -183,7 +119,7 @@
       super
     end
 
-    # layout an array of buttons horizontally
+    # layout an array of buttons horizontally {{{
     def self.button_layout buttons, row, startcol=0, cols=FFI::NCurses.COLS-1, gap=5
       col = startcol
       buttons.each_with_index do |b, ix|
