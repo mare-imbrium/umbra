@@ -69,7 +69,7 @@ class Widget
     # it does not apply to all widgets.
     # 2018-03-18 - proporty change is deprecated since we don't use dsl_property any longer
     register_events( [:ENTER, :LEAVE, :CHANGED, :PROPERTY_CHANGE])
-    @repaint_required = true # added 2018-03-20 - 
+    @repaint_required = true # added 2018-03-20 - so all widgets get it
 
     aconfig.each_pair { |k,v| variable_set(k,v) }
     #instance_eval &block if block_given?
