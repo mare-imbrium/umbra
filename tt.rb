@@ -6,7 +6,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-03-16 23:17
+#  Last update: 2018-03-23 14:49
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
@@ -37,7 +37,7 @@
 #
 require './window.rb'
 require './menu.rb'
-
+TOPLINE="| ` Menu  | = Toggle | q Quit | lyra 0.1"
 $sorto = "on"
 $hidden = nil
 $long_listing = false
@@ -199,7 +199,7 @@ end
     filler = " "*width
     files.each_with_index {|f, y| 
       next if y < st
-      colr = 1 # white on bg -1
+      colr = CP_WHITE # white on bg -1
       ctr += 1
       mark = " "
       if y == hl
@@ -230,7 +230,11 @@ end
         #ff = "#{mark} #{f}/"
         # 2018-03-12 - removed slash at end since zsh puts it there
         ff = "#{mark} #{f}"
-        colr = 4 # blue on background color_pair COLOR_PAIR
+        colr = CP_BLUE # blue on background color_pair COLOR_PAIR
+        attr = attr | FFI::NCurses::A_BOLD
+      elsif File.executable? fullp
+        ff = "#{mark} #{f}*"
+        colr = CP_WHITE # yellow on background color_pair COLOR_PAIR
         attr = attr | FFI::NCurses::A_BOLD
       else
         ff = "#{mark} #{f}"
@@ -265,6 +269,7 @@ end
     h = { :s => :sort_menu, :M => :newdir, "%" => :newfile }
     m = Menu.new "Main Menu", h
     ch = m.getkey
+    return nil if !ch
 
     binding = h[ch]
     binding = h[ch.to_sym] unless binding
@@ -321,7 +326,7 @@ begin
   win.printstr("Press Ctrl-Q to quit #{win.height}:#{win.width}", win.height-1, 20)
 
   path = File.expand_path("./")
-  win.printstring(0,0, "DIR: #{path}                 ",0)
+  win.printstring(0,0, "PATH: #{path}                 #{TOPLINE}",0)
   files = get_files
   current = 0
   prevstart = listing(win, path, files, current, 0)
@@ -341,7 +346,8 @@ begin
         Dir.chdir(files[current])
         $patt = nil
         path = Dir.pwd
-        win.printstring(0,0, "DIR: #{path}                 ",0)
+        #win.printstring(0,0, "PATH: #{path}                 ",0)
+        win.printstring(0,0, "PATH: #{path}                 #{TOPLINE}",0)
         files = get_files
         current = 0
         #FFI::NCurses.wclrtobot(pointer)
@@ -358,7 +364,7 @@ begin
       Dir.chdir("..")
       path = Dir.pwd
       $patt = nil
-      win.printstring(0,0, "DIR: #{path}                 ",0)
+      win.printstring(0,0, "PATH: #{path}                 #{TOPLINE}",0)
       files = get_files
       # when going up, keep focus on the dir we came from
       current = files.index(File.basename(oldpath) + "/")
@@ -372,7 +378,8 @@ begin
         Dir.chdir(files[current])
         $patt = nil
         path = Dir.pwd
-        win.printstring(0,0, "DIR: #{path}                 ",0)
+        #win.printstring(0,0, "PATH: #{path}                 ",0)
+        win.printstring(0,0, "PATH: #{path}                 #{TOPLINE}",0)
         files = get_files
         #files = Dir.entries("./")
         #files.delete(".")
