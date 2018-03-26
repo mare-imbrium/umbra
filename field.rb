@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-03-23 12:44
+#  Last update: 2018-03-24 14:38
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -254,8 +254,6 @@ end # }}}
       end
 =end
 
-      #@form.addcol num
-      # addcol is surpossed and won't work now so now we have to update @col_offset 2018-03-21 - 
     end
     private
     # converts back into original type
