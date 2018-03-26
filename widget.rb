@@ -266,6 +266,10 @@ class Widget
     @_key_args[keycode] = args
     self
   end
+
+  def bind_keys keycodes, *args, &blk
+    keycodes.each { |k| bind_key k, *args, &blk }
+  end
   ##
   # remove a binding that you don't want
   def unbind_key keycode
