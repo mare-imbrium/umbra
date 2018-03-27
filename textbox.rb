@@ -1,14 +1,14 @@
 # ----------------------------------------------------------------------------- #
-  #         File: textbox.rb
+#         File: textbox.rb
 #  Description: a multiline text view
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-03-26 18:44
+#  Last update: 2018-03-27 09:40
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
-# 
+#  improve the object sent when row change or cursor movement 
 #
 #
 #  ----------------------------------------
@@ -66,6 +66,8 @@ class Textbox < Widget
       @int_width = @width - 2
       @int_height = @height - 2
     end
+    @scroll_lines ||= @int_height/2  # fix these to be perhaps half and one of ht
+    @page_lines = @int_height
     @repaint_required = true
   end
   # set list of data to be displayed.
@@ -220,22 +222,21 @@ class Textbox < Widget
     bind_key(?G, 'goto_end'){ goto_end }
     bind_key(FFI::NCurses::KEY_CTRL_A, 'cursor_home'){ cursor_home }
     bind_key(FFI::NCurses::KEY_CTRL_E, 'cursor_end'){ cursor_end }
+    bind_key(FFI::NCurses::KEY_CTRL_F, 'page_forward'){ page_forward }
+    bind_key(FFI::NCurses::KEY_CTRL_B, 'page_backward'){ page_backward }
+    bind_key(FFI::NCurses::KEY_CTRL_U, 'scroll_up'){ scroll_up }
+    bind_key(FFI::NCurses::KEY_CTRL_D, 'scroll_down'){ scroll_down }
     return if @keys_mapped
   end
 
   # listbox key handling
   def handle_key ch
-    # make scrolling consistent with vim. C-f is a window,  TODO
+    #   save old positions so we know movement has happened
     old_current_index = @current_index
     old_pcol = @pcol
     old_col_offset = @col_offset
-    pagecols = @height/2  # fix these to be perhaps half and one of ht
-    spacecols = @height
+
     case ch
-    when FFI::NCurses::KEY_CTRL_N
-      @current_index += pagecols
-    when FFI::NCurses::KEY_CTRL_P
-      @current_index -= pagecols
     when @selection_key
       @repaint_required = true  
       if @selected_index == @current_index 
@@ -243,10 +244,6 @@ class Textbox < Widget
       else
         @selected_index = @current_index 
       end
-    when 127, FFI::NCurses::KEY_CTRL_B
-      @current_index -= spacecols
-    when FFI::NCurses::KEY_CTRL_D
-      @current_index += spacecols
     else
       ret = super
       return ret
@@ -261,7 +258,6 @@ class Textbox < Widget
         on_enter_row @current_index
         #fire_handler(:CHANGE_ROW, [old_current_index, @current_index, ch ])     # 2018-03-26 - improve this
       end
-      # this could happen from a called routine
       @repaint_required = true 
       fire_handler(:CURSOR_MOVE, [@col_offset, @current_index, @curpos, @pcol, ch ])     # 2018-03-25 - improve this
     end
@@ -336,6 +332,18 @@ class Textbox < Widget
     # go to end of file (last line)
     def goto_end
       @current_index = @list.size-1
+    end
+    def scroll_down
+      @current_index += @scroll_lines
+    end
+    def scroll_up
+      @current_index -= @scroll_lines
+    end
+    def page_backward
+      @current_index -= @page_lines
+    end
+    def page_forward
+      @current_index += @page_lines
     end
   # sets the visual cursor on the window at correct place
   # NOTE be careful of curpos - pcol being less than 0
