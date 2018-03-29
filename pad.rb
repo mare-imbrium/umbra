@@ -4,7 +4,7 @@
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-03-29 12:57
+  * Last update:  2018-03-29 12:58
 
   == CHANGES
   == TODO 
@@ -83,6 +83,7 @@ class Pad
   end
   def title stitle
     return unless stitle
+    stitle = "| #{stitle} |"
     col = (@window.width-stitle.size)/2
     FFI::NCurses.mvwaddstr(@window.pointer, 0, col, stitle) 
   end
