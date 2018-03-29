@@ -1,14 +1,15 @@
 =begin
   * Name: PadReader.rb
   * Description : This is an independent file viewer that uses a Pad and traps keys
+                  I am using only ffi-ncurses and not window.rb or any other support classes
+                  so this can be used anywhere else.
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-03-29 12:58
+  * Last update:  2018-03-29 18:50
 
   == CHANGES
   == TODO 
-  - Ideally, don't even rely upon window.rb
   - / search ?
   NOTE:
   in this the cursor does not move down, it starts to scroll straight away.
@@ -17,25 +18,6 @@
   == -----------------------
 =end
 require 'ffi-ncurses'
-require './window.rb'
-def startup
-  require 'logger'
-  require 'date'
-
-    path = File.join(ENV["LOGDIR"] || "./" ,"v.log")
-    file   = File.open(path, File::WRONLY|File::TRUNC|File::CREAT) 
-    $log = Logger.new(path)
-    $log.level = Logger::DEBUG
-    today = Time.now.to_s
-    $log.info "Pad demo #{$0} started on #{today}"
-end
-
-class Integer
-  def ifzero v
-    return self if self != 0
-    return v
-  end
-end
 
 class Pad
 
@@ -70,10 +52,13 @@ class Pad
     end
     @top = t
     @left = l
-    @window = Window.new(h, w, t, l)
-    @window.box # 2018-03-28 - 
+    @height = h
+    @width = w
+    @pointer, @panel = create_window(h, w, t, l)
+    #@window.box # 2018-03-28 - 
+    FFI::NCurses.box @pointer, 0, 0
     title(config[:title])
-    FFI::NCurses.wbkgd(@window.pointer, FFI::NCurses.COLOR_PAIR(0));
+    FFI::NCurses.wbkgd(@pointer, FFI::NCurses.COLOR_PAIR(0));
     FFI::NCurses.curs_set 0                  # cursor invisible
     if config[:filename]
       self.filename=(config[:filename])
@@ -81,24 +66,41 @@ class Pad
       self.list=(config[:list])
     end
   end
+  # minimum window creator method, not using a class.
+  # However, some methods do require windows width and ht etc
+  def create_window h, w, t, l
+    pointer = FFI::NCurses.newwin(h, w, t, l)
+    panel = FFI::NCurses.new_panel(pointer)
+    FFI::NCurses.keypad(pointer, true)
+    return pointer, panel
+  end
+  def destroy_window pointer, panel
+    FFI::NCurses.del_panel(panel)  if panel
+    FFI::NCurses.delwin(pointer)   if pointer
+    panel = pointer = nil         # prevent call twice
+  end
+  def destroy_pad
+    if @pad
+      FFI::NCurses.delwin(@pad) 
+      @pad = nil
+    end
+  end
+  # print a title over the box on zeroth row
   def title stitle
     return unless stitle
     stitle = "| #{stitle} |"
-    col = (@window.width-stitle.size)/2
-    FFI::NCurses.mvwaddstr(@window.pointer, 0, col, stitle) 
+    col = (@width-stitle.size)/2
+    FFI::NCurses.mvwaddstr(@pointer, 0, col, stitle) 
   end
   private def display_content content
       @pad = create_pad content 
-      @window.wrefresh
+      FFI::NCurses.wrefresh(@pointer)
       padrefresh
   end
 
   private def create_pad content
     # destroy pad if exists
-    if @pad
-      FFI::NCurses.delwin(@pad) 
-      @pad = nil
-    end
+    destroy_pad
     @content_rows, @content_cols = content_dimensions(content)
     pad = FFI::NCurses.newpad(@content_rows, @content_cols)
     FFI::NCurses.keypad(pad, true);         # function and arrow keys
@@ -154,11 +156,12 @@ class Pad
   # returns button index
   private
   def handle_keys
-    ht = @window.height.ifzero FFI::NCurses.LINES-1
+    @height = FFI::NCurses.LINES-1 if @height == 0
+    ht = @height 
     buttonindex = catch(:close) do 
       maxrow = @content_rows - @rows
       maxcol = @content_cols - @cols 
-      while((ch = @window.getch()) != FFI::NCurses::KEY_F10 )
+      while ((ch = FFI::NCurses.wgetch(@pointer)) != FFI::NCurses::KEY_F10)
         break if ch == ?\C-q.getbyte(0) 
         begin
           case ch
@@ -204,6 +207,10 @@ class Pad
           padrefresh
           #FFI::NCurses::Panel.update_panels # 2018-03-28 - this bombs elsewhere
         rescue => err
+          if $log
+            $log.debug err.to_s                 
+            $log.debug err.backtrace.join("\n")
+          end
           FFI::NCurses.endwin
           puts err
           puts err.backtrace.join("\n")
@@ -213,17 +220,64 @@ class Pad
       end # while loop
     end # close
   rescue => err
+    if $log
+      $log.debug err.to_s
+      $log.debug err.backtrace.join("\n")
+    end
     FFI::NCurses.endwin
     puts err
     puts err.backtrace.join("\n")
   ensure
-    @window.destroy #unless @config[:window]
-    FFI::NCurses.delwin(@pad) if @pad
+    #@window.destroy #unless @config[:window]
+    destroy_window @pointer, @panel
+    #FFI::NCurses.delwin(@pad)       if @pad
+    destroy_pad
     return buttonindex 
   end
 end
 if __FILE__ == $PROGRAM_NAME
-  init_curses
+  def startup
+    require 'logger'
+    require 'date'
+
+    path = File.join(ENV["LOGDIR"] || "./" ,"v.log")
+    file   = File.open(path, File::WRONLY|File::TRUNC|File::CREAT) 
+    $log = Logger.new(path)
+    $log.level = Logger::DEBUG
+    today = Time.now.to_s
+    $log.info "Pad demo #{$0} started on #{today}"
+  end
+  def std_colors
+    FFI::NCurses.use_default_colors
+    # 2018-03-17 - changing it to ncurses defaults
+    FFI::NCurses.init_pair(0,  FFI::NCurses::BLACK,   -1)
+    FFI::NCurses.init_pair(1,  FFI::NCurses::RED,   -1)
+    FFI::NCurses.init_pair(2,  FFI::NCurses::GREEN,     -1)
+    FFI::NCurses.init_pair(3,  FFI::NCurses::YELLOW,   -1)
+    FFI::NCurses.init_pair(4,  FFI::NCurses::BLUE,    -1)
+    FFI::NCurses.init_pair(5,  FFI::NCurses::MAGENTA,  -1)
+    FFI::NCurses.init_pair(6,  FFI::NCurses::CYAN,    -1)
+    FFI::NCurses.init_pair(7,  FFI::NCurses::WHITE,    -1)
+  end
+
+  class Integer
+    def ifzero v
+      return self if self != 0
+      return v
+    end
+  end
+
+  FFI::NCurses.initscr
+  FFI::NCurses.curs_set 1
+  FFI::NCurses.raw
+  FFI::NCurses.noecho
+  FFI::NCurses.keypad FFI::NCurses.stdscr, true
+  FFI::NCurses.scrollok FFI::NCurses.stdscr, true
+  if FFI::NCurses.has_colors
+    FFI::NCurses.start_color
+    std_colors
+  end
+
   startup
   begin
     h = 20
