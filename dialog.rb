@@ -5,14 +5,21 @@
 #        dependence that I would like to avoid. This way widgets can include this to print an error
 #        or other message.
 #        NOTE: to check similar behavior, load "links" and press "q", its displays a dialog box with yes/no.
+#        Also check midnight-commander, press F10 to quit and see dialog box.
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-27 - 12:09
 #      License: MIT
-#  Last update: 2018-03-30 11:01
+#  Last update: 2018-03-30 12:29
 # ----------------------------------------------------------------------------- #
 #  dialog.rb  Copyright (C) 2012-2018 j kepler
 #
 require './window.rb'
+
+# A simple dialog box that only displays a line of text, centered.
+# It can take an array of button labels (just strings) and display them, and return the index
+# of the button pressed, when closed.
+# If no buttons are supplied, an "Ok" button is displayed.
+# Minimum requirements are `text` and `title`
 class Dialog
 
   attr_accessor  :text                       # text or message to print centered
@@ -21,6 +28,7 @@ class Dialog
   attr_accessor  :title_attr                 # attribute of title
   attr_accessor  :border_color_pair          # color pair of border
   attr_accessor  :border_attr                # attribute of border
+  attr_accessor  :buttons                    # button text array
 
   ## currently color and attr for text is missing. I think it should be what window has.
 
@@ -33,14 +41,15 @@ class Dialog
         self.instance_eval(&block)
       end
     end
-    @title ||= "Alert"
+    @title       ||= "Alert"
+    @buttons     ||= ["Ok"]
   end
 
   private def variable_set var, val
     send("#{var}=", val) 
   end
   private def _create_window
-    text = @text || "DID not get text"
+    text = @text || "Warning! Did not get text"
     #h = 7
     # increase height to 9 so we can put a fake button below text
     h = 9
@@ -71,17 +80,35 @@ class Dialog
 
     win.printstring 3,(w-text.size)/2, text
     ## ---- button section ---- {{{
-    button = "[ Ok ]"
-    brow   = 6
-    bcol   = (w-button.size)/2
-    @button_color ||= create_color_pair(COLOR_BLACK, COLOR_MAGENTA)
-    @button_attr  ||= REVERSE
-    win.printstring brow, bcol, button, @button_color, @button_attr
-    FFI::NCurses.mvwhline(win.pointer, brow-1, 3, FFI::NCurses::ACS_HLINE, win.width-6)
-    FFI::NCurses.wmove(win.pointer, brow, bcol+2)
+    paint_buttons win, @buttons, 0
     ## ---- button section ---- }}}
     @window = win
     win.wrefresh
+  end
+  def paint_buttons win, buttons, active_index
+    brow   = 6
+    bcol   = (win.width-(buttons.size*10))/2
+    origbcol = bcol
+    FFI::NCurses.mvwhline(win.pointer, brow-1, 3, FFI::NCurses::ACS_HLINE, win.width-6)
+    #@button_color ||= create_color_pair(COLOR_BLACK, COLOR_MAGENTA)
+    @button_color ||= CP_BLACK
+    active_color = create_color_pair(COLOR_BLACK, COLOR_MAGENTA)
+    #active_color = create_color_pair(COLOR_MAGENTA, COLOR_BLACK)
+    active_col = bcol
+    buttons.each_with_index do |button, ix|
+      button_attr  = NORMAL
+      button_color = @button_color
+      _button = "[ #{button} ]"
+      if ix == active_index
+        button_attr = BOLD
+        button_color = active_color
+        active_col = bcol
+        _button = "> #{button} <"
+      end
+      win.printstring brow, bcol, _button, button_color, button_attr
+      bcol += 10
+    end
+    FFI::NCurses.wmove(win.pointer, brow, active_col+2)
   end
 
   # convenience func to get int value of a key {{{
@@ -95,10 +122,24 @@ class Dialog
   def run
    _create_window unless @window 
     win = @window
+    buttoncount = @buttons.count
+    buttonindex = 0
     begin
       while (ch = win.getkey) != FFI::NCurses::KEY_RETURN
         begin
           break if ch == 32 or key(?q) == ch
+          # go to next button if right or down or TAB pressed
+          if ch == FFI::NCurses::KEY_TAB or ch == FFI::NCurses::KEY_RIGHT or FFI::NCurses::KEY_DOWN
+            buttonindex += 1
+          elsif ch == FFI::NCurses::KEY_LEFT or FFI::NCurses::KEY_UP
+            buttonindex -= 1
+          else
+            # should check against first char of buttons TODO
+            #puts "Don't know #{ch}"
+          end
+          buttonindex = 0 if buttonindex > buttoncount-1
+          buttonindex = buttoncount-1 if buttonindex < 0
+          paint_buttons win, @buttons, buttonindex
         rescue => e
           puts e
           puts e.backtrace.join("\n")
@@ -109,7 +150,7 @@ class Dialog
       win.destroy
     end
     #FFI::NCurses.endwin # don't think this should be here if popped up by another window
-    return ch
+    return buttonindex
   end
 
   # create a centered window. # {{{
@@ -150,7 +191,7 @@ if __FILE__ == $0
   ch = nil
   begin
     init_curses
-    m = Dialog.new text: ARGV[0], title: ARGV[1]||"Alert"
+    m = Dialog.new text: ARGV[0], title: ARGV[1]||"Alert", buttons: ["Yes", "No"]
     ch = m.run
   ensure
     FFI::NCurses.endwin 
