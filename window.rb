@@ -10,6 +10,8 @@ COLOR_WHITE = FFI::NCurses::WHITE
 COLOR_BLUE = FFI::NCurses::BLUE
 COLOR_RED = FFI::NCurses::RED
 COLOR_GREEN = FFI::NCurses::GREEN
+COLOR_CYAN = FFI::NCurses::CYAN
+COLOR_MAGENTA = FFI::NCurses::MAGENTA
 
 def init_curses
   FFI::NCurses.initscr
