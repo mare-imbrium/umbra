@@ -8,7 +8,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-27 - 12:09
 #      License: MIT
-#  Last update: 2018-03-28 13:05
+#  Last update: 2018-03-30 11:01
 # ----------------------------------------------------------------------------- #
 #  dialog.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -74,9 +74,10 @@ class Dialog
     button = "[ Ok ]"
     brow   = 6
     bcol   = (w-button.size)/2
-    @button_color ||= create_color_pair(COLOR_WHITE, COLOR_BLUE)
+    @button_color ||= create_color_pair(COLOR_BLACK, COLOR_MAGENTA)
     @button_attr  ||= REVERSE
     win.printstring brow, bcol, button, @button_color, @button_attr
+    FFI::NCurses.mvwhline(win.pointer, brow-1, 3, FFI::NCurses::ACS_HLINE, win.width-6)
     FFI::NCurses.wmove(win.pointer, brow, bcol+2)
     ## ---- button section ---- }}}
     @window = win
