@@ -6,7 +6,7 @@
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-03-29 18:50
+  * Last update:  2018-03-30 09:05
 
   == CHANGES
   == TODO 
@@ -31,7 +31,7 @@ class Pad
     @config = config
     @rows = FFI::NCurses.LINES-1
     @cols = FFI::NCurses.COLS-1
-    @prow = @pcol = 0
+    @prow = @pcol = 0                        # show many cols we are panning
     @startrow = 0
     @startcol = 0
     
@@ -39,26 +39,32 @@ class Pad
     w = config.fetch(:width, 0)
     t = config.fetch(:row, 0)
     l = config.fetch(:col, 0)
+    @color_pair = config.fetch(:color_pair, 14)
+    @attr = config.fetch(:attr, FFI::NCurses::A_BOLD)
     @rows = h unless h == 0
     @cols = w unless w == 0
     @startrow = t unless t == 0
     @startcol = l unless l == 0
     @suppress_border = config[:suppress_border]
+    top = t
+    left = l
+    @height = h
+    @width = w
+    #@pointer, @panel = create_window(h, w, t, l)
+    @pointer, @panel = create_centered_window(h, w, @color_pair, @attr)
+
+    @startrow, @startcol = FFI::NCurses.getbegyx(@pointer)
     unless @suppress_border
       @startrow += 1
       @startcol += 1
       @rows -=3  # 3 is since print_border_only reduces one from width, to check whether this is correct
       @cols -=3
     end
-    @top = t
-    @left = l
-    @height = h
-    @width = w
-    @pointer, @panel = create_window(h, w, t, l)
+    $log.debug "top and left are: #{top}  #{left} "
     #@window.box # 2018-03-28 - 
     FFI::NCurses.box @pointer, 0, 0
     title(config[:title])
-    FFI::NCurses.wbkgd(@pointer, FFI::NCurses.COLOR_PAIR(0));
+    FFI::NCurses.wbkgd(@pointer, FFI::NCurses.COLOR_PAIR(@color_pair) | @attr);
     FFI::NCurses.curs_set 0                  # cursor invisible
     if config[:filename]
       self.filename=(config[:filename])
@@ -70,6 +76,15 @@ class Pad
   # However, some methods do require windows width and ht etc
   def create_window h, w, t, l
     pointer = FFI::NCurses.newwin(h, w, t, l)
+    panel = FFI::NCurses.new_panel(pointer)
+    FFI::NCurses.keypad(pointer, true)
+    return pointer, panel
+  end
+  def create_centered_window height, width, color_pair=14, attr=FFI::NCurses::A_BOLD
+    row = ((FFI::NCurses.LINES-height)/2).floor
+    col = ((FFI::NCurses.COLS-width)/2).floor
+    pointer = FFI::NCurses.newwin(height, width, row, col)
+    FFI::NCurses.wbkgd(pointer, FFI::NCurses.COLOR_PAIR(color_pair) | attr);
     panel = FFI::NCurses.new_panel(pointer)
     FFI::NCurses.keypad(pointer, true)
     return pointer, panel
@@ -103,12 +118,20 @@ class Pad
     destroy_pad
     @content_rows, @content_cols = content_dimensions(content)
     pad = FFI::NCurses.newpad(@content_rows, @content_cols)
+    FFI::NCurses.wbkgd(pad, FFI::NCurses.COLOR_PAIR(@color_pair) | @attr);
     FFI::NCurses.keypad(pad, true);         # function and arrow keys
 
     FFI::NCurses.update_panels
+    cp = @color_pair
+    #@attr = FFI::NCurses::A_BOLD
+    FFI::NCurses.wattron(pad, FFI::NCurses.COLOR_PAIR(cp) | @attr)
+    # WRITE
+    filler = " "*@content_cols
     content.each_index { |ix|
+      #FFI::NCurses.mvwaddstr(pad,ix, 0, filler)
       FFI::NCurses.mvwaddstr(pad,ix, 0, content[ix])
     }
+    FFI::NCurses.wattroff(pad, FFI::NCurses.COLOR_PAIR(cp) | @attr)
     return pad
   end
 
@@ -157,7 +180,8 @@ class Pad
   private
   def handle_keys
     @height = FFI::NCurses.LINES-1 if @height == 0
-    ht = @height 
+    ht = @rows 
+    scroll_lines = @height/2
     buttonindex = catch(:close) do 
       maxrow = @content_rows - @rows
       maxcol = @content_cols - @cols 
@@ -178,8 +202,12 @@ class Pad
           when 32, 338   # Page Down abd Page Up as per iTerm2
             @prow += 10
           when key(?\C-d)
-            @prow += ht
+            @prow += scroll_lines
           when key(?\C-b)
+            @prow -= scroll_lines
+          when key(?\C-f)
+            @prow += ht
+          when key(?\C-u)
             @prow -= ht
           when 339
             @prow -= 10
@@ -258,6 +286,7 @@ if __FILE__ == $PROGRAM_NAME
     FFI::NCurses.init_pair(5,  FFI::NCurses::MAGENTA,  -1)
     FFI::NCurses.init_pair(6,  FFI::NCurses::CYAN,    -1)
     FFI::NCurses.init_pair(7,  FFI::NCurses::WHITE,    -1)
+    FFI::NCurses.init_pair(14,  FFI::NCurses::WHITE,    FFI::NCurses::CYAN)
   end
 
   class Integer
@@ -282,7 +311,7 @@ if __FILE__ == $PROGRAM_NAME
   begin
     h = 20
     w = 50
-    p = Pad.new :filename => "pad.rb", :height => FFI::NCurses.LINES-1, :width => w, :row => 0, :col => 0, title: "pad.rb"
+    p = Pad.new :filename => "pad.rb", :height => FFI::NCurses.LINES-1, :width => w, :row => 0, :col => 0, title: "pad.rb", color_pair: 14, attr: FFI::NCurses::A_BOLD
     p.run
   ensure
     FFI::NCurses.endwin
