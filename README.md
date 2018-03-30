@@ -1,9 +1,18 @@
 # Umbra
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/umbra`. To experiment with that code, run `bin/console` for an interactive prompt.
+stripped version of canis (ncurses ruby)
 
-TODO: Delete this and the text above, and describe your gem
+ - Minimal functionality
+ - Very close to ncurses, should not try to wrap everything
+ - load only what you need
+ - not necessarily object oriented, that is not a goal
+ - should be able to use a file or widget from here without having to copy too much
+ - should be able to understand one file without having to understand entire library
+ - should be easy for others to change as per their needs, or copy parts.
+ - 
 
+
+Currently, not looking at ALT keys, this may change in the future. Only single and control keys and function keys trapped 
 ## Installation
 
 Add this line to your application's Gemfile:
