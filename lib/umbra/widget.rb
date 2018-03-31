@@ -3,7 +3,8 @@
 # extend this, if it wants to be repainted or wants focus. Otherwise.
 # form will be unaware of it.
 # 2018-03-08 - 
-#require 'umbra/form'
+#require 'umbra/form'    # for EventHandler !!!
+require 'umbra/eventhandler'    # for register_events and fire_handler etc
 
 class FieldValidationException < RuntimeError
 end
@@ -17,7 +18,7 @@ class Widget
   attr_accessor :highlight_color_pair
   attr_accessor :highlight_attr
 
-  # NOTE: 2018-03-04 - user will have to call repaint or somthing like that if he changes color or coordinates.
+  # NOTE: 2018-03-04 - user will have to call repaint_required if he changes color or coordinates.
   attr_accessor  :row, :col                   # location of object
   #attr_writer :color, :bgcolor               # normal foreground and background 2018-03-08 - now color_pair
   # moved to a method which calculates color 2011-11-12 
