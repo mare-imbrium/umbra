@@ -6,7 +6,7 @@
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-03-30 09:05
+  * Last update:  2018-03-31 15:55
 
   == CHANGES
   == TODO 
@@ -289,12 +289,6 @@ if __FILE__ == $PROGRAM_NAME
     FFI::NCurses.init_pair(14,  FFI::NCurses::WHITE,    FFI::NCurses::CYAN)
   end
 
-  class Integer
-    def ifzero v
-      return self if self != 0
-      return v
-    end
-  end
 
   FFI::NCurses.initscr
   FFI::NCurses.curs_set 1
@@ -309,9 +303,10 @@ if __FILE__ == $PROGRAM_NAME
 
   startup
   begin
+    file = ARGV[0] || $0
     h = 20
     w = 50
-    p = Pad.new :filename => "pad.rb", :height => FFI::NCurses.LINES-1, :width => w, :row => 0, :col => 0, title: "pad.rb", color_pair: 14, attr: FFI::NCurses::A_BOLD
+    p = Pad.new :filename => "#{file}", :height => FFI::NCurses.LINES-1, :width => w, :row => 0, :col => 0, title: "pad.rb", color_pair: 14, attr: FFI::NCurses::A_BOLD
     p.run
   ensure
     FFI::NCurses.endwin
