@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-03-30 14:57
+#  Last update: 2018-03-31 14:37
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -15,7 +15,7 @@
 ## CHANGELOG
 #
 #  ----------------------------------------
-require 'umbra/widget.rb'
+require 'umbra/widget'
 class Textbox < Widget 
   attr_reader :list                   # list containing data 
   attr_accessor :file_name            # filename passed in for reading
