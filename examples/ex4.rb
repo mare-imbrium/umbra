@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # example showing listbox
 # 2018-03-19 -
-require 'umbra/window'
+require 'umbra'
 require 'umbra/label'
 require 'umbra/listbox'
 require 'umbra/togglebutton'
