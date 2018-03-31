@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # example showing only labels and fields a window
 # 2018-03-10 
-require 'umbra/window'
+require 'umbra'
 require 'umbra/label'
 require 'umbra/field'
 
