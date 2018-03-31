@@ -5,13 +5,13 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-03-22 23:15
+#  Last update: 2018-03-31 14:36
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
 #  - mnemonics with highlighting
 #  - default button
-#
+require 'umbra/widget'
 #  ----------------
   class Button < Widget 
     attr_accessor :surround_chars   # characters to use to surround the button, def is square brackets
