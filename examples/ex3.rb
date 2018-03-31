@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # example showing labels and fields and buttons
 # 2018-03-11 
-require 'umbra/window'
+require 'umbra'
 require 'umbra/label'
 require 'umbra/field'
 require 'umbra/button'
