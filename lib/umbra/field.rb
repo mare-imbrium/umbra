@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-03-24 14:38
+#  Last update: 2018-03-31 16:14
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -50,6 +50,7 @@ end # }}}
   #
   # Field introduces an event :CHANGE which is fired for each character deleted or inserted
   #  
+  module Umbra
   class Field < Widget 
     attr_accessor :maxlen             # maximum length allowed into field
     attr_reader :buffer              # actual buffer being used for storage
@@ -542,3 +543,4 @@ end # }}}
     alias :default= :text=
   # ADD HERE FIELD
   end # }}}
+  end # module
