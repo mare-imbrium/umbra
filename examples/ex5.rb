@@ -23,6 +23,7 @@ def statusline win, str, column = 1
   win.printstring( FFI::NCurses.LINES-2, column, str, 6, REVERSE)
 end
 begin
+  include Umbra
   init_curses
   startup
   #win = Window.new
@@ -59,7 +60,7 @@ begin
       end
       lb.repaint_required true
     end
-    lb.bind(:CURSOR_MOVE) {|arr|
+    lb.bind_event(:CURSOR_MOVE) {|arr|
       col_offset , current_index, curpos,  pcol = arr
       blen = lb.current_row().size
       statusline(win, "offset: #{col_offset} , curpos: #{curpos} , currind: #{current_index} , pcol #{pcol}, len:#{blen}.....", 20)
