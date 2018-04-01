@@ -9,12 +9,12 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-27 - 12:09
 #      License: MIT
-#  Last update: 2018-03-30 14:49
+#  Last update: 2018-04-01 09:17
 # ----------------------------------------------------------------------------- #
 #  dialog.rb  Copyright (C) 2012-2018 j kepler
 #
-#require './window.rb'
 require 'umbra/window'
+module Umbra
 
 # A simple dialog box that only displays a line of text, centered.
 # It can take an array of button labels (just strings) and display them, and return the index
@@ -199,3 +199,4 @@ if __FILE__ == $0
   end
   puts "got key: #{ch}"
 end
+end # module
