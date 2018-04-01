@@ -5,11 +5,12 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-03-31 14:36
+#  Last update: 2018-03-31 16:13
 # ----------------------------------------------------------------------------- #
 #  label.rb  Copyright (C) 2018-2020 j kepler
 #
 require 'umbra/widget'
+module Umbra
 class Label < Widget 
 
   # justify required a display length, esp if center.
@@ -103,3 +104,4 @@ class Label < Widget
   end
   # ADD HERE LABEL
 end # }}}
+end # module
