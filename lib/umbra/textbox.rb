@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-03-31 14:37
+#  Last update: 2018-03-31 16:17
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -16,6 +16,7 @@
 #
 #  ----------------------------------------
 require 'umbra/widget'
+module Umbra
 class Textbox < Widget 
   attr_reader :list                   # list containing data 
   attr_accessor :file_name            # filename passed in for reading
@@ -414,3 +415,4 @@ class Textbox < Widget
     FFI::NCurses.wattroff(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
   end
 end 
+end # module
