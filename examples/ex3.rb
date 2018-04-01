@@ -24,6 +24,7 @@ def statusline win, str, col = 1
   win.printstring( FFI::NCurses.LINES-2, col, str, 6, REVERSE)
 end
 begin
+  include Umbra
   init_curses
   startup
   #win = Window.new
