@@ -34,12 +34,13 @@ def statusline win, str, col = 0
   win.printstring( FFI::NCurses.LINES-1, col, str, 10)
 end
 begin
+  include Umbra
   init_curses
   startup
   #FFI::NCurses.init_pair(12,  COLOR_WHITE, FFI::NCurses::RED)
   win = Window.new
   statusline(win, " "*(win.width-0), 0)
-  statusline(win, "Press q to quit #{win.height}:#{win.width}", 20)
+  statusline(win, "Press C-q to quit #{win.height}:#{win.width}", 20)
   title = Label.new( :text => "Demo of Fields", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
                     :justify => :center, :color_pair => CP_BLACK)
 
@@ -82,7 +83,7 @@ begin
   #fhash["mobile"].type = :integer
   fhash["mobile"].chars_allowed = /[\d\-]/
   fhash["mobile"].maxlen = 10
-  fhash["mobile"].bind(:CHANGE) do |f|
+  fhash["mobile"].bind_event(:CHANGE) do |f|
     message_label.text = "#{f.getvalue.size()} chars entered"
     statusline(win, "#{f.getvalue.size()} chars entered")
     message_label.repaint_required
