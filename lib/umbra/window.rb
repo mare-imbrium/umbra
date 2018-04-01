@@ -1,6 +1,7 @@
 require 'ffi-ncurses'
 require 'ffi-ncurses/widechars'
 
+module Umbra
 BOLD = FFI::NCurses::A_BOLD
 REVERSE = FFI::NCurses::A_REVERSE
 UNDERLINE = FFI::NCurses::A_UNDERLINE
@@ -213,3 +214,4 @@ class Window
   end
 
 end # window 
+end # module
