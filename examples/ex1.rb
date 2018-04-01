@@ -20,6 +20,7 @@ def statusline win, str, col = 0
   win.printstring( FFI::NCurses.LINES-1, col, str, 10)
 end
 begin
+  include Umbra
   init_curses
   startup
   win = Window.new
