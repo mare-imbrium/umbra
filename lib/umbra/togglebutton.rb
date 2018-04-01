@@ -6,11 +6,12 @@ require 'umbra/button'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-03-17 - 22:50
 #      License: MIT
-#  Last update: 2018-03-30 14:58
+#  Last update: 2018-03-31 16:16
 # ----------------------------------------------------------------------------- #
 #  togglebutton.rb Copyright (C) 2012-2018 j kepler
 #
 #
+module Umbra
   ##
   # an event fired when an item that can be selected is toggled/selected
   class ItemEvent  # {{{
@@ -130,3 +131,4 @@ class ToggleButton < Button
     end
   end
 end # class 
+end # module
