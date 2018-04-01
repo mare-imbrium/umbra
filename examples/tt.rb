@@ -6,7 +6,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-03-30 15:52
+#  Last update: 2018-03-31 16:17
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
@@ -43,6 +43,7 @@ $hidden = nil
 $long_listing = false
 $patt = nil
 _LINES = FFI::NCurses.LINES-1
+include Umbra
 def create_footer_window h = 2 , w = FFI::NCurses.COLS, t = FFI::NCurses.LINES-2, l = 0
   ewin = Window.new(h, w , t, l)
 end
