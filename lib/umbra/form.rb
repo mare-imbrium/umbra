@@ -8,6 +8,7 @@
 # has bound the key via +bind_key+.    
 # NOTE : 2018-03-08 - now using @focusables instead of @widgets in traversal.
 #        active_index is now index into focusables.
+module Umbra
 class Form 
   # array of widgets, and those that can be traversed
   attr_reader :widgets, :focusables
@@ -312,7 +313,7 @@ class Form
 
   def process_key keycode, object
     return _process_key keycode, object, @window
-  end
+  end # }}}
 
   #
   # NOTE: These mappings will only trigger if the current field
@@ -439,4 +440,4 @@ class Form
   ## ADD HERE FORM
 end 
 
-
+end # module
