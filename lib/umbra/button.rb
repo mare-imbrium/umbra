@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-03-31 14:36
+#  Last update: 2018-04-01 09:36
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -13,6 +13,7 @@
 #  - default button
 require 'umbra/widget'
 #  ----------------
+module Umbra
   class Button < Widget 
     attr_accessor :surround_chars   # characters to use to surround the button, def is square brackets
     # char to be underlined, and bound to Alt-char
@@ -99,7 +100,7 @@ require 'umbra/widget'
     ## command of button (invoked on press, hotkey, space)
     # added args 2008-12-20 19:22 
     def command *args, &block
-      bind :PRESS, *args, &block
+      bind_event :PRESS, *args, &block
     end
     ## fires PRESS event of button
     def fire
@@ -132,3 +133,4 @@ require 'umbra/widget'
       end
     end
   end #BUTTON # }}}
+end # module
