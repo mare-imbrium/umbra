@@ -6,6 +6,7 @@
 #require 'umbra/form'    # for EventHandler !!!
 require 'umbra/eventhandler'    # for register_events and fire_handler etc
 
+module Umbra
 class FieldValidationException < RuntimeError
 end
 class Widget   
@@ -316,9 +317,9 @@ class Widget
   # 2018-03-08 - NOT_SURE 
   def command *args, &block
     if event? :PRESS
-      bind :PRESS, *args, &block
+      bind_event :PRESS, *args, &block
     else
-      bind :CHANGED, *args, &block
+      bind_event :CHANGED, *args, &block
     end
   end
   #
@@ -345,3 +346,4 @@ class Widget
     end
   end
 end #  }}}
+end # module
