@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-03-31 14:37
+#  Last update: 2018-03-31 16:16
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -13,6 +13,7 @@ require 'umbra/widget'
 #  events
 #  insert/delete a row
 #  ----------------
+module Umbra
 class Listbox < Widget 
   attr_reader :list  # list containing data 
   attr_accessor :selection_key  # key used to select a row
@@ -210,3 +211,4 @@ class Listbox < Widget
     FFI::NCurses.wattroff(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
   end
 end 
+end # module
