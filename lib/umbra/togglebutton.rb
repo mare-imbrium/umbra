@@ -6,7 +6,7 @@ require 'umbra/button'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-03-17 - 22:50
 #      License: MIT
-#  Last update: 2018-03-31 16:16
+#  Last update: 2018-04-02 18:11
 # ----------------------------------------------------------------------------- #
 #  togglebutton.rb Copyright (C) 2012-2018 j kepler
 #
@@ -41,7 +41,7 @@ module Umbra
     end
   end # }}}
 # A button that may be switched off an on. 
-# To be extended by RadioButton and checkbox.
+# Extended by RadioButton and checkbox.
 # WARNING, pls do not override +text+ otherwise checkboxes etc will stop functioning.
 # TODO: add editable here nd prevent toggling if not so.
 class ToggleButton < Button 
@@ -51,16 +51,19 @@ class ToggleButton < Button
   attr_accessor :value
   # characters to use for surround, array, default square brackets
   attr_accessor :surround_chars 
-  attr_accessor :variable    # value linked to this variable which is a boolean
+  # 2018-04-02 - removing variable
+  #attr_accessor :variable    # value linked to this variable which is a boolean
   # background to use when selected, if not set then default
-  attr_accessor :selected_bgcolor 
-  attr_accessor :selected_color 
+  # 2018-04-02 - unused so commenting off. color_pair is not used here or in checkbox
+  #attr_accessor :selected_bgcolor
+  #attr_accessor :selected_color 
   attr_accessor :selected_color_pair
 
   def initialize config={}, &block
     super
 
-    @value ||= (@variable.nil? ? false : @variable.get_value(@name)==true)
+    #@value ||= (@variable.nil? ? false : @variable.get_value(@name)==true)
+    # TODO may need to do this when this is added to button_group 
   end
   def getvalue
     @value ? @onvalue : @offvalue
@@ -122,6 +125,7 @@ class ToggleButton < Button
   # user may programmatically want to check or uncheck
   def checked tf
     @value = tf
+=begin
     if @variable
       if @value 
         @variable.set_value((@onvalue || 1), @name)
@@ -129,6 +133,7 @@ class ToggleButton < Button
         @variable.set_value((@offvalue || 0), @name)
       end
     end
+=end
   end
 end # class 
 end # module
