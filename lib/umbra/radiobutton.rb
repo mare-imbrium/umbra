@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-02 - 10:37
 #      License: MIT
-#  Last update: 2018-04-02 23:32
+#  Last update: 2018-04-03 14:22
 # ----------------------------------------------------------------------------- #
 #  radiobutton.rb  Copyright (C) 2012-2018 j kepler
 
@@ -57,8 +57,7 @@ module Umbra
     end
 
     ##
-    # ideally this should not be used. But implemented for completeness.
-    # it is recommended to toggle some other radio button than to uncheck this.
+    # If user has pressed on this then set the group to this button.
     def checked tf
 
       if @button_group.value == value
