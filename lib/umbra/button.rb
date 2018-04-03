@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-04-01 09:36
+#  Last update: 2018-04-03 18:25
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -74,6 +74,15 @@ module Umbra
         #$log.debug("button repaint :#{self} r:#{r} c:#{c} col:#{_color} v: #{value} ul #{@underline} mnem #{@mnemonic} ")
         len = @width || value.length
         @graphic.printstring r, c, "%-*s" % [len, value], _color, _attr
+        if @mnemonic
+          index = value.index(@mnemonic) || value.index(@mnemonic.swapcase)
+          if index
+            y = c + index
+            x = r
+            _color ||= 1
+            @graphic.mvchgat(x, y, max=1, FFI::NCurses::A_BOLD|UNDERLINE, FFI::NCurses.COLOR_PAIR(_color), nil)
+          end
+        end
 =begin
 #       @form.window.mvchgat(y=r, x=c, max=len, Ncurses::A_NORMAL, bgcolor, nil)
         # in toggle buttons the underline can change as the text toggles
