@@ -88,8 +88,8 @@ begin
   end
   form.add_widget togglebutton 
 
-  check = Checkbox.new text: "No Frames", value: true, row: row+1, col: col
-  check1 = Checkbox.new text: "Use https", value: false, row: row+2, col: col
+  check = Checkbox.new text: "No Frames", value: true, row: row+1, col: col, mnemonic: "N"
+  check1 = Checkbox.new text: "Use https", value: false, row: row+2, col: col, mnemonic: "U"
   row += 2
   form.add_widget [check, check1]
   [ check, check1 ].each do |cb|
@@ -109,8 +109,8 @@ begin
     message_label.repaint_required = true
   end
 
-  ok_butt = Button.new( :name => 'ok', :text => 'Ok', :row => row+2, :col => col, :width => 10 , :color_pair => 1)
-  cancel_butt = Button.new( :name => 'cancel', :text => 'Cancel', :row => row+2, :col => col + 20, :width => 10 , :color_pair => 1)
+  ok_butt = Button.new( :name => 'ok', :text => 'Ok', :row => row+2, :col => col, :width => 10 , :color_pair => 0, :mnemonic => 'O')
+  cancel_butt = Button.new( :name => 'cancel', :text => 'Cancel', :row => row+2, :col => col + 20, :width => 10 , :color_pair => 0, mnemonic: 'C')
   form.add_widget ok_butt
   form.add_widget cancel_butt
   FFI::NCurses.mvwhline(win.pointer, ok_butt.row+1, 1, FFI::NCurses::ACS_HLINE, win.width-2)
