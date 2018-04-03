@@ -6,7 +6,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-03-31 16:17
+#  Last update: 2018-04-03 18:22
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
@@ -256,6 +256,7 @@ end
   end
   def statusline win, str
     win.printstring(win.height-1, 2, str, 1) # white on default
+    #win.mvchgat(win.height-1,2, 1, FFI::NCurses::A_REVERSE, 0, nil)
   end
   def alert str 
     win = create_footer_window
