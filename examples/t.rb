@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 #
-require 'umbra/window'
+require 'umbra'
 require 'umbra/form'
 
 begin
+  include Umbra
   init_curses
   txt = "Press cursor keys to move window"
   win = Window.new
