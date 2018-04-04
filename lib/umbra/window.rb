@@ -159,13 +159,96 @@ class Window
   # with a timeout. If we get a key, then resolve. Otherwise, it is just ESC
   # @return [Integer] ascii code of key
   def getch
-    ch = FFI::NCurses.wgetch(@pointer)
+    c = FFI::NCurses.wgetch(@pointer)
+    if c == 27
+      
+      # don't wait for another key
+      FFI::NCurses.nodelay(@pointer, true)
+      k = FFI::NCurses.wgetch(@pointer)
+      if k == -1
+        # wait for key
+        FFI::NCurses.nodelay(@pointer, false)
+        return 27
+      else
+        # wait for next key
+        FFI::NCurses.nodelay(@pointer, false)
+        # this works for all alt-keys but it messes with shift-function keys
+        # shift-function keys start with M-[ (91) and then have more keys
+        return k + 128
+      end
+    end
+    FFI::NCurses.nodelay(@pointer, false)
+    c
   rescue SystemExit, Interrupt 
     3      # is C-c
   rescue StandardError
     -1     # is C-c
   end
-  alias :getkey :getch
+
+  # this works fine for basic, control and function keys
+  def OLDgetch
+    c = FFI::NCurses.wgetch(@pointer)
+  rescue SystemExit, Interrupt 
+    3      # is C-c
+  rescue StandardError
+    -1     # is C-c
+  end
+  alias :getkey :OLDgetch
+
+  # check for alt keys and shift-function keys which return multiple characters after ESC.
+  # this is not working anylonger
+  def getchar
+    c = nil
+    buff = nil
+    while true
+      c = self.getch
+      $log.debug "184  GETCH  c=#{c}"
+      break if c != -1
+    end
+
+        $log.debug "185  GETCHAR  c=#{c}"
+    cn = c
+    #$key_int = c
+    # handle control codes 0 to 127 but not escape
+    if cn >= 0 && cn < 128 && cn != 27
+      return c
+    end
+    # process escape codes
+    if c == 27
+      buff = c.chr
+      # process till -1 or another ESC received
+      loop do
+        k = self.getch
+        $log.debug "197  GETCHAR buff=#{buff}, k=#{k}"
+        if k == 27
+          if buff = 27.chr
+            return 2727 
+          end
+          $log.debug "195  GETCHAR #{buff}, #{k}"
+          # ignore other cases, we need to ungetch escape here FIXME
+          FFI::NCurses.ungetch(k)
+        elsif k > -1
+          if k > 255
+            # this is the usual ALT-KEY combination
+            $log.debug "201  GETCHAR buff=#{buff}, k=#{k}"
+            return k + 128
+          else
+            $log.debug "204  GETCHAR buff=#{buff}, k=#{k}"
+            return k + 128
+          end
+          #buff +=  k.chr
+        else
+          # -1 caught
+          $log.warn "9999: No mapping defined for KEY COMBINATION: k=#{k} buff=#{buff}." if $log
+          return 9999
+        end
+      end
+    end # if c == 27
+    return c if c > 127
+    return c if c 
+    $log.warn "7777: No mapping defined for KEY COMBINATION: c=#{c} buff=#{buff}." if $log
+    return 7777
+  end 
 
   # refresh the window (wrapper)
   # To be called after printing on a window.
