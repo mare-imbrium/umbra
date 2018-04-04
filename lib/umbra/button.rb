@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-04-03 18:25
+#  Last update: 2018-04-04 09:39
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -69,40 +69,22 @@ module Umbra
         elsif selected? # only for certain buttons lie toggle and radio
           _color = @selected_color_pair || @color_pair
         end
-        $log.debug "XXX: button #{text}   STATE is #{@state} color #{_color} , attr:#{_attr}"
+        #$log.debug "XXX: button #{text}   STATE is #{@state} color #{_color} , attr:#{_attr}"
         value = getvalue_for_paint
         #$log.debug("button repaint :#{self} r:#{r} c:#{c} col:#{_color} v: #{value} ul #{@underline} mnem #{@mnemonic} ")
         len = @width || value.length
         @graphic.printstring r, c, "%-*s" % [len, value], _color, _attr
+
+        # if a mnemonic character has been defined, then locate the index and highlight it.
+        # TODO a mnemonic can also be defined in the text with an ampersand.
         if @mnemonic
           index = value.index(@mnemonic) || value.index(@mnemonic.swapcase)
           if index
             y = c + index
             x = r
-            _color ||= 1
-            @graphic.mvchgat(x, y, max=1, FFI::NCurses::A_BOLD|UNDERLINE, FFI::NCurses.COLOR_PAIR(_color), nil)
+            @graphic.mvchgat(x, y, max=1, FFI::NCurses::A_BOLD|UNDERLINE, FFI::NCurses.COLOR_PAIR(_color || 1), nil)
           end
         end
-=begin
-#       @form.window.mvchgat(y=r, x=c, max=len, Ncurses::A_NORMAL, bgcolor, nil)
-        # in toggle buttons the underline can change as the text toggles
-        if @underline || @mnemonic # {{{ TODO
-          uline = @underline && (@underline + @text_offset) ||  value.index(@mnemonic) || 
-            value.index(@mnemonic.swapcase)
-          # if the char is not found don't print it
-          if uline
-            y=r #-@graphic.top
-            x=c+uline #-@graphic.left
-            #
-            # NOTE: often values go below zero since root windows are defined 
-            # with 0 w and h, and then i might use that value for calcaluting
-            #
-            $log.error "XXX button underline location error #{x} , #{y} " if x < 0 or c < 0
-            raise " #{r} #{c}  #{uline} button underline location error x:#{x} , y:#{y}. left #{@graphic.left} top:#{@graphic.top} " if x < 0 or c < 0
-            @graphic.mvchgat(y, x, max=1, Ncurses::A_BOLD|Ncurses::A_UNDERLINE, _color, nil)
-          end
-        end # }}}
-=end
         @repaint_required = false
     end
 
