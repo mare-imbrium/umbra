@@ -3,9 +3,22 @@
 require 'umbra'
 require 'umbra/form'
 
+def startup
+  require 'logger'
+  require 'date'
+
+    path = File.join(ENV["LOGDIR"] || "./" ,"v.log")
+    file   = File.open(path, File::WRONLY|File::TRUNC|File::CREAT) 
+    $log = Logger.new(path)
+    $log.level = Logger::DEBUG
+    today = Date.today
+    $log.info "Started up on #{today}"
+    FFI::NCurses.init_pair(10,  FFI::NCurses::BLACK,   FFI::NCurses::GREEN) # statusline
+end
 begin
   include Umbra
   init_curses
+  startup
   txt = "Demo of keys. Press various keys to see what value comes"
   win = Window.new
   win.printstr txt
@@ -17,7 +30,11 @@ begin
 
   ch = 0
   y = x = 1
-  while (ch = win.getkey) != FFI::NCurses::KEY_CTRL_Q
+  while (ch = win.getch) != FFI::NCurses::KEY_CTRL_Q
+    if ch == 2727 or ch == -1
+      $log.debug "t.rb got #{ch}"
+      break
+    end
     rv = nil
     #rv = win.mvwin(y, x)
   
