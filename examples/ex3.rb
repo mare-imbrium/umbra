@@ -136,7 +136,7 @@ begin
   win.wrefresh
 
   y = x = 1
-  while (ch = win.getkey) != FFI::NCurses::KEY_CTRL_Q
+  while (ch = win.getch) != FFI::NCurses::KEY_CTRL_Q
     begin
       form.handle_key ch
     rescue => e
