@@ -38,7 +38,12 @@ begin
     rv = nil
     #rv = win.mvwin(y, x)
   
-    win.printstring y, x, "#{ch.to_s}:#{FFI::NCurses::keyname(ch)}"
+    case ch
+    when Integer
+      win.printstring y, x, "#{ch.to_s}:#{FFI::NCurses::keyname(ch)}"
+    when String
+      win.printstring y, x, "#{ch.to_s}"
+    end
     y += 1
     # start a new column if we exceed last line
     if y >= FFI::NCurses.LINES-1
