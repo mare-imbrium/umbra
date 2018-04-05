@@ -1,3 +1,5 @@
+require 'umbra/eventhandler'         # for register_events and fire_handler etc
+require 'umbra/keymappinghandler'    # for bind_key and process_key
 ##
 # Manages the controls/widgets on a screen. 
 # Manages traversal, rendering and events of all widgets that are associated with it
@@ -26,6 +28,8 @@ class Form
   # name given to form for debugging
   attr_accessor :name 
 
+  include EventHandler
+  include KeyMappingHandler
   def initialize win, &block
     @window = win
     @widgets = []
@@ -75,6 +79,17 @@ class Form
     # creation of this array should be a separate method, so if property is changed after form creation
     # then user can call this method and have it reflect. FIXME
     @focusables = @widgets.select { |w| w.focusable }
+    @focusables.each do |w|
+      if w.respond_to? :mnemonic
+        if w.mnemonic
+          ch = w.mnemonic.downcase()[0].ord
+          # meta key 
+          mch = ?\M-a.getbyte(0) + (ch - ?a.getbyte(0))
+
+          self.bind_key(mch, "hotkey for button #{w} ") { w.fire }
+        end
+      end
+    end
     @active_index = 0 if @focusables.size > 0
     repaint
     self
