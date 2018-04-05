@@ -157,7 +157,7 @@ class Window
   #
   # NOTE: For ALT keys we need to check for 27/Esc and if so, then do another read
   # with a timeout. If we get a key, then resolve. Otherwise, it is just ESC
-  # @return [Integer] ascii code of key
+  # @return [Integer] ascii code of key. For undefined keys, returns a String representation.
   def getch
     c = FFI::NCurses.wgetch(@pointer)
     if c == 27
@@ -170,11 +170,24 @@ class Window
         FFI::NCurses.nodelay(@pointer, false)
         return 27
       else
+        buf = ""
+        loop do
+          n = FFI::NCurses.wgetch(@pointer)
+          break if n == -1
+          buf += n.chr
+        end
         # wait for next key
         FFI::NCurses.nodelay(@pointer, false)
         # this works for all alt-keys but it messes with shift-function keys
         # shift-function keys start with M-[ (91) and then have more keys
-        return k + 128
+        if buf == ""
+          return k + 128
+        end
+        #$log.debug "  getch buf is #{k.chr}#{buf} "
+        # returning a string key here which is for Shift-Function keys or other undefined keys.
+        key = 27.chr + k.chr + buf
+        return key
+
       end
     end
     FFI::NCurses.nodelay(@pointer, false)
@@ -198,6 +211,7 @@ class Window
   # check for alt keys and shift-function keys which return multiple characters after ESC.
   # this is not working anylonger
   def getchar
+    raise "deprecated getchar"
     c = nil
     buff = nil
     while true
