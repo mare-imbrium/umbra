@@ -1,6 +1,8 @@
 module Umbra
+  # module containing methods to enable widgets and forms to handle events.
+  # Included by form and widget
   module EventHandler 
-    # widgets may register their events prior to calling super {{{
+    # register_events: widgets may register their events prior to calling super {{{
     # This ensures that caller programs don't use wrong event names.
     #
     def register_events eves
@@ -15,7 +17,7 @@ module Umbra
       end
     end # }}}
     ##
-    # bind an event to a block, optional args will also be passed when calling {{{
+    # bind_event: bind an event to a block, optional args will also be passed when calling {{{
     # 2018-04-01 - renamed +bind+ to +bind_event+
     def bind_event event, *xargs, &blk
       #$log.debug "#{self} called EventHandler BIND #{event}, args:#{xargs} "
@@ -36,7 +38,7 @@ module Umbra
     end # }}}
 
     ##
-    # Fire all bindings for given event  {{{
+    # fire_handler: Fire all bindings for given event  {{{
     # e.g. fire_handler :ENTER, self
     # The first parameter passed to the calling block is either self, or some action event
     # The second and beyond are any objects you passed when using `bind` or `command`.
@@ -101,18 +103,12 @@ module Umbra
       end # if
     end # }}}
 
-    # returns boolean depending on whether this widget has registered the given event
+    # event? : returns boolean depending on whether this widget has registered the given event {{{
     def event? eve
       @_events.include? eve
-    end
+    end # }}}
 
-=begin
-  # returns event list for this widget
-  def event_list
-    @_events
-  end
-=end
-
+# ActionEvent # {{{
     # source - as always is the object whose event has been fired
     # id     - event identifier (seems redundant since we bind events often separately.
     # event  - is :PRESS
@@ -131,8 +127,9 @@ module Umbra
       # that received the object and called it's getvalue. It is better to use text.
       # @return text associated with source (label of button)
       def getvalue
+        raise "getvalue in eventhandler. remove if does not happen in 2018"
         source.getvalue
       end
-    end
+    end # }}}
   end # module eventh 
 end # module
