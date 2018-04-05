@@ -4,13 +4,15 @@
 # form will be unaware of it.
 # 2018-03-08 - 
 #require 'umbra/form'    # for EventHandler !!!
-require 'umbra/eventhandler'    # for register_events and fire_handler etc
+require 'umbra/eventhandler'         # for register_events and fire_handler etc
+require 'umbra/keymappinghandler'    # for bind_key and process_key
 
 module Umbra
 class FieldValidationException < RuntimeError
 end
 class Widget   
     include EventHandler
+    include KeyMappingHandler
   # common interface for text related to a field, label, textview, button etc
   attr_accessor :text, :width, :height
 
@@ -177,51 +179,8 @@ class Widget
     #$log.warn " #{@name} empty set_form_col #{c}, curpos #{@curpos}  , #{@col} + #{@col_offset} #{@form} "
     setrowcol nil, c
   end
-  def hide
-    raise "is hide called ? from where? why not just visible"
-    @visible = false
-  end
-  def show
-    raise "is show called ? from where? why not just visible"
-    @visible = true
-  end
-  # is this required can we remove
-  def move row, col
-    raise "is move called ? from where? why "
-    @row = row
-    @col = col
-  end
-=begin
-  ##
-  # moves focus to this field
-  # we must look into running on_leave of previous field
-  def focus
-    # 2018-03-21 - removing methods that call form
-    raise "focus being called. deprecated since it calls form"
-    return if !@focusable
-    if @form.validate_field != -1
-      @form.select_field @id
-    end
-  end
-=end
-  # 2018-03-21 - replaced this with attr_accessor
-=begin
-  # set or unset focusable (boolean). Whether a widget can get keyboard focus.
-  # 
-  # 2018-03-04 - NOT_SURE
-  def focusable(*val)
-    return @focusable if val.empty?
-    oldv = @focusable
-    @focusable = val[0]
 
-    return self if oldv.nil? || @_object_created.nil?
-    # once the form has been painted then any changes will trigger update of focusables.
-    @form.update_focusables if @form
-    # actually i should only set the forms focusable_modified flag rather than call this. FIXME
-    self
-  end
-=end
-
+=begin
   def bind_key keycode, *args, &blk
     #$log.debug " #{@name} bind_key received #{keycode} "
     @_key_map ||= {}
@@ -286,6 +245,7 @@ class Widget
   def process_key keycode, object
     return _process_key keycode, object, @graphic
   end
+=end
   ## 
   # to be added at end of handle_key of widgets so instlalled actions can be checked
   def handle_key(ch)
@@ -324,26 +284,5 @@ class Widget
   end
   #
   ## ADD HERE WIDGET
-  # these is duplicated in form and widget. put in module Utils and include in both
-  def _process_key keycode, object, window
-    return :UNHANDLED if @_key_map.nil?
-    blk = @_key_map[keycode]
-    $log.debug "XXX:  _process key keycode #{keycode} #{blk.class}, #{self.class} "
-    return :UNHANDLED if blk.nil?
-
-    if blk.is_a? Symbol
-      if respond_to? blk
-        return send(blk, *@_key_args[keycode])
-      else
-        ## 2013-03-05 - 19:50 why the hell is there an alert here, nowhere else
-        alert "This ( #{self.class} ) does not respond to #{blk.to_s} [PROCESS-KEY]"
-        # added 2013-03-05 - 19:50 so called can know
-        return :UNHANDLED 
-      end
-    else
-      $log.debug "rwidget BLOCK called _process_key " if $log.debug? 
-      return blk.call object,  *@_key_args[keycode]
-    end
-  end
 end #  }}}
 end # module
