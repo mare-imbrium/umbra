@@ -18,9 +18,9 @@ def startup
     $log.info "listbox demo #{$0} started on #{today}"
     FFI::NCurses.init_pair(10,  FFI::NCurses::BLACK,   FFI::NCurses::GREEN) # statusline
 end
-def statusline win, str, col = 1
+def statusline win, str, column = 1
   # LINES-2 prints on second last line so that box can be seen
-  win.printstring( FFI::NCurses.LINES-2, col, str, 6, REVERSE)
+  win.printstring( FFI::NCurses.LINES-2, column, str, 6, REVERSE)
 end
 begin
   include Umbra
@@ -60,6 +60,12 @@ begin
       end
       lb.repaint_required true
     end
+    # bind the most common event for a listbox which is ENTER_ROW
+    lb.command do |ix|
+      statusline(win, "Sitting on offset #{lb.current_index}, #{ix.first} ")
+    end
+    # bind to another event of listbox
+    lb.bind_event(:LEAVE_ROW) { |ix| statusline(win, "LEFT ROW #{ix.first}", 50) }
     form.add_widget lb
     form.add_widget tb
     form.pack
