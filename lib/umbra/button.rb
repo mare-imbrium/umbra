@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-04-04 09:39
+#  Last update: 2018-04-06 10:07
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -25,7 +25,7 @@ module Umbra
       # hotkey denotes we should bind the key itself not alt-key (for menulinks)
       #@hotkey = config.delete(:hotkey)  2018-03-22 - 
       # 2018-03-18 - FORM_ATTACHED deprecated to keep things simple
-      register_events([:PRESS, :FORM_ATTACHED])
+      register_events([:PRESS])
       @default_chars = ['> ', ' <'] # a default button is painted differently
       super
 
