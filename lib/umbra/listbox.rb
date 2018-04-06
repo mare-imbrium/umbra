@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-06 09:24
+#  Last update: 2018-04-06 11:56
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -24,6 +24,8 @@ class Listbox < Widget
   attr_accessor :unselected_mark             # row unselected character (usually blank)
   attr_accessor :current_mark                # row current character (default is >)
 
+  # index of focussed row, starting 0, index into the data supplied
+  attr_reader :current_index
   def initialize config={}, &block
     @focusable          = true
     @editable           = false
@@ -257,6 +259,9 @@ class Listbox < Widget
     end
   end
 
+  def command *args, &block
+    bind_event :ENTER_ROW, *args, &block
+  end
   def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
     pointer = @graphic.pointer
     FFI::NCurses.wattron(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
