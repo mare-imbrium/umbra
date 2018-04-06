@@ -5,91 +5,100 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-03-31 16:16
+#  Last update: 2018-04-06 09:24
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
-#  keys
-#  events
-#  insert/delete a row
+#  left and right scrolling
+#  currently only do single selection, we may do multiple at a later date.
+#  insert/delete a row ??
 #  ----------------
 module Umbra
 class Listbox < Widget 
-  attr_reader :list  # list containing data 
-  attr_accessor :selection_key  # key used to select a row
-  attr_accessor :selected_index  # row selected, may change to plural
-  attr_accessor :selected_color_pair  # row selected color_pair
-  attr_accessor :selected_attr  # row selected color_pair
-  attr_accessor :selected_mark  # row selected character
-  attr_accessor :unselected_mark  # row unselected character (usually blank)
-  attr_accessor :current_mark  # row current character (default is >)
+  attr_reader   :list                        # list containing data 
+  attr_accessor :selection_key               # key used to select a row
+  attr_accessor :selected_index              # row selected, may change to plural
+  attr_accessor :selected_color_pair         # row selected color_pair
+  attr_accessor :selected_attr               # row selected color_pair
+  attr_accessor :selected_mark               # row selected character
+  attr_accessor :unselected_mark             # row unselected character (usually blank)
+  attr_accessor :current_mark                # row current character (default is >)
 
   def initialize config={}, &block
-    @focusable = true
-    @editable = false
-    @pstart = 0    # which row does printing start from
-    @current_index = 0 # index of row on which cursor is
-    @selected_index = nil # index of row selected
-    @selection_key = 32    # SPACE used to select/deselect
+    @focusable          = true
+    @editable           = false
+    @pstart             = 0                  # which row does printing start from
+    @current_index      = 0                  # index of row on which cursor is
+    @selected_index     = nil                # index of row selected
+    @selection_key      = 32                 # SPACE used to select/deselect
     @selected_color_pair = CP_RED 
-    @selected_attr = REVERSE
-    @to_print_border = true
-    @row_offset = 0
-    @selected_mark    = 'x' # row selected character
-    @unselected_mark  = ' ' # row unselected character (usually blank)
-    @current_mark     = '>' # row current character (default is >)
-    register_events([:LEAVE_ROW, :ENTER_ROW, :LIST_SELECTION_EVENT]) # TODO events
+    @selected_attr      = REVERSE
+    @to_print_border    = true
+    @row_offset         = 0
+    @selected_mark      = 'x'                # row selected character
+    @unselected_mark    = ' '                # row unselected character (usually blank)
+    @current_mark       = '>'                # row current character (default is >)
+    register_events([:LEAVE_ROW, :ENTER_ROW, :LIST_SELECTION_EVENT])
     super
 
     map_keys
-    @row_offset = 2 if @to_print_border
-    @repaint_required = true
+    @int_width  = @width                     # internal width
+    @int_height = @height                    # internal height
+    if @to_print_border
+      @row_offset         = 2 
+      @border_offset      = 1
+      @int_width = @width - 2
+      @int_height = @height - 2
+    end
+    @scroll_lines ||= @int_height/2
+    @page_lines = @int_height
+    @repaint_required   = true
   end
   # set list of data to be displayed.
   # NOTE this can be called again and again, so we need to take care of change in size of data
   # as well as things like current_index and selected_index or indices.
   def list=(alist)
-    @list = alist
-    @repaint_required = true
+    @list               = alist
+    @repaint_required   = true
     @pstart = @current_index = 0
-    @selected_index = nil
+    @selected_index     = nil
   end
   # should a border be printed on the listbox
   def border flag=true
-    @to_print_border = flag
-    @row_offset = 2
-    @row_offset = 0 unless flag
-    @pstart = 0
-    @repaint_required = true
+    @to_print_border    = flag
+    @row_offset         = 2
+    @row_offset         = 0 unless flag
+    @pstart             = 0
+    @repaint_required   = true
   end
 
   def repaint 
     return unless @repaint_required
-    win = @graphic
-    r,c = @row, @col 
-    _attr = @attr || NORMAL
-    _color = @color_pair || CP_WHITE
-    _bordercolor = @border_color_pair || CP_BLUE
-    curpos = 1
-    coffset = 0
-    #width = win.width-1
-    width = @width
-    files = @list
+    win                 = @graphic
+    r,c                 = @row, @col 
+    _attr               = @attr || NORMAL
+    _color              = @color_pair || CP_WHITE
+    _bordercolor        = @border_color_pair || CP_BLUE
+    curpos              = 1
+    coffset             = 0
+    #width              = win.width-1
+    width               = @width
+    files               = @list
     
     #ht = win.height-2
-    ht = @height
-    border_offset = 0
+    ht                  = @height
+    border_offset       = 0
     if @to_print_border
       print_border r, c, ht, width, _bordercolor, _attr
-      border_offset = 1
-      coffset = 1 # same as border offset I think from left
-      ht -= 2
-      width -= 2
-      r += 1
+      border_offset     = 1
+      coffset           = 1 # same as border offset I think from left
+      ht                -= 2
+      width             -= 2
+      r                 += 1
     end
-    cur = @current_index
-    st = pstart = @pstart           # previous start
-    pend = pstart + ht -1  #-border_offset -border_offset           # previous end
+    cur                 = @current_index
+    st                  = pstart = @pstart           # previous start
+    pend = pstart + ht -1                            # previous end
     if cur > pend
       st = (cur -ht) + 1 #+ border_offset + border_offset
     elsif cur < pstart
@@ -103,19 +112,19 @@ class Listbox < Widget
     filler = " "*(width)
     files.each_with_index {|f, y| 
       next if y < st
-      colr = CP_WHITE # white on bg -1
-      mark = @unselected_mark
+      colr              = CP_WHITE # white on bg -1
+      mark              = @unselected_mark
       if y == hl
-        attr = FFI::NCurses::A_REVERSE
-        mark = @current_mark
-        curpos = ctr
+        attr            = FFI::NCurses::A_REVERSE
+        mark            = @current_mark
+        curpos          = ctr
       else
-        attr = FFI::NCurses::A_NORMAL
+        attr            = FFI::NCurses::A_NORMAL
       end
       if y == @selected_index
-        colr = @selected_color_pair
-        attr = @selected_attr
-        mark = @selected_mark
+        colr            = @selected_color_pair
+        attr            = @selected_attr
+        mark            = @selected_mark
       end
       ff = "#{mark} #{f}"
       if ff.size > width
@@ -128,15 +137,9 @@ class Listbox < Widget
       @pstart = st
       break if ctr >= ht #-border_offset
     }
-    # wmove won't work since form does this after repaint
-    #win.wmove( curpos+r , coffset+c) # +1 depends on offset of ctr 
-    #setformrowcol( curpos+r , coffset+c)  # TODO is this the right place. NOPE THIS IS GRABBING CURSOR XXX
-    # 2018-03-21 - commenting off so we don't call form. trying out.
-    #setformrowcol( curpos+r , coffset+c)  if @focussed
     @row_offset = curpos + border_offset
-    @col_offset = coffset # this way form can pick it up
+    @col_offset = coffset
     @repaint_required = false
-    #win.wrefresh
   end
 
   def getvalue
@@ -153,29 +156,85 @@ class Listbox < Widget
 
 
   def map_keys
+    bind_keys([?k,FFI::NCurses::KEY_UP], "Up")         { cursor_up }
+    bind_keys([?j,FFI::NCurses::KEY_DOWN], "Down")     { cursor_down }
+    bind_keys([?l,FFI::NCurses::KEY_RIGHT], "Right")   { cursor_forward }
+    bind_keys([?h,FFI::NCurses::KEY_LEFT], "Left")     { cursor_backward }
+    bind_key(?g, 'goto_start')                         { goto_start }
+    bind_key(?G, 'goto_end')                           { goto_end }
+    bind_key(FFI::NCurses::KEY_CTRL_A, 'cursor_home')  { cursor_home }
+    bind_key(FFI::NCurses::KEY_CTRL_E, 'cursor_end')   { cursor_end }
+    bind_key(FFI::NCurses::KEY_CTRL_F, 'page_forward') { page_forward }
+    bind_key(FFI::NCurses::KEY_CTRL_B, 'page_backward'){ page_backward }
+    bind_key(FFI::NCurses::KEY_CTRL_U, 'scroll_up')    { scroll_up }
+    bind_key(FFI::NCurses::KEY_CTRL_D, 'scroll_down')  { scroll_down }
     return if @keys_mapped
   end
 
+  def on_enter
+    super
+    on_enter_row @current_index
+  end
+  def on_leave
+    super
+    on_leave_row @current_index
+  end
+  # called when object leaves a row and when object is exited.
+  def on_leave_row index
+    fire_handler(:LEAVE_ROW, [index])     # 2018-03-26 - improve this
+  end
+  # called whenever a row entered.
+  # Call when object entered, also. 
+  def on_enter_row index
+    fire_handler(:ENTER_ROW, [@current_index])     # 2018-03-26 - improve this
+  end
+  def cursor_up
+    @current_index -= 1
+  end
+  # go to next row
+  def cursor_down
+    @current_index += 1
+  end
+    # position cursor at start of field
+    def cursor_home
+      @curpos = 0  # UNUSED RIGHT NOW
+      @pcol = 0
+    end
+    # goto end of line. 
+    # This should be consistent with moving the cursor to the end of the row with right arrow
+    def cursor_end
+      # TODO
+    end
+    def cursor_forward
+      # TODO
+    end
+    def cursor_backward
+    end
+    # go to start of file (first line)
+    def goto_start
+      @current_index = 0
+      @pcol = @curpos = 0
+    end
+    # go to end of file (last line)
+    def goto_end
+      @current_index = @list.size-1
+    end
+    def scroll_down
+      @current_index += @scroll_lines
+    end
+    def scroll_up
+      @current_index -= @scroll_lines
+    end
+    def page_backward
+      @current_index -= @page_lines
+    end
+    def page_forward
+      @current_index += @page_lines
+    end
   # listbox key handling
-  # preferably move this to mappings, so caller can bind keys to methods TODO
   def handle_key ch
     old_current_index = @current_index
-    pagecols = @height/2  # fix these to be perhaps half and one of ht
-    spacecols = @height
     case ch
-    when FFI::NCurses::KEY_UP, ?k.getbyte(0)
-      @current_index -=1
-    when FFI::NCurses::KEY_DOWN, ?j.getbyte(0)
-      @current_index +=1
-    when ?g.getbyte(0)
-      @current_index = 0
-    when ?G.getbyte(0)
-      @current_index = @list.size-1
-    when FFI::NCurses::KEY_CTRL_N
-      # why are these paging ones not reflecing immediately ?
-      @current_index += pagecols
-    when FFI::NCurses::KEY_CTRL_P
-      @current_index -= pagecols
     when @selection_key
       @repaint_required = true  
       if @selected_index == @current_index 
@@ -183,17 +242,19 @@ class Listbox < Widget
       else
         @selected_index = @current_index 
       end
-    when FFI::NCurses::KEY_BACKSPACE, 127, FFI::NCurses::KEY_CTRL_B
-      @current_index -= spacecols
-    when FFI::NCurses::KEY_CTRL_D
-      @current_index += spacecols
+      fire_handler :LIST_SELECTION_EVENT, self   # use selected_index to know which one
     else
       ret = super
       return ret
     end
+  ensure
     @current_index = 0 if @current_index < 0
     @current_index = @list.size-1 if @current_index >= @list.size
-    @repaint_required = true  if @current_index != old_current_index
+    if @current_index != old_current_index
+      on_leave_row old_current_index
+      on_enter_row @current_index
+      @repaint_required = true  
+    end
   end
 
   def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
