@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-03-31 16:17
+#  Last update: 2018-04-07 23:29
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -39,7 +39,7 @@ class Textbox < Widget
     @selected_index = nil # index of row selected
     @selection_key = 0    # SPACE used to select/deselect
     @highlight_attr = FFI::NCurses::A_BOLD
-    @to_print_border = true
+    @to_print_border = false
     @border_offset = 0
     @row_offset = 0
     @col_offset = 0
@@ -58,6 +58,9 @@ class Textbox < Widget
 
     map_keys
     # internal width and height
+    @repaint_required = true
+  end
+  def _calculate_dimensions
     @int_width = @width
     @int_height = @height 
     if @to_print_border
@@ -69,7 +72,7 @@ class Textbox < Widget
     end
     @scroll_lines ||= @int_height/2  # fix these to be perhaps half and one of ht
     @page_lines = @int_height
-    @repaint_required = true
+    @calculate_dimensions = true
   end
   # set list of data to be displayed.
   # NOTE this can be called again and again, so we need to take care of change in size of data
@@ -116,6 +119,7 @@ class Textbox < Widget
   end
 
   def repaint 
+    _calculate_dimensions unless @calculate_dimensions
     return unless @repaint_required
     win = @graphic
     r,c = @row, @col 
