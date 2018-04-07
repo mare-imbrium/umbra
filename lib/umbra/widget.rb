@@ -28,7 +28,6 @@ class Widget
   attr_accessor  :color_pair                  # instead of colors give just color_pair
   attr_accessor  :attr                        # attribute bold, normal, reverse
   attr_accessor  :name                        # name to refr to or recall object by_name
-  #attr_accessor :id #, :zorder   UNUSED REMOVE
   attr_accessor :curpos                       # cursor position inside object - column, not row.
   attr_reader  :config                        # can be used for popping user objects too
   #attr_accessor  :form                       # made accessor 2008-11-27 22:32 so menu can set
@@ -42,17 +41,15 @@ class Widget
   # 2018-03-04 - we should use modified as accessor unless it is due to setting forms modified
   # 2018-03-22 - making it accessor
   attr_accessor :modified                     # boolean, value modified or not (moved from field 2009-01-18 00:14 )
-  attr_accessor  :help_text                   # added 2009-01-22 17:41 can be used for status/tooltips
+  #attr_accessor  :help_text                   # added 2009-01-22 17:41 can be used for status/tooltips
 
   #attr_accessor :parent_component  # added 2010-01-12 23:28 BUFFERED - to bubble up
 
-  # sometimes inside a container there's no way of knowing if an individual comp is in focus
-  # other than to explicitly set it and inquire . 2010-09-02 14:47 @since 1.1.5
   # NOTE state takes care of this and is set by form. boolean
-  attr_accessor :focussed                    # is this widget in focus, so they may paint differently
+  attr_reader :focussed                    # is this widget in focus, so they may paint differently
 
   # height percent and width percent used in stacks and flows.
-  attr_accessor :height_pc, :width_pc        # tryin out in stacks and flows 2011-11-23 
+  #attr_accessor :height_pc, :width_pc        # may bring this back
 
   # descriptions for each key set in _key_map
   # 2018-03-07 - NOT_SURE
