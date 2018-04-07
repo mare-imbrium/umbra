@@ -49,7 +49,7 @@ class Form
   # A widget must be added to a Form for it to be painted and focussed.
   # @param [Widget] widget to display on form
   # @return [Form] pointer to self
-  def add_widget widget
+  def add_widget *widget
     case widget
     when Array
       widget.each do |w|
