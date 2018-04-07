@@ -45,12 +45,14 @@ begin
   catch(:close) do
     form = Form.new win
     win.printstring(3,1,"Just testing that listbox is correctly positioned")
-    lb = Listbox.new list: alist, row: 4, col: 2, width: 50, height: 20
+    lb = Listbox.new list: alist, row: 4, col: 2, width: 80, height: 20
     win.printstring(lb.row+1,0,"XX")
     win.printstring(lb.row+1,lb.col+lb.width,"XX")
     win.printstring(lb.row+lb.height,1,"This prints below the listbox")
     brow = lb.row+lb.height+3
     tb = ToggleButton.new onvalue: "Border", offvalue: "No Border", row: brow, col: 10, value: true
+    ab = Button.new text: "Processes" , row: brow, col: 30
+    logb = Button.new text: "LogFile" , row: brow, col: 50
 
     tb.command do
       if tb.value
@@ -64,10 +66,40 @@ begin
     lb.command do |ix|
       statusline(win, "Sitting on offset #{lb.current_index}, #{ix.first} ")
     end
+    ab.command do 
+      lb.color_pair = create_color_pair(COLOR_BLACK, COLOR_CYAN)
+      #lb.attr = REVERSE
+      lb.list = %x{ ps aux }.split("\n")
+    end
+    logb.command do
+      lb.list=[]
+      lb.repaint_required=true
+      # We require a timeout in getch for this to update
+      # without thread process hangs and no update happens
+      t = Thread.new do
+        IO.popen("tail -f v.log") do |output|
+          ctr = 0
+          while line = output.gets do
+            lb.list << line.chomp
+            lb.goto_end
+            lb.repaint_required=true
+            form.repaint
+            ctr += 1
+            if ctr > 100
+              sleep(1)
+              ctr = 0
+            end
+          end
+        end
+      end
+    end
     # bind to another event of listbox
     lb.bind_event(:LEAVE_ROW) { |ix| statusline(win, "LEFT ROW #{ix.first}", 50) }
+    lb.bind_event(:LIST_SELECTION_EVENT) { |w| alert("You selected row #{w.selected_index || "none"} ") }
     form.add_widget lb
     form.add_widget tb
+    form.add_widget ab
+    form.add_widget logb
     form.pack
     form.select_first_field
     win.wrefresh
