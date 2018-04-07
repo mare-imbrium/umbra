@@ -376,6 +376,7 @@ class Form
 
     case ch
     when -1
+      #repaint # only for continuous updates, and will need to use wtimeout and not nodelay in getch
       return
 =begin
     when 1000, 12
