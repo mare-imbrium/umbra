@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-04-06 10:07
+#  Last update: 2018-04-07 23:07
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -72,7 +72,10 @@ module Umbra
         #$log.debug "XXX: button #{text}   STATE is #{@state} color #{_color} , attr:#{_attr}"
         value = getvalue_for_paint
         #$log.debug("button repaint :#{self} r:#{r} c:#{c} col:#{_color} v: #{value} ul #{@underline} mnem #{@mnemonic} ")
-        len = @width || value.length
+        #len = @width || value.length # 2018-04-07 - width is not serving a purpose right now
+        #                             # since surround chars still come where they do, and only highlight uses the width
+        #                             which looks wrong.
+        len = value.length
         @graphic.printstring r, c, "%-*s" % [len, value], _color, _attr
 
         # if a mnemonic character has been defined, then locate the index and highlight it.
