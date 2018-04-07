@@ -9,7 +9,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-27 - 12:09
 #      License: MIT
-#  Last update: 2018-04-01 09:17
+#  Last update: 2018-04-06 14:32
 # ----------------------------------------------------------------------------- #
 #  dialog.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -27,6 +27,8 @@ class Dialog
   attr_accessor  :title                      # title of dialog
   attr_accessor  :title_color_pair           # color pair of title
   attr_accessor  :title_attr                 # attribute of title
+  attr_accessor  :window_color_pair          # color pair of window
+  attr_accessor  :window_attr                # attribute of window
   attr_accessor  :border_color_pair          # color pair of border
   attr_accessor  :border_attr                # attribute of border
   attr_accessor  :buttons                    # button text array
@@ -153,6 +155,7 @@ class Dialog
     #FFI::NCurses.endwin # don't think this should be here if popped up by another window
     return buttonindex
   end
+end # module
 
   # create a centered window. # {{{
   # NOTE: this should probably go into window class, or some util class.
@@ -162,7 +165,8 @@ class Dialog
     col = ((FFI::NCurses.COLS-width)/2).floor
     win = Window.new  height, width, row, col
     #FFI::NCurses.wbkgd(win.pointer, FFI::NCurses.COLOR_PAIR(0) | REVERSE); #  does not work on xterm-256color
-    FFI::NCurses.wbkgd(win.pointer, color_pair | attrib)
+    FFI::NCurses.wbkgd(win.pointer, FFI::NCurses.COLOR_PAIR(color_pair) | attrib); #  does not work on xterm-256color
+    #FFI::NCurses.wbkgd(win.pointer, color_pair | attrib)
     return win
   end # }}}
   private def print_border_mb window, row, col, height, width, color, attr # {{{
@@ -189,14 +193,15 @@ class Dialog
 end
 
 if __FILE__ == $0
+  include Umbra
   ch = nil
   begin
     init_curses
-    m = Dialog.new text: ARGV[0], title: ARGV[1]||"Alert", buttons: ["Yes", "No"]
+    cp = create_color_pair( COLOR_BLUE, COLOR_WHITE )
+    m = Dialog.new text: ARGV[0], title: ARGV[1]||"Alert", buttons: ["Yes", "No"], window_color_pair: cp, window_attr: NORMAL
     ch = m.run
   ensure
     FFI::NCurses.endwin 
   end
   puts "got key: #{ch}"
 end
-end # module
