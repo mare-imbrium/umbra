@@ -6,7 +6,7 @@ require 'umbra/button'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-03-17 - 22:50
 #      License: MIT
-#  Last update: 2018-04-02 18:11
+#  Last update: 2018-04-07 23:08
 # ----------------------------------------------------------------------------- #
 #  togglebutton.rb Copyright (C) 2012-2018 j kepler
 #
@@ -83,11 +83,12 @@ class ToggleButton < Button
   alias :selected? :checked?
 
   def getvalue_for_paint
-    unless @width
+    # when the width is set externally then the surround chars sit outside the width
+    #unless @width
       if @onvalue && @offvalue
-        @width = [ @onvalue.length, @offvalue.length ].max
+        @width = [ @onvalue.length, @offvalue.length ].max 
       end
-    end
+    #end
     buttontext = getvalue().center(@width)
     @text_offset = @surround_chars[0].length
     @surround_chars[0] + buttontext + @surround_chars[1]
