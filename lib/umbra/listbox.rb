@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-06 11:56
+#  Last update: 2018-04-06 23:39
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -59,6 +59,7 @@ class Listbox < Widget
   # set list of data to be displayed.
   # NOTE this can be called again and again, so we need to take care of change in size of data
   # as well as things like current_index and selected_index or indices.
+  # clear the listbox is list is smaller or empty FIXME
   def list=(alist)
     @list               = alist
     @repaint_required   = true
@@ -114,14 +115,15 @@ class Listbox < Widget
     filler = " "*(width)
     files.each_with_index {|f, y| 
       next if y < st
-      colr              = CP_WHITE # white on bg -1
+      #colr              = CP_WHITE # white on bg -1
+      colr              = _color           # 2018-04-06 - set but not used
       mark              = @unselected_mark
       if y == hl
         attr            = FFI::NCurses::A_REVERSE
         mark            = @current_mark
         curpos          = ctr
       else
-        attr            = FFI::NCurses::A_NORMAL
+        attr            = _attr
       end
       if y == @selected_index
         colr            = @selected_color_pair
@@ -139,6 +141,13 @@ class Listbox < Widget
       @pstart = st
       break if ctr >= ht #-border_offset
     }
+    ## if counter < ht then we need to clear the rest in case there was data earlier
+    if ctr < ht
+      while ctr < ht
+        win.printstring(ctr + r, coffset+c, filler, _color )
+        ctr += 1
+      end
+    end
     @row_offset = curpos + border_offset
     @col_offset = coffset
     @repaint_required = false
