@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-07 15:48
+#  Last update: 2018-04-08 08:57
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -36,7 +36,6 @@ class Listbox < Widget
     @selection_key      = 32                 # SPACE used to select/deselect
     @selected_color_pair = CP_RED 
     @selected_attr      = REVERSE
-    @to_print_border    = false
     @row_offset         = 0
     @selected_mark      = 'x'                # row selected character
     @unselected_mark    = ' '                # row unselected character (usually blank)
@@ -57,28 +56,13 @@ class Listbox < Widget
     @pstart = @current_index = 0
     @selected_index     = nil
   end
-  # should a border be printed on the listbox
-  # FIXME how to call this when creating ?
-  def border flag=true
-    @to_print_border    = flag
-    @row_offset         = 2
-    @row_offset         = 0 unless flag
-    @pstart             = 0
-    @repaint_required   = true
-  end
   # Calculate dimensions as late as possible, since we can have some other container such as a box,
   # determine the dimensions after creation.
   private def _calc_dimensions
     raise "Dimensions not supplied to listbox" if @row.nil? or @col.nil? or @width.nil? or @height.nil?
     @_calc_dimensions = true
-    @int_width  = @width                     # internal width
-    @int_height = @height                    # internal height
-    if @to_print_border
-      @row_offset         = 2 
-      @border_offset      = 1
-      @int_width = @width - 2
-      @int_height = @height - 2
-    end
+    @int_width  = @width                     # internal width NOT USED ELSEWHERE
+    @int_height = @height                    # internal height  USED HERE ONLy REDUNDANT FIXME
     @scroll_lines ||= @int_height/2
     @page_lines = @int_height
   end
@@ -91,7 +75,6 @@ class Listbox < Widget
     r,c                 = @row, @col 
     _attr               = @attr || NORMAL
     _color              = @color_pair || CP_WHITE
-    _bordercolor        = @border_color_pair || CP_BLUE
     curpos              = 1
     coffset             = 0
     #width              = win.width-1
@@ -100,20 +83,11 @@ class Listbox < Widget
     
     #ht = win.height-2
     ht                  = @height
-    border_offset       = 0
-    if @to_print_border
-      print_border r, c, ht, width, _bordercolor, _attr
-      border_offset     = 1
-      coffset           = 1 # same as border offset I think from left
-      ht                -= 2
-      width             -= 2
-      r                 += 1
-    end
     cur                 = @current_index
     st                  = pstart = @pstart           # previous start
     pend = pstart + ht -1                            # previous end
     if cur > pend
-      st = (cur -ht) + 1 #+ border_offset + border_offset
+      st = (cur -ht) + 1 
     elsif cur < pstart
       st = cur
     end
@@ -121,7 +95,6 @@ class Listbox < Widget
     hl = cur
     y = 0
     ctr = 0
-    # 2 is for col offset  and border
     filler = " "*(width)
     files.each_with_index {|f, y| 
       next if y < st
@@ -149,7 +122,7 @@ class Listbox < Widget
       win.printstring(ctr + r, coffset+c, ff, colr, attr)
       ctr += 1 
       @pstart = st
-      break if ctr >= ht #-border_offset
+      break if ctr >= ht 
     }
     ## if counter < ht then we need to clear the rest in case there was data earlier
     if ctr < ht
@@ -158,7 +131,7 @@ class Listbox < Widget
         ctr += 1
       end
     end
-    @row_offset = curpos + border_offset
+    @row_offset = curpos #+ border_offset
     @col_offset = coffset
     @repaint_required = false
   end
@@ -171,8 +144,6 @@ class Listbox < Widget
   def getvalue_for_paint
     raise
     ret = getvalue
-    #@text_offset = @surround_chars[0].length
-    #@surround_chars[0] + ret + @surround_chars[1]
   end
 
 
@@ -282,6 +253,7 @@ class Listbox < Widget
     bind_event :ENTER_ROW, *args, &block
   end
   def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
+    raise "deprecated"
     pointer = @graphic.pointer
     FFI::NCurses.wattron(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
     FFI::NCurses.mvwaddch pointer, row, col, FFI::NCurses::ACS_ULCORNER
