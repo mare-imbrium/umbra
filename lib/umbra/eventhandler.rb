@@ -77,9 +77,8 @@ module Umbra
               $log.error "======= Error ERROR in block event #{self}:  #{event}"
               $log.error ex
               $log.error(ex.backtrace.join("\n")) 
-              #$error_message = "#{ex}" # changed 2010  
-              #$error_message.value = "#{ex.to_s}" # 2018-03-18 - commented off
-              FFI::NCurses.beep
+              alert ex.to_s    # added 2018-04-08 - 08:55 so it shows up
+              FFI::NCurses.beep    # doesn't do anything, maybe switched off in preferences
             end
           end
         else
