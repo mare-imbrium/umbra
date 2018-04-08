@@ -5,13 +5,12 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-08 08:57
+#  Last update: 2018-04-08 09:56
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
 #  left and right scrolling
 #  currently only do single selection, we may do multiple at a later date.
-#  FIXME remove border stuff from here totally
 #  insert/delete a row ??
 #  ----------------
 module Umbra
@@ -44,6 +43,7 @@ class Listbox < Widget
     super
 
     map_keys
+    @pcol               = 0
     @repaint_required   = true
   end
   # set list of data to be displayed.
@@ -55,6 +55,7 @@ class Listbox < Widget
     @repaint_required   = true
     @pstart = @current_index = 0
     @selected_index     = nil
+    @pcol               = 0
   end
   # Calculate dimensions as late as possible, since we can have some other container such as a box,
   # determine the dimensions after creation.
@@ -77,11 +78,9 @@ class Listbox < Widget
     _color              = @color_pair || CP_WHITE
     curpos              = 1
     coffset             = 0
-    #width              = win.width-1
     width               = @width
     files               = @list
     
-    #ht = win.height-2
     ht                  = @height
     cur                 = @current_index
     st                  = pstart = @pstart           # previous start
@@ -114,9 +113,27 @@ class Listbox < Widget
         mark            = @selected_mark
       end
       ff = "#{mark} #{f}"
-      if ff.size > width
-        ff = ff[0...width]
+      #if ff.size > width
+        #ff = ff[0...width]
+      #end
+      if ff
+        if ff.size > width
+          #ff = ff[0...width]
+          # pcol can be greater than width then we get null
+          if @pcol < ff.size
+            ff = ff[@pcol..@pcol+width-1] 
+          else
+            ff = ""
+          end
+        else
+          if @pcol < ff.size
+            ff = ff[@pcol..-1]
+          else
+            ff = ""
+          end
+        end
       end
+      ff = "" unless ff
 
       win.printstring(ctr + r, coffset+c, filler, colr )
       win.printstring(ctr + r, coffset+c, ff, colr, attr)
@@ -189,18 +206,31 @@ class Listbox < Widget
   end
     # position cursor at start of field
     def cursor_home
-      @curpos = 0  # UNUSED RIGHT NOW
-      @pcol = 0
+      @curpos  = 0  # UNUSED RIGHT NOW
+      @pcol    = 0
     end
     # goto end of line. 
     # This should be consistent with moving the cursor to the end of the row with right arrow
     def cursor_end
-      # TODO
+      blen = current_row().length
+      if blen < @width
+        @pcol = 0
+      else
+        @pcol = blen-@width+2  # 2 is due to mark and space
+      end
+      @curpos = blen # this is position in array where editing or motion is to happen regardless of what you see
+      # regardless of pcol (panning)
+    end
+    # returns current row
+    def current_row
+      @list[@current_index]
     end
     def cursor_forward
-      # TODO
+      blen = current_row().size-1
+      @pcol += 1 if @pcol < blen
     end
     def cursor_backward
+      @pcol -= 1 if @pcol > 0
     end
     # go to start of file (first line)
     def goto_start
@@ -210,6 +240,7 @@ class Listbox < Widget
     # go to end of file (last line)
     def goto_end
       @current_index = @list.size-1
+      @pcol = @curpos = 0
     end
     def scroll_down
       @current_index += @scroll_lines
@@ -226,6 +257,7 @@ class Listbox < Widget
   # listbox key handling
   def handle_key ch
     old_current_index = @current_index
+    old_pcol = @pcol
     case ch
     when @selection_key
       @repaint_required = true  
@@ -247,6 +279,7 @@ class Listbox < Widget
       on_enter_row @current_index
       @repaint_required = true  
     end
+    @repaint_required = true if old_pcol != @pcol
   end
 
   def command *args, &block
