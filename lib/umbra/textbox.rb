@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-04-08 09:02
+#  Last update: 2018-04-08 09:24
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -377,7 +377,7 @@ class Textbox < Widget
     end
     @col_offset = 0 if @col_offset < 0
   end
-  ##
+  ## border {{{
   private def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
     raise
     pointer = @graphic.pointer
@@ -392,6 +392,6 @@ class Textbox < Widget
     FFI::NCurses.mvwaddch pointer, row+height-1, col+width-1, FFI::NCurses::ACS_LRCORNER
     FFI::NCurses.mvwvline( pointer, row+1, col+width-1, FFI::NCurses::ACS_VLINE, height-2)
     FFI::NCurses.wattroff(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
-  end
+  end # }}}
 end 
 end # module
