@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-04-07 23:29
+#  Last update: 2018-04-08 09:02
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -40,7 +40,6 @@ class Textbox < Widget
     @selection_key = 0    # SPACE used to select/deselect
     @highlight_attr = FFI::NCurses::A_BOLD
     @to_print_border = false
-    @border_offset = 0
     @row_offset = 0
     @col_offset = 0
     @pcol = 0
@@ -62,14 +61,7 @@ class Textbox < Widget
   end
   def _calculate_dimensions
     @int_width = @width
-    @int_height = @height 
-    if @to_print_border
-      @row_offset = 2 if @to_print_border # picked by form
-      @border_offset = 1 if @to_print_border
-      set_col_offset 0
-      @int_width = @width - 2
-      @int_height = @height - 2
-    end
+    @int_height = @height      # used here only
     @scroll_lines ||= @int_height/2  # fix these to be perhaps half and one of ht
     @page_lines = @int_height
     @calculate_dimensions = true
@@ -109,14 +101,6 @@ class Textbox < Widget
     raise "list not set" unless @list
 
   end
-  # should a border be printed on the listbox
-  def border flag=true
-    @to_print_border = flag
-    @row_offset = 2 
-    @row_offset = 0 unless flag
-    @pstart = 0
-    @repaint_required = true
-  end
 
   def repaint 
     _calculate_dimensions unless @calculate_dimensions
@@ -134,20 +118,11 @@ class Textbox < Widget
     
     #ht = win.height-2
     ht = @height
-    border_offset = 0
-    if @to_print_border
-      print_border r, c, ht, width, _bordercolor, _attr
-      border_offset = 1
-      coffset = 1 # same as border offset I think from left
-      ht -= 2
-      width -= 2
-      r += 1
-    end
     cur = @current_index
     st = pstart = @pstart           # previous start
-    pend = pstart + ht -1  #-border_offset -border_offset           # previous end
+    pend = pstart + ht -1  #- previous end
     if cur > pend
-      st = (cur -ht) + 1 #+ border_offset + border_offset
+      st = (cur -ht) + 1 #+ 
     elsif cur < pstart
       st = cur
     end
@@ -155,7 +130,6 @@ class Textbox < Widget
     hl = cur
     y = 0
     ctr = 0
-    # 2 is for col offset  and border
     filler = " "*(width)
     files.each_with_index {|f, y| 
       next if y < st
@@ -198,9 +172,9 @@ class Textbox < Widget
       win.printstring(ctr + r, coffset+c, ff, colr, attr)
       ctr += 1 
       @pstart = st
-      break if ctr >= ht #-border_offset
+      break if ctr >= ht #-
     }
-    @row_offset = rowpos + border_offset 
+    @row_offset = rowpos 
     #@col_offset = coffset # this way form can pick it up XXX can't override it like this
     @repaint_required = false
   end
@@ -272,7 +246,7 @@ class Textbox < Widget
   # @return -1 if cannot advance
   private def add_col_offset num
     x = @col_offset + num
-    return -1 if x < @border_offset
+    return -1 if x < 0
     return -1 if x > @int_width 
     # is it a problem that i am directly changing col_offset ??? XXX
     @col_offset += num 
@@ -295,7 +269,7 @@ class Textbox < Widget
   end
   def cursor_backward
 
-    if @col_offset > @border_offset
+    if @col_offset > 0
       @curpos -= 1
       add_col_offset -1
     else
@@ -362,7 +336,7 @@ class Textbox < Widget
       @col_offset = @int_width 
       return
     end
-    @col_offset = x + @border_offset
+    @col_offset = x 
     @col_offset = @int_width if @col_offset > @int_width
     return
   end
@@ -393,18 +367,19 @@ class Textbox < Widget
     # if cursor ahead of blen then fix it
     blen = current_row().size-1
     if @curpos > blen
-      @col_offset = blen - @pcol + @border_offset
+      @col_offset = blen - @pcol 
       @curpos = blen
       if @pcol > blen
         @pcol = blen - @int_width
         @pcol = 0 if @pcol < 0
-        @col_offset = blen - @pcol + @border_offset
+        @col_offset = blen - @pcol 
       end
     end
-    @col_offset = @border_offset if @col_offset < @border_offset
+    @col_offset = 0 if @col_offset < 0
   end
   ##
   private def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
+    raise
     pointer = @graphic.pointer
     FFI::NCurses.wattron(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
     FFI::NCurses.mvwaddch pointer, row, col, FFI::NCurses::ACS_ULCORNER
