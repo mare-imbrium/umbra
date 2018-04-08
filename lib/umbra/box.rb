@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-07
 #      License: MIT
-#  Last update: 2018-04-07 23:23
+#  Last update: 2018-04-08 09:12
 # ----------------------------------------------------------------------------- #
 #  box.rb  Copyright (C) 2018 j kepler
 module Umbra
@@ -106,7 +106,15 @@ module Umbra
     private def print_title stitle
       return unless stitle
       stitle = "| #{stitle} |"
-      col = (@width-stitle.size)/2
+      @justify ||= :center
+      col = case @justify
+      when :left
+        4
+      when :right
+        @width -stitle.size - 3
+      else
+        (@width-stitle.size)/2
+      end
       #FFI::NCurses.mvwaddstr(@pointer, 0, col, stitle) 
       @graphic.printstring(@row, col, stitle)
     end
