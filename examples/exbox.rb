@@ -45,7 +45,7 @@ begin
   # check with long lines
   catch(:close) do
     form = Form.new win
-    box = Box.new row: 2,col: 2, height: 24, width: 80, title: "A box"
+    box = Box.new row: 2,col: 2, height: 24, width: 80, title: "A box", justify: :left
     win.printstring(3,1,"Just testing that listbox is correctly positioned")
     #lb = Listbox.new list: alist, row: 4, col: 2, width: 70, height: 18
     lb = Listbox.new list: alist
@@ -64,11 +64,11 @@ begin
 
     tb.command do
       if tb.value
-        lb.border true
+        #lb.border true
       else
-        lb.border false
+        #lb.border false
       end
-      lb.repaint_required true
+      lb.repaint_required=true
     end
     # bind the most common event for a listbox which is ENTER_ROW
     lb.command do |ix|
@@ -119,6 +119,7 @@ begin
       rescue => e
         puts e
         puts e.backtrace.join("\n")
+        alert e.to_s
       end
       win.wrefresh
     end
