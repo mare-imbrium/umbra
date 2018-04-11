@@ -50,20 +50,14 @@ class Form
   # @param [Widget] widget to display on form
   # @return [Form] pointer to self
   def add_widget *widget
-    case widget
-    when Array
-      widget.each do |w|
-        w.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
-        @widgets << w
-      end
-    else
-      #widget.form = self       # 2018-03-19 - can we avoid giving this handle
-      widget.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
-      @widgets << widget
+    # FIXME check that user does not accidentally add same widget again
+    widget.each do |w|
+      w.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
+      @widgets << w
     end
     return self
   end
-  alias :add :add_widget
+  #alias :add :add_widget
 
   # remove a widget from form. 
   # Will not be displayed or focussed.
@@ -80,6 +74,7 @@ class Form
     # then user can call this method and have it reflect. FIXME
     @focusables = @widgets.select { |w| w.focusable }
     @focusables.each do |w|
+      #$log.debug "  FOCUSABLES #{w.name} #{w.to_s} #{w.class}"
       if w.respond_to? :mnemonic
         if w.mnemonic
           ch = w.mnemonic.downcase()[0].ord
