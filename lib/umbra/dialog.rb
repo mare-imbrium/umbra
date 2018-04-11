@@ -9,7 +9,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-27 - 12:09
 #      License: MIT
-#  Last update: 2018-04-06 14:32
+#  Last update: 2018-04-10 10:15
 # ----------------------------------------------------------------------------- #
 #  dialog.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -57,6 +57,8 @@ class Dialog
     # increase height to 9 so we can put a fake button below text
     h = 9
     w = text.size + 20
+    # don't exceed max
+    w = [FFI::NCurses.COLS-10, w].min
     @window_color_pair ||= CP_BLACK
     @window_attr       ||= REVERSE
     win = create_centered_window h, w, @window_color_pair, @window_attr
@@ -81,7 +83,11 @@ class Dialog
     win.printstring(row=1,col=(w-title.length)/2,title, color=@title_color_pair, @title_attr)
     ## ---- title section ---- }}}
 
-    win.printstring 3,(w-text.size)/2, text
+    # text can be longer than window. truncate or wrap
+    # tet.size can be longer than w
+    _col = (w-text.size)/2
+    _col = 3 if _col < 3
+    win.printstring 3, _col, text
     ## ---- button section ---- {{{
     paint_buttons win, @buttons, 0
     ## ---- button section ---- }}}
