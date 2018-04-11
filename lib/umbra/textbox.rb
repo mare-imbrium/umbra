@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-04-08 09:24
+#  Last update: 2018-04-10 08:17
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -24,26 +24,26 @@ class Textbox < Widget
   attr_accessor :selected_index       # row selected, may change to plural
   attr_accessor :selected_color_pair  # row selected color_pair
   attr_accessor :selected_attr        # row selected color_pair
-  #attr_accessor :cursor               # position of cursor in line ??
+  #attr_accessor :cursor              # position of cursor in line ??
 =begin
-  attr_accessor :selected_mark  # row selected character
-  attr_accessor :unselected_mark  # row unselected character (usually blank)
-  attr_accessor :current_mark  # row current character (default is >)
+  attr_accessor :selected_mark               # row selected character
+  attr_accessor :unselected_mark             # row unselected character (usually blank)
+  attr_accessor :current_mark                # row current character (default is >)
 =end
 
   def initialize config={}, &block
-    @focusable = true
-    @editable = false
-    @pstart = 0    # which row does printing start from
-    @current_index = 0 # index of row on which cursor is
-    @selected_index = nil # index of row selected
-    @selection_key = 0    # SPACE used to select/deselect
-    @highlight_attr = FFI::NCurses::A_BOLD
-    @to_print_border = false
-    @row_offset = 0
-    @col_offset = 0
-    @pcol = 0
-    @curpos = 0                  # current cursor position in buffer (NOT screen/window/field)
+    @focusable          = true
+    @editable           = false
+    @pstart             = 0                  # which row does printing start from
+    @current_index      = 0                  # index of row on which cursor is
+    @selected_index     = nil                # index of row selected
+    @selection_key      = 0                  # presently no selection. Actually 0 is Ctrl-Space.
+    @highlight_attr     = FFI::NCurses::A_BOLD
+    @to_print_border    = false
+    @row_offset         = 0
+    @col_offset         = 0
+    @pcol               = 0
+    @curpos             = 0                  # current cursor position in buffer (NOT screen/window/field)
 =begin
 
     @selected_color_pair = CP_RED 
@@ -193,19 +193,21 @@ class Textbox < Widget
 
 
   def map_keys
-    bind_keys([?k,FFI::NCurses::KEY_UP], "Up"){ cursor_up }
-    bind_keys([?j,FFI::NCurses::KEY_DOWN], "Down"){ cursor_down }
-    bind_keys([?l,FFI::NCurses::KEY_RIGHT], "Right"){ cursor_forward }
-    bind_keys([?h,FFI::NCurses::KEY_LEFT], "Left"){ cursor_backward }
-    bind_key(?g, 'goto_start'){ goto_start }
-    bind_key(?G, 'goto_end'){ goto_end }
-    bind_key(FFI::NCurses::KEY_CTRL_A, 'cursor_home'){ cursor_home }
-    bind_key(FFI::NCurses::KEY_CTRL_E, 'cursor_end'){ cursor_end }
-    bind_key(FFI::NCurses::KEY_CTRL_F, 'page_forward'){ page_forward }
-    bind_key(FFI::NCurses::KEY_CTRL_B, 'page_backward'){ page_backward }
-    bind_key(FFI::NCurses::KEY_CTRL_U, 'scroll_up'){ scroll_up }
-    bind_key(FFI::NCurses::KEY_CTRL_D, 'scroll_down'){ scroll_down }
     return if @keys_mapped
+    bind_keys([?k,FFI::NCurses::KEY_UP], "Up")         { cursor_up }
+    bind_keys([?j,FFI::NCurses::KEY_DOWN], "Down")     { cursor_down }
+    bind_keys([?l,FFI::NCurses::KEY_RIGHT], "Right")   { cursor_forward }
+    bind_keys([?h,FFI::NCurses::KEY_LEFT], "Left")     { cursor_backward }
+    bind_key(?g, 'goto_start')                         { goto_start }
+    bind_key(?G, 'goto_end')                           { goto_end }
+    bind_key(FFI::NCurses::KEY_CTRL_A, 'cursor_home')  { cursor_home }
+    bind_key(FFI::NCurses::KEY_CTRL_E, 'cursor_end')   { cursor_end }
+    bind_key(FFI::NCurses::KEY_CTRL_F, 'page_forward') { page_forward }
+    bind_key(32, 'page_forward')                       { page_forward }
+    bind_key(FFI::NCurses::KEY_CTRL_B, 'page_backward'){ page_backward }
+    bind_key(FFI::NCurses::KEY_CTRL_U, 'scroll_up')    { scroll_up }
+    bind_key(FFI::NCurses::KEY_CTRL_D, 'scroll_down')  { scroll_down }
+    @keys_mapped = true
   end
 
   # listbox key handling
