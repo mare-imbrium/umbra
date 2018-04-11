@@ -251,20 +251,15 @@ class Widget
     0
   end
 
-
-
-  # to give simple access to other components, (eg, parent) to tell a comp to either
-  # paint its data, or to paint all - borders, headers, footers due to a big change (ht/width)
-  # earlier this was defaulting to true, but I am not using it as a question, not realizing that it is setting 
-  #the value as true !
-  #def repaint_required(tf)
-    #@repaint_required = tf
-  #end
   # is the entire widget to be repainted including things like borders and titles
-  # earlier took a default of true, now must be explicit
+  # earlier took a default of true, now must be explicit. Perhaps, not used currently.
   def repaint_all(tf)
     @repaint_all = tf
     @repaint_required = tf
+  end
+  # shortcut for users to indicate that a widget should be redrawn since some property has been changed.
+  def touch
+    @repaint_required = true
   end
 
 
@@ -281,5 +276,5 @@ class Widget
   end
   #
   ## ADD HERE WIDGET
-end #  }}}
+end #  
 end # module
