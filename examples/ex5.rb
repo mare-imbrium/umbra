@@ -3,6 +3,7 @@
 # 2018-03-19 -
 require 'umbra'
 require 'umbra/label'
+require 'umbra/box'
 require 'umbra/textbox'
 require 'umbra/togglebutton'
 
@@ -45,27 +46,30 @@ begin
   catch(:close) do
     form = Form.new win
     win.printstring(3,1,"Just testing that Textbox is correctly positioned")
-    lb = Textbox.new file_name: filename, row: 4, col: 2, width: 50, height: 20
-    win.printstring(lb.row+1,0,"XX")
-    win.printstring(lb.row+1,lb.col+lb.width,"XX")
-    win.printstring(lb.row+lb.height,1,"This prints below the Textbox")
-    brow = lb.row+lb.height+3
-    tb = ToggleButton.new onvalue: "Border", offvalue: "No Border", row: brow, col: 10, value: true
+    box = Box.new row: 4, col: 2, width: 50, height: 20
+    lb = Textbox.new file_name: filename
+    box.fill lb
+    box.title = filename
+    win.printstring(box.row+1,0,"XX")
+    win.printstring(box.row+1,box.col+box.width,"XX")
+    win.printstring(box.row+box.height,1,"This prints below the Textbox")
+    brow = box.row+box.height+3
+    tb = ToggleButton.new onvalue: "Left", offvalue: "Center", row: brow, col: 10, value: true
 
     tb.command do
       if tb.value
-        lb.border true
+        box.justify = :center
       else
-        lb.border false
+        box.justify = :left
       end
-      lb.repaint_required true
+      box.repaint_required  = true
     end
     lb.bind_event(:CURSOR_MOVE) {|arr|
       col_offset , current_index, curpos,  pcol = arr
       blen = lb.current_row().size
       statusline(win, "offset: #{col_offset} , curpos: #{curpos} , currind: #{current_index} , pcol #{pcol}, len:#{blen}.....", 20)
     }
-    form.add_widget lb
+    form.add_widget box, lb
     form.add_widget tb
     form.pack
     form.select_first_field
