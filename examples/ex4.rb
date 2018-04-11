@@ -4,6 +4,7 @@
 require 'umbra'
 require 'umbra/label'
 require 'umbra/listbox'
+require 'umbra/box'
 require 'umbra/togglebutton'
 
 def startup
@@ -45,22 +46,27 @@ begin
   catch(:close) do
     form = Form.new win
     win.printstring(3,1,"Just testing that listbox is correctly positioned")
-    lb = Listbox.new list: alist, row: 4, col: 2, width: 80, height: 20
-    win.printstring(lb.row+1,0,"XX")
-    win.printstring(lb.row+1,lb.col+lb.width,"XX")
-    win.printstring(lb.row+lb.height,1,"This prints below the listbox")
-    brow = lb.row+lb.height+3
-    tb = ToggleButton.new onvalue: "Border", offvalue: "No Border", row: brow, col: 10, value: true
+    box = Box.new row: 4, col: 2, width: 80, height: 20
+    lb = Listbox.new list: alist
+    box.fill lb
+    win.printstring(box.row+1,0,"XX")
+    win.printstring(box.row+1,box.col+box.width,"XX")
+    win.printstring(box.row+box.height,1,"This prints below the listbox")
+    brow = box.row+box.height+3
+    tb = ToggleButton.new onvalue: "Toggle", offvalue: "No Toggle", row: brow, col: 10, value: true
     ab = Button.new text: "Processes" , row: brow, col: 30
     logb = Button.new text: "LogFile" , row: brow, col: 50
 
     tb.command do
       if tb.value
-        lb.border true
+        # we no longer have border in listboxes or textboxes
+        #lb.border true
+        box.title = "Toggled"
       else
-        lb.border false
+        #lb.border false
+        box.title = "Untoggled"
       end
-      lb.repaint_required true
+      box.repaint_required = true
     end
     # bind the most common event for a listbox which is ENTER_ROW
     lb.command do |ix|
@@ -70,10 +76,14 @@ begin
       lb.color_pair = create_color_pair(COLOR_BLACK, COLOR_CYAN)
       #lb.attr = REVERSE
       lb.list = %x{ ps aux }.split("\n")
+      box.title = "Processes"
+      box.repaint_required = true
     end
     logb.command do
       lb.list=[]
       lb.repaint_required=true
+      box.title = "Log File"
+      box.repaint_required = true
       # We require a timeout in getch for this to update
       # without thread process hangs and no update happens
       t = Thread.new do
@@ -96,7 +106,7 @@ begin
     # bind to another event of listbox
     lb.bind_event(:LEAVE_ROW) { |ix| statusline(win, "LEFT ROW #{ix.first}", 50) }
     lb.bind_event(:LIST_SELECTION_EVENT) { |w| alert("You selected row #{w.selected_index || "none"} ") }
-    form.add_widget lb
+    form.add_widget box, lb
     form.add_widget tb
     form.add_widget ab
     form.add_widget logb
