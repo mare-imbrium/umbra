@@ -5,11 +5,10 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-08 09:56
+#  Last update: 2018-04-11 10:17
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
-#  left and right scrolling
 #  currently only do single selection, we may do multiple at a later date.
 #  insert/delete a row ??
 #  ----------------
@@ -32,7 +31,7 @@ class Listbox < Widget
     @pstart             = 0                  # which row does printing start from
     @current_index      = 0                  # index of row on which cursor is
     @selected_index     = nil                # index of row selected
-    @selection_key      = 32                 # SPACE used to select/deselect
+    @selection_key      = ?s.getbyte(0)      # 's' used to select/deselect
     @selected_color_pair = CP_RED 
     @selected_attr      = REVERSE
     @row_offset         = 0
@@ -79,7 +78,8 @@ class Listbox < Widget
     curpos              = 1
     coffset             = 0
     width               = @width
-    files               = @list
+    #files               = @list
+    files               = getvalue # allows overriding
     
     ht                  = @height
     cur                 = @current_index
@@ -95,13 +95,17 @@ class Listbox < Widget
     y = 0
     ctr = 0
     filler = " "*(width)
-    files.each_with_index {|f, y| 
+    files.each_with_index {|_f, y| 
       next if y < st
+      f = getvalue_for_paint(_f)
       #colr              = CP_WHITE # white on bg -1
       colr              = _color           # 2018-04-06 - set but not used
       mark              = @unselected_mark
-      if y == hl
-        attr            = FFI::NCurses::A_REVERSE
+      if y == hl 
+        # highlight only if object is focussed, otherwise just show mark
+        if @state == :HIGHLIGHTED
+          attr            = FFI::NCurses::A_REVERSE
+        end
         mark            = @current_mark
         curpos          = ctr
       else
@@ -157,11 +161,14 @@ class Listbox < Widget
     @list
   end
 
-  # ensure text has been passed or action
-  def getvalue_for_paint
-    raise
-    ret = getvalue
+  # 
+  # how to paint the specific row
+  # @param the current row which could be a string or array or whatever was passed in in +list=()+.
+  # @return [String] string to print. A String must be returned.
+  def _format line
+    line
   end
+  alias :_format :getvalue_for_paint
 
 
   def map_keys
@@ -174,6 +181,7 @@ class Listbox < Widget
     bind_key(FFI::NCurses::KEY_CTRL_A, 'cursor_home')  { cursor_home }
     bind_key(FFI::NCurses::KEY_CTRL_E, 'cursor_end')   { cursor_end }
     bind_key(FFI::NCurses::KEY_CTRL_F, 'page_forward') { page_forward }
+    bind_key(32, 'page_forward')                       { page_forward }
     bind_key(FFI::NCurses::KEY_CTRL_B, 'page_backward'){ page_backward }
     bind_key(FFI::NCurses::KEY_CTRL_U, 'scroll_up')    { scroll_up }
     bind_key(FFI::NCurses::KEY_CTRL_D, 'scroll_down')  { scroll_down }
@@ -183,10 +191,14 @@ class Listbox < Widget
   def on_enter
     super
     on_enter_row @current_index
+    # basically I need to only highlight the current index, not repaint all OPTIMIZE 
+    touch ; repaint
   end
   def on_leave
     super
     on_leave_row @current_index
+    # basically I need to only unhighlight the current index, not repaint all OPTIMIZE 
+    touch ; repaint
   end
   # called when object leaves a row and when object is exited.
   def on_leave_row index
