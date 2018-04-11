@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-03-31 16:14
+#  Last update: 2018-04-09 23:17
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -39,8 +39,6 @@ end # }}}
   # Text edit field
 #  TODO :
 #  ? remove datatype, just use strings.
-#  x remove the old method *val type. use attr_accessor or similar.
-#  x labeled stuff, remove. 
   # NOTE: +width+ is the length of the display whereas +maxlen+ is the maximum size that the value 
   # can take. Thus, +maxlen+ can exceed +width+. Currently, +maxlen+ defaults to +width+ which 
   # defaults to 20.
