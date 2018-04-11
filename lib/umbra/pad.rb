@@ -6,10 +6,11 @@
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-03-31 15:55
+  * Last update:  2018-04-11 00:01
 
   == CHANGES
   == TODO 
+  - should have option to wrap text
   - / search ?
   NOTE:
   in this the cursor does not move down, it starts to scroll straight away.
@@ -28,6 +29,7 @@ class Pad
   # pads into other classes such as textview.
   def initialize config={}, &block
 
+    $log.debug "  inside pad contructor"
     @config = config
     @rows = FFI::NCurses.LINES-1
     @cols = FFI::NCurses.COLS-1
@@ -172,6 +174,7 @@ class Pad
     x.getbyte(0)
   end
   def content_cols content
+    # FIXME bombs if content is integer
     longest = content.max_by(&:length)
     longest.length
   end
@@ -240,6 +243,7 @@ class Pad
             $log.debug err.backtrace.join("\n")
           end
           FFI::NCurses.endwin
+          puts "INSIDE pad.rb"
           puts err
           puts err.backtrace.join("\n")
         ensure
@@ -260,6 +264,7 @@ class Pad
     destroy_window @pointer, @panel
     #FFI::NCurses.delwin(@pad)       if @pad
     destroy_pad
+    FFI::NCurses.curs_set 1                  # cursor visible again
     return buttonindex 
   end
 end
@@ -310,5 +315,6 @@ if __FILE__ == $PROGRAM_NAME
     p.run
   ensure
     FFI::NCurses.endwin
+    FFI::NCurses.curs_set 1                  # cursor visible again
   end
 end
