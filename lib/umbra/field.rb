@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-04-09 23:17
+#  Last update: 2018-04-13 15:21
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -238,25 +238,12 @@ end # }}}
       return -1 if x < 0
       return -1 if x > @width
       @col_offset += num 
-=begin
-      if num < 0
-        if @form.col <= @col + @col_offset
-          raise "reached ths checj XXX"
-         # $log.debug " error trying to cursor back #{@form.col}"
-          return -1
-        end
-      elsif num > 0
-        if @form.col >= @col + @col_offset + @width
-      #    $log.debug " error trying to cursor forward #{@form.col}"
-          return -1
-        end
-      end
-=end
-
     end
-    private
+
     # converts back into original type
     #  changed to convert on 2009-01-06 23:39 
+    #  2018-04-13 - Changed from private to public since I got an error on on_leave
+    #    when this was called from LabeledField.
     def getvalue
       dt = @datatype || String
       case dt.to_s
@@ -271,15 +258,8 @@ end # }}}
       end
     end
   
-=begin
-    # 2018-03-23 - NOT_SURE 
-    def label *val
-      return @label if val.empty?
-      raise "Field does not allow setting of label. Please use LabeledField instead with lcol for label column"
-    end
-=end
-    public
 
+    public
   ## Note that some older widgets like Field repaint every time the form.repaint
   ##+ is called, whether updated or not. I can't remember why this is, but
   ##+ currently I've not implemented events with these widgets. 2010-01-03 15:00 
@@ -511,27 +491,6 @@ end # }}}
     def text
       getvalue
     end
-=begin
-    #
-    # Set the value in the field.
-    # @param if none given, returns value existing
-    # @param value (can be int, float, String)
-    # 
-    # @return self
-    def text(*val)
-      if val.empty?
-        return getvalue()
-      else
-        return unless val # added 2010-11-17 20:11, dup will fail on nil
-        return unless val[0]
-        # 2013-04-20 - 19:02 dup failing on fixnum, set_buffer does a dup
-        # so maybe i can do without it here
-        #s = val[0].dup
-        s = val[0]
-        _set_buffer(s)
-      end
-    end
-=end
     def text=(val)
       return unless val # added 2010-11-17 20:11, dup will fail on nil
       # will bomb on integer or float etc !!
