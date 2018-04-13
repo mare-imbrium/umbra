@@ -126,11 +126,9 @@ class Widget
   # row and col is where a widget starts. offsets usually take into account borders.
   # the offsets typically are where the cursor should be positioned inside, upon on_enter.
   def rowcol
-    # $log.debug "widgte rowcol : #{@row+@row_offset}, #{@col+@col_offset}"
     return @row+@row_offset, @col+@col_offset
   end
   ## return the value of the widget.
-  #  In cases where selection is possible, should return selected value/s
   def getvalue
     @text
   end
