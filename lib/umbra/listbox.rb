@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-11 10:17
+#  Last update: 2018-04-12 08:38
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -15,6 +15,10 @@ require 'umbra/widget'
 module Umbra
 class Listbox < Widget 
   attr_reader   :list                        # list containing data 
+  #
+  # index of focussed row, starting 0, index into the list supplied
+  attr_reader   :current_index
+
   attr_accessor :selection_key               # key used to select a row
   attr_accessor :selected_index              # row selected, may change to plural
   attr_accessor :selected_color_pair         # row selected color_pair
@@ -23,8 +27,7 @@ class Listbox < Widget
   attr_accessor :unselected_mark             # row unselected character (usually blank)
   attr_accessor :current_mark                # row current character (default is >)
 
-  # index of focussed row, starting 0, index into the data supplied
-  attr_reader :current_index
+
   def initialize config={}, &block
     @focusable          = true
     @editable           = false
@@ -55,6 +58,7 @@ class Listbox < Widget
     @pstart = @current_index = 0
     @selected_index     = nil
     @pcol               = 0
+    fire_handler(:CHANGED, alist)
   end
   # Calculate dimensions as late as possible, since we can have some other container such as a box,
   # determine the dimensions after creation.
@@ -65,6 +69,46 @@ class Listbox < Widget
     @int_height = @height                    # internal height  USED HERE ONLy REDUNDANT FIXME
     @scroll_lines ||= @int_height/2
     @page_lines = @int_height
+  end
+  # Each row can be in one of the following states:
+  #  1. HIGHLIGHTED: cursor is on the row, and the list is focussed (user is in it)
+  #  2. CURRENT    : cursor was on this row, now user has exited the list
+  #  3. SELECTED   : user has selected this row (this can also have above two states actually)
+  #  4. NORMAL     : All other rows: not selected, not under cursor
+  # returns color, attrib and left marker for given row
+  # @param index of row in the list
+  # @param state of row in the list (see above states)
+  def _format_color index, state
+    case state
+    when :SELECTED
+      return @selected_color_pair, @selected_attr, @selected_mark
+    when :HIGHLIGHTED
+      return @highlight_color_pair || CP_WHITE, @highlight_attr || REVERSE, @current_mark
+    when :CURRENT
+      return @color_pair, @attr, @current_mark
+    when :NORMAL
+      _color = CP_CYAN
+      _color = CP_WHITE if index % 2 == 0
+      return @color_pair || _color, @attr || NORMAL, @unselected_mark
+    end
+  end
+  # do the actual printing of the row, depending on index and state
+  # This method starts with underscore since it is only required to be overriden
+  # if an object has special printing needs.
+  def _print_row(win, row, col, str, index, state)
+    arr = case state
+    when :SELECTED
+      [@selected_color_pair, @selected_attr]
+    when :HIGHLIGHTED
+      [@highlight_color_pair || CP_WHITE, @highlight_attr || REVERSE]
+    when :CURRENT
+      [@color_pair, @attr]
+    when :NORMAL
+      _color = CP_CYAN
+      _color = CP_WHITE if index % 2 == 0
+      [@color_pair || _color, @attr || NORMAL]
+    end
+    win.printstring(row, col, str, arr[0], arr[1])
   end
 
   def repaint 
@@ -79,7 +123,7 @@ class Listbox < Widget
     coffset             = 0
     width               = @width
     #files               = @list
-    files               = getvalue # allows overriding
+    files               = getvalue 
     
     ht                  = @height
     cur                 = @current_index
@@ -97,32 +141,38 @@ class Listbox < Widget
     filler = " "*(width)
     files.each_with_index {|_f, y| 
       next if y < st
-      f = getvalue_for_paint(_f)
-      #colr              = CP_WHITE # white on bg -1
-      colr              = _color           # 2018-04-06 - set but not used
-      mark              = @unselected_mark
-      if y == hl 
+      f = _format_value(_f)
+      
+      # determine state of this row: NORMAL CURRENT HIGHLIGHTED SELECTED {{{
+      _st = :NORMAL
+      if y == hl # current row, row on which cursor is or was
         # highlight only if object is focussed, otherwise just show mark
         if @state == :HIGHLIGHTED
-          attr            = FFI::NCurses::A_REVERSE
+          _st = :HIGHLIGHTED
+        else
+          # cursor was on this row, but now user has tabbed out
+          _st = :CURRENT
         end
-        mark            = @current_mark
         curpos          = ctr
-      else
-        attr            = _attr
       end
       if y == @selected_index
-        colr            = @selected_color_pair
-        attr            = @selected_attr
-        mark            = @selected_mark
-      end
+        _st = :SELECTED
+      end # }}}
+      #colr, attr, mark = _format_color y, _st
+
+      mark = case _st
+             when :SELECTED
+               @selected_mark
+             when :HIGHLIGHTED, :CURRENT
+               @current_mark
+             else
+               @unselected_mark
+             end
+               
       ff = "#{mark} #{f}"
-      #if ff.size > width
-        #ff = ff[0...width]
-      #end
+      # truncate string to width, and handle panning {{{
       if ff
         if ff.size > width
-          #ff = ff[0...width]
           # pcol can be greater than width then we get null
           if @pcol < ff.size
             ff = ff[@pcol..@pcol+width-1] 
@@ -136,22 +186,23 @@ class Listbox < Widget
             ff = ""
           end
         end
-      end
+      end # }}}
       ff = "" unless ff
 
-      win.printstring(ctr + r, coffset+c, filler, colr )
-      win.printstring(ctr + r, coffset+c, ff, colr, attr)
+      win.printstring(ctr + r, coffset+c, filler, _color )     # print filler
+      #win.printstring(ctr + r, coffset+c, ff, colr, attr)
+      _print_row(win, ctr + r, coffset+c, ff, y, _st)
       ctr += 1 
       @pstart = st
       break if ctr >= ht 
     }
-    ## if counter < ht then we need to clear the rest in case there was data earlier
+    ## if counter < ht then we need to clear the rest in case there was data earlier {{{
     if ctr < ht
       while ctr < ht
         win.printstring(ctr + r, coffset+c, filler, _color )
         ctr += 1
       end
-    end
+    end # }}}
     @row_offset = curpos #+ border_offset
     @col_offset = coffset
     @repaint_required = false
@@ -162,13 +213,14 @@ class Listbox < Widget
   end
 
   # 
-  # how to paint the specific row
+  # how to convert the line of the array to a simple String.
+  # This is only required to be overridden if the list passed in is not an array of Strings.
   # @param the current row which could be a string or array or whatever was passed in in +list=()+.
   # @return [String] string to print. A String must be returned.
-  def _format line
+  def _format_value line
     line
   end
-  alias :_format :getvalue_for_paint
+  #alias :_format_value :getvalue_for_paint
 
 
   def map_keys
@@ -233,9 +285,12 @@ class Listbox < Widget
       @curpos = blen # this is position in array where editing or motion is to happen regardless of what you see
       # regardless of pcol (panning)
     end
-    # returns current row
+    # returns current row as String
+    # 2018-04-11 - NOTE this may not be a String so we convert it to string before returning
+    # @return [String] row the cursor/user is on
     def current_row
-      @list[@current_index]
+      s = @list[@current_index]
+      _format_value s
     end
     def cursor_forward
       blen = current_row().size-1
