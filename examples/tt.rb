@@ -6,7 +6,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/
 #         Date: 2018-03-09 
 #      License: MIT
-#  Last update: 2018-04-03 18:22
+#  Last update: 2018-04-12 08:45
 # ----------------------------------------------------------------------------- #
 #  tt.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO
@@ -341,6 +341,8 @@ begin
     #y, x = win.getbegyx(pointer)
     old_y, old_x = y, x
     case ch
+    when -1
+      next
     when FFI::NCurses::KEY_RIGHT
       # if directory then open it
       fullp = path + "/" + files[current]
