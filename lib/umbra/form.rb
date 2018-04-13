@@ -81,7 +81,17 @@ class Form
           # meta key 
           mch = ?\M-a.getbyte(0) + (ch - ?a.getbyte(0))
 
-          self.bind_key(mch, "hotkey for button #{w} ") { w.fire }
+          if w.respond_to? :fire
+            $log.debug "  setting hotkey #{mch} to button #{w} "
+            self.bind_key(mch, "hotkey for button #{w} ") { w.fire }
+          else
+            # case of labels and labeled field
+            $log.debug "  setting hotkey #{mch} to field #{w} "
+            self.bind_key(mch, "hotkey for field #{w} ") { 
+              
+              $log.debug "  HOTKEY got key #{mch} : for #{w} "
+              self.select_field w }
+          end
         end
       end
     end
@@ -148,7 +158,7 @@ class Form
       ix0 = @focusables.index(ix0)
     end
     return if @focusables.nil? or @focusables.empty?
-    #$log.debug "inside select_field :  #{ix0} ai #{@active_index}" 
+    $log.debug "inside select_field :  #{ix0} ai #{@active_index}" 
     f = @focusables[ix0]
     return if !f.focusable
     if f.focusable
