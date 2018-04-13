@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-13
 #      License: MIT
-#  Last update: 2018-04-01 09:27
+#  Last update: 2018-04-12 09:18
 # ----------------------------------------------------------------------------- #
 #  menu.rb  Copyright (C) 2012-2018 j kepler
 
