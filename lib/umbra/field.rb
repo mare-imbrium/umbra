@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-04-13 15:21
+#  Last update: 2018-04-14 08:55
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -266,7 +266,7 @@ end # }}}
 
   def repaint
     return unless @repaint_required  # 2010-11-20 13:13 its writing over a window i think TESTING
-    $log.debug("repaint FIELD: #{name}, #{row} #{col},pcol:#{@pcol},  #{focusable} st: #{@state} ")
+    $log.debug("repaint FIELD: #{name}, r:#{row} c:#{col},wid:#{width},pcol:#{@pcol},  #{focusable} st: #{@state} ")
     @width = 1 if width == 0
     printval = getvalue_for_paint().to_s # added 2009-01-06 23:27 
     printval = mask()*printval.length unless @mask.nil?
