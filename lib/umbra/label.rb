@@ -5,12 +5,14 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-03-31 16:13
+#  Last update: 2018-04-14 11:03
 # ----------------------------------------------------------------------------- #
 #  label.rb  Copyright (C) 2018-2020 j kepler
 #
 require 'umbra/widget'
 module Umbra
+  # a text label. 
+  # when creating use +text=+ to set text. Optionally use +justify+ and +width+.
 class Label < Widget 
 
   # justify required a display length, esp if center.
@@ -26,6 +28,7 @@ class Label < Widget
     super
     @justify ||= :left
     @name ||= @text
+    @width ||= @text.length # 2018-04-14 - added for messageboxes
     @repaint_required = true
   end
   #
@@ -59,6 +62,7 @@ class Label < Widget
 
   ##
   # label's repaint - I am removing wrapping and Array stuff and making it simple 2011-11-12 
+  # NOTE: width can be nil, i have not set a default, containers asking width can crash. WHY NOT ?
   def repaint
     return unless @repaint_required
     raise "Label row or col is nil #{@row} , #{@col}, #{@text} " if @row.nil? || @col.nil?
