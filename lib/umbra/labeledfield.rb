@@ -4,14 +4,18 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-12 - 23:35
 #      License: MIT
-#  Last update: 2018-04-13 15:06
+#  Last update: 2018-04-14 10:52
 # ----------------------------------------------------------------------------- #
 #  labeledfield.rb Copyright (C) 2018 j kepler
 require 'umbra/field'
 module Umbra
-  # TODO should be bale to add a mnemonic here for the label since the association exists
+  # TODO should be able to add a mnemonic here for the label since the association exists
   # TODO we should consider creating a Label, so user can have more control. Or allow user
   #   to supply a Label i/o a String ???
+  #
+  #   NOTE: If using LabeledField in a messagebox, pls specify messagebox width explicitly
+  #   since the width here is the field width, and messagebox has no way of knowing that we are
+  #   placing a label too. 
 
   # Other options:
   #   This could contain a Labal and a Field and extend Widget. Actually, it could be LabeledWidget
@@ -44,6 +48,12 @@ module Umbra
       # only sets row and col for whatever is added, it does not know that lcol has to be 
       # taken into account
       _lcol = @lcol || (@col - @label.length  - 2)
+      if _lcol < 1
+        @lcol = @col
+        @col = @lcol + @label.length + 2
+        _lcol = @lcol
+      end
+
 =begin
       # This actually uses the col of the field, and pushes field ahead. We need to get the above to work.
       unless @lcol
@@ -52,7 +62,7 @@ module Umbra
       end
       _lcol = @lcol
 =end
-      lcolor = @label_color_pair || @color_pair
+      lcolor = @label_color_pair || CP_BLACK
       lattr = @label_attr || NORMAL
 
       # this gives the effect of `pine` (aka alpine)  email client, of highlighting the label
@@ -62,6 +72,7 @@ module Umbra
         lattr = @label_highlight_attr || lattr
       end
 
+      $log.debug "  repaint labeledfield lrow: #{_lrow} lcol #{_lcol} "
       # print the label
       @graphic.printstring _lrow, _lcol, @label, lcolor, lattr
       # print the mnemonic
