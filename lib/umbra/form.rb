@@ -52,7 +52,8 @@ class Form
   def add_widget *widget
     # FIXME check that user does not accidentally add same widget again
     widget.each do |w|
-      w.graphic = @window # 2018-03-19 - prevent widget from needing to call form back
+      # NOTE: if form created with nil window (messagebox), then this would have to happen later
+      w.graphic = @window if @window # 2018-03-19 - prevent widget from needing to call form back
       @widgets << w
     end
     return self
@@ -72,6 +73,7 @@ class Form
   def pack
     # creation of this array should be a separate method, so if property is changed after form creation
     # then user can call this method and have it reflect. FIXME
+
     @focusables = @widgets.select { |w| w.focusable }
     @focusables.each do |w|
       #$log.debug "  FOCUSABLES #{w.name} #{w.to_s} #{w.class}"
@@ -96,7 +98,8 @@ class Form
       end
     end
     @active_index = 0 if @focusables.size > 0
-    repaint
+    # 2018-04-14 - why the repaint here ? commenting off. Gave error in messagbox if no window yet.
+    #repaint
     self
   end
 
@@ -111,6 +114,7 @@ class Form
       #f.repaint 
       # changed on 2018-03-21 - so widgets don't need to do this.
       if f.repaint_required
+        f.graphic = @window unless f.graphic   # messageboxes may not have a window till very late
         f.repaint 
         f.repaint_required = false
       end
