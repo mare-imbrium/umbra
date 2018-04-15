@@ -20,7 +20,19 @@ def old_alert str
   win.getkey
   win.destroy
 end
-def _alert str 
+def _alert array, title="Alert"
+  mb = MessageBox.new title: title do
+    text array
+  end
+  mb.run
+end
+def _alert_message str 
+  mb = MessageBox.new title: "Testing Messageboxes" do
+    message str
+  end
+  mb.run
+end
+def _alert_fields str 
   #mb = MessageBox.new height: 20, width: 60, row: 5, col: 5, title: "Enter yor name" do
   mb = MessageBox.new title: "Testing Messageboxes", width: 80 do
     add Label.new text: "Name"
@@ -115,7 +127,10 @@ begin
     begin
       form.handle_key ch
     rescue => e
-      _alert(e.to_s)
+      #_alert(e.to_s.strip + ".")
+
+      _alert(["Error in Messagebox: #{e} ", *e.backtrace], "Exception")
+      #_alert(e.backtrace)
       $log.error e
       $log.error e.backtrace.join("\n")
       e = nil
