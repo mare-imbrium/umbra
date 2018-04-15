@@ -4,13 +4,16 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-13 - 23:10
 #      License: MIT
-#  Last update: 2018-04-14 12:16
+#  Last update: 2018-04-14 23:28
 # ----------------------------------------------------------------------------- #
 #  YFF Copyright (C) 2012-2018 j kepler
 require 'umbra/window'
 require 'umbra/form'
 require 'umbra/widget'
 require 'umbra/button'
+require 'umbra/field'
+require 'umbra/label'
+require 'umbra/textbox'
 
 module Umbra
   class MessageBox
@@ -159,6 +162,7 @@ module Umbra
         end
       end
     end
+    # CLEAN THIS UP TODO
     # Pass a short message to be printed. 
     # This creates a label for a short message, and a field for a long one.
     # @yield field created
@@ -167,32 +171,101 @@ module Umbra
       @suggested_h = @height || 10
       message = message.gsub(/[\n\r\t]/,' ') rescue message
       message_col = 5
-      @suggested_w = @width || [message.size + 8 + message_col , FFI::NCurses.COLS-2].min
+      $log.debug "  MESSAGE w: #{@width}, size: #{message.size} "
+      _pad = 5
+      @suggested_w = @width || [message.size + _pad + message_col , FFI::NCurses.COLS-2].min
       r = 3
       len = message.length
-      @suggested_w = len + 8 + message_col if len < @suggested_w - 8 - message_col
+      #@suggested_w = len + _pad + message_col if len < @suggested_w - _pad - message_col
 
-      display_length = @suggested_w-8
+      display_length = @suggested_w-_pad
       display_length -= message_col
       message_height = 2
-      clr = @color || :white
-      bgclr = @bgcolor || :black
+      #clr = @color || :white
+      #bgclr = @bgcolor || :black
 
+      color_pair = CP_WHITE
       # trying this out. sometimes very long labels get truncated, so i give a field in wchich user
       # can use arrow key or C-a and C-e
       if message.size > display_length
-        message_label = Canis::Field.new @form, {:text => message, :name=>"message_label",
+        message_label = Field.new({:text => message, :name=>"message_label",
           :row => r, :col => message_col, :width => display_length,  
-          :bgcolor => bgclr , :color => clr, :editable => false}
+          :color_pair => color_pair, :editable => false})
       else
-        message_label = Canis::Label.new @form, {:text => message, :name=>"message_label",
-          :row => r, :col => message_col, :width => display_length,  
-          :height => message_height, :bgcolor => bgclr , :color => clr}
+        message_label = Label.new({:text => message, :name=>"message_label",
+          :row => r, :col => message_col, :width => display_length,
+          :height => message_height, :color_pair => color_pair})
       end
+      @form.add_widget message_label
       @maxrow = 3
       yield message_label if block_given?
     end
     alias :message= :message
+ 
+    # This is for larger messages, or messages where the size is not known.
+    # A textview object is created and yielded.
+    #
+    def text message
+      @suggested_w = @width || (FFI::NCurses.COLS * 0.80).floor
+      @suggested_h = @height || (FFI::NCurses.LINES * 0.80).floor
+
+      message_col = 3
+      r = 2
+      display_length = @suggested_w-4
+      display_length -= message_col
+      #clr = @color || :white
+      #bgclr = @bgcolor || :black
+      color_pair = CP_WHITE
+
+      if message.is_a? Array
+        l = longest_in_list message
+        if l > @suggested_w 
+          if l < FFI::NCurses.COLS
+            #@suggested_w = l
+            @suggested_w = FFI::NCurses.COLS-2 
+          else
+            @suggested_w = FFI::NCurses.COLS-2 
+          end
+          display_length = @suggested_w-6
+        end
+        # reduce width and height if you can based on array contents
+      else
+        message = wrap_text(message, display_length).split("\n")
+      end
+      # now that we have moved to textpad that +8 was causing black lines to remain after the text
+      message_height = message.size #+ 8
+      # reduce if possible if its not required.
+      #
+      r1 = (FFI::NCurses.LINES-@suggested_h)/2
+      r1 = r1.floor
+      w = @suggested_w
+      c1 = (FFI::NCurses.COLS-w)/2
+      c1 = c1.floor
+      @suggested_row = r1
+      @suggested_col = c1
+      brow = @button_row || @suggested_h-4
+      available_ht = brow - r + 1
+      message_height = [message_height, available_ht].min
+      # replaced 2014-04-14 - 23:51 
+      message_label = Textbox.new({:name=>"message_label", :list => message,
+        :row => r, :col => message_col, :width => display_length,
+        :height => message_height, :color_pair => color_pair})
+      #message_label.set_content message
+      @form.add_widget message_label
+      yield message_label if block_given?
+
+    end
+    alias :text= :text
+    # returns length of longest
+    def longest_in_list list  #:nodoc:
+      longest = list.inject(0) do |memo,word|
+        memo >= word.length ? memo : word.length
+      end    
+      longest
+    end    
+    def wrap_text(s, width=78)    # {{{
+      s.gsub(/(.{1,#{width}})(\s+|\Z)/, "\\1\n").split("\n")
+    end
     def _create_window
 
       $log.debug "  MESSAGEBOX _create_window h:#{@height} w:#{@width} r:#{@row} c:#{@col} "
@@ -232,39 +305,43 @@ module Umbra
           rescue => err
             $log.debug( err) if err
             $log.debug(err.backtrace.join("\n")) if err
-            #textdialog ["Error in Messagebox: #{err} ", *err.backtrace], :title => "Exception"
+            #textdialog ["Error in Messagebox: #{err} ", *err.backtrace], :title => "Exception" # TODO
             @window.refresh # otherwise the window keeps showing (new FFI-ncurses issue)
           ensure
           end
 
         end # while loop
       end # close
-      $log.debug "XXX: CALLER BEING RETURNED #{buttonindex} "
+      $log.debug "MESSAGEBOX: CALLING PROGRAM BEING RETURNED: #{buttonindex} "
       @window.destroy
       # added 2014-05-01 - 18:10 hopefully to refresh root_window.
       #Window.refresh_all
       return buttonindex 
     end
-  private def print_border_mb window, row, col, height, width, color, attr # {{{
-    win = window.pointer
-    #att = attr
-    len = width
-    len = FFI::NCurses.COLS if len == 0
-    space_char = " ".codepoints.first
-    (row-1).upto(row+height-1) do |r|
-      # this loop clears the screen, printing spaces does not work since ncurses does not do anything
-      FFI::NCurses.mvwhline(win, r, col, space_char, len)
-    end
+    # this is identical to the border printed by dialogs.
+    # The border is printed not on the edge, but one row and column inside.
+    # This is purely cosmetic, otherwise windows.box should be used which prints a box 
+    # on the edge.
+    private def print_border_mb window, row, col, height, width, color, attr # {{{
+      win = window.pointer
+      #att = attr
+      len = width
+      len = FFI::NCurses.COLS if len == 0
+      space_char = " ".codepoints.first
+      (row-1).upto(row+height-1) do |r|
+        # this loop clears the screen, printing spaces does not work since ncurses does not do anything
+        FFI::NCurses.mvwhline(win, r, col, space_char, len)
+      end
 
-    FFI::NCurses.mvwaddch win, row, col, FFI::NCurses::ACS_ULCORNER
-    FFI::NCurses.mvwhline( win, row, col+1, FFI::NCurses::ACS_HLINE, width-6)
-    FFI::NCurses.mvwaddch win, row, col+width-5, FFI::NCurses::ACS_URCORNER
-    FFI::NCurses.mvwvline( win, row+1, col, FFI::NCurses::ACS_VLINE, height-4)
+      FFI::NCurses.mvwaddch win, row, col, FFI::NCurses::ACS_ULCORNER
+      FFI::NCurses.mvwhline( win, row, col+1, FFI::NCurses::ACS_HLINE, width-6)
+      FFI::NCurses.mvwaddch win, row, col+width-5, FFI::NCurses::ACS_URCORNER
+      FFI::NCurses.mvwvline( win, row+1, col, FFI::NCurses::ACS_VLINE, height-4)
 
-    FFI::NCurses.mvwaddch win, row+height-3, col, FFI::NCurses::ACS_LLCORNER
-    FFI::NCurses.mvwhline(win, row+height-3, col+1, FFI::NCurses::ACS_HLINE, width-6)
-    FFI::NCurses.mvwaddch win, row+height-3, col+width-5, FFI::NCurses::ACS_LRCORNER
-    FFI::NCurses.mvwvline( win, row+1, col+width-5, FFI::NCurses::ACS_VLINE, height-4)
-  end # }}}
+      FFI::NCurses.mvwaddch win, row+height-3, col, FFI::NCurses::ACS_LLCORNER
+      FFI::NCurses.mvwhline(win, row+height-3, col+1, FFI::NCurses::ACS_HLINE, width-6)
+      FFI::NCurses.mvwaddch win, row+height-3, col+width-5, FFI::NCurses::ACS_LRCORNER
+      FFI::NCurses.mvwvline( win, row+1, col+width-5, FFI::NCurses::ACS_VLINE, height-4)
+    end # }}}
   end # class
 end # module
