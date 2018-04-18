@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-05 - 08:34
 #      License: MIT
-#  Last update: 2018-04-05 08:47
+#  Last update: 2018-04-17 08:59
 # ----------------------------------------------------------------------------- #
 #  keymappinghandler.rb  Copyright (C) 2018 j kepler
 
@@ -45,7 +45,7 @@ module Umbra
         # 2018-03-10 - unused now delete
         raise "unused"
       else
-        $log.debug " assigning #{keycode} to  _key_map for #{self.class}, #{@name}" if $log.debug? 
+        #$log.debug " assigning #{keycode} to  _key_map for #{self.class}, #{@name}" if $log.debug? 
       end
       @_key_map[keycode] = blk
       @_key_args ||= {}
