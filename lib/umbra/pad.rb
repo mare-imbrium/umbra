@@ -6,7 +6,7 @@
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-04-11 00:01
+  * Last update:  2018-04-17 11:25
 
   == CHANGES
   == TODO 
@@ -174,10 +174,30 @@ class Pad
     x.getbyte(0)
   end
   def content_cols content
-    # FIXME bombs if content is integer
-    longest = content.max_by(&:length)
-    longest.length
+    # FIXME bombs if content contains integer or nil.
+    #longest = content.max_by(&:length)
+    #longest.length
+    max = 1
+    content.each do |line|
+      next unless line
+      l = 1
+      case line
+      when String
+        l = line.length
+      else
+        l = line.to_s.length
+      end
+      max = l if l > max
+    end
+    return max
   end
+  # returns length of longest
+  def longest_in_list list  #:nodoc:
+    longest = list.inject(0) do |memo,word|
+      memo >= word.length ? memo : word.length
+    end    
+    longest
+  end    
 
   # returns button index
   private
