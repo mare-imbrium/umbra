@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-12 08:38
+#  Last update: 2018-04-17 09:35
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -79,23 +79,6 @@ class Listbox < Widget
   # @param index of row in the list
   # @param state of row in the list (see above states)
   def _format_color index, state
-    case state
-    when :SELECTED
-      return @selected_color_pair, @selected_attr, @selected_mark
-    when :HIGHLIGHTED
-      return @highlight_color_pair || CP_WHITE, @highlight_attr || REVERSE, @current_mark
-    when :CURRENT
-      return @color_pair, @attr, @current_mark
-    when :NORMAL
-      _color = CP_CYAN
-      _color = CP_WHITE if index % 2 == 0
-      return @color_pair || _color, @attr || NORMAL, @unselected_mark
-    end
-  end
-  # do the actual printing of the row, depending on index and state
-  # This method starts with underscore since it is only required to be overriden
-  # if an object has special printing needs.
-  def _print_row(win, row, col, str, index, state)
     arr = case state
     when :SELECTED
       [@selected_color_pair, @selected_attr]
@@ -108,7 +91,24 @@ class Listbox < Widget
       _color = CP_WHITE if index % 2 == 0
       [@color_pair || _color, @attr || NORMAL]
     end
+    return arr
+  end
+  # do the actual printing of the row, depending on index and state
+  # This method starts with underscore since it is only required to be overriden
+  # if an object has special printing needs.
+  def _print_row(win, row, col, str, index, state)
+    arr = _format_color index, state
     win.printstring(row, col, str, arr[0], arr[1])
+  end
+  def _format_mark index, state
+      mark = case state
+             when :SELECTED
+               @selected_mark
+             when :HIGHLIGHTED, :CURRENT
+               @current_mark
+             else
+               @unselected_mark
+             end
   end
 
   def repaint 
@@ -160,6 +160,8 @@ class Listbox < Widget
       end # }}}
       #colr, attr, mark = _format_color y, _st
 
+      mark = _format_mark(y, _st)
+=begin
       mark = case _st
              when :SELECTED
                @selected_mark
@@ -168,6 +170,7 @@ class Listbox < Widget
              else
                @unselected_mark
              end
+=end
                
       ff = "#{mark} #{f}"
       # truncate string to width, and handle panning {{{
