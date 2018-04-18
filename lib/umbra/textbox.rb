@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-04-10 08:17
+#  Last update: 2018-04-16 22:51
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -74,6 +74,7 @@ class Textbox < Widget
     @repaint_required = true
     @pstart = @current_index = 0
     @selected_index = nil
+    @focusable = true         # too late since form is not rechecking its array
   end
   def file_name=(fp)
     raise "File #{fp} not readable"  unless File.readable? fp 
@@ -105,11 +106,12 @@ class Textbox < Widget
   def repaint 
     _calculate_dimensions unless @calculate_dimensions
     return unless @repaint_required
+    return unless @list
     win = @graphic
     r,c = @row, @col 
     _attr = @attr || NORMAL
     _color = @color_pair || CP_WHITE
-    _bordercolor = @border_color_pair || CP_BLUE
+    #_bordercolor = @border_color_pair || CP_BLUE
     rowpos = 1
     coffset = 0
     #width = win.width-1
@@ -174,6 +176,13 @@ class Textbox < Widget
       @pstart = st
       break if ctr >= ht #-
     }
+    ## if counter < ht then we need to clear the rest in case there was data earlier {{{
+    if ctr < ht
+      while ctr < ht
+        win.printstring(ctr + r, coffset+c, filler, _color )
+        ctr += 1
+      end
+    end # }}}
     @row_offset = rowpos 
     #@col_offset = coffset # this way form can pick it up XXX can't override it like this
     @repaint_required = false
@@ -212,35 +221,38 @@ class Textbox < Widget
 
   # listbox key handling
   def handle_key ch
+    return :UNHANDLED unless @list
     #   save old positions so we know movement has happened
     old_current_index = @current_index
     old_pcol = @pcol
     old_col_offset = @col_offset
 
-    case ch
-    when @selection_key
-      @repaint_required = true  
-      if @selected_index == @current_index 
-        @selected_index = nil
+    begin
+      case ch
+      when @selection_key
+        @repaint_required = true  
+        if @selected_index == @current_index 
+          @selected_index = nil
+        else
+          @selected_index = @current_index 
+        end
       else
-        @selected_index = @current_index 
+        ret = super
+        return ret
       end
-    else
-      ret = super
-      return ret
-    end
-  ensure
-    @current_index = 0 if @current_index < 0
-    @current_index = @list.size-1 if @current_index >= @list.size
-    @repaint_required = true  if @current_index != old_current_index
-    if @current_index != old_current_index or @pcol != old_pcol or @col_offset != old_col_offset
-      if @current_index != old_current_index 
-        on_leave_row old_current_index
-        on_enter_row @current_index
-        #fire_handler(:CHANGE_ROW, [old_current_index, @current_index, ch ])     # 2018-03-26 - improve this
+    ensure
+      @current_index = 0 if @current_index < 0
+      @current_index = @list.size-1 if @current_index >= @list.size
+      @repaint_required = true  if @current_index != old_current_index
+      if @current_index != old_current_index or @pcol != old_pcol or @col_offset != old_col_offset
+        if @current_index != old_current_index 
+          on_leave_row old_current_index
+          on_enter_row @current_index
+          #fire_handler(:CHANGE_ROW, [old_current_index, @current_index, ch ])     # 2018-03-26 - improve this
+        end
+        @repaint_required = true 
+        fire_handler(:CURSOR_MOVE, [@col_offset, @current_index, @curpos, @pcol, ch ])     # 2018-03-25 - improve this
       end
-      @repaint_required = true 
-      fire_handler(:CURSOR_MOVE, [@col_offset, @current_index, @curpos, @pcol, ch ])     # 2018-03-25 - improve this
     end
   end
   # advance col_offset (where cursor will be displayed on screen)
@@ -284,48 +296,48 @@ class Textbox < Widget
       end
     end
   end
-    # position cursor at start of field
-    def cursor_home
-      @curpos = 0
+  # position cursor at start of field
+  def cursor_home
+    @curpos = 0
+    @pcol = 0
+    set_col_offset 0
+  end
+  # goto end of line. 
+  # This should be consistent with moving the cursor to the end of the row with right arrow
+  def cursor_end
+    blen = current_row().length
+    if blen < @int_width
+      set_col_offset blen # just after the last character
       @pcol = 0
-      set_col_offset 0
+    else
+      @pcol = blen-@int_width
+      set_col_offset blen
     end
-    # goto end of line. 
-    # This should be consistent with moving the cursor to the end of the row with right arrow
-    def cursor_end
-      blen = current_row().length
-      if blen < @int_width
-        set_col_offset blen # just after the last character
-        @pcol = 0
-      else
-        @pcol = blen-@int_width
-        set_col_offset blen
-      end
-      @curpos = blen # this is position in array where editing or motion is to happen regardless of what you see
-      # regardless of pcol (panning)
-    end
-    # go to start of file (first line)
-    def goto_start
-      @current_index = 0
-      @pcol = @curpos = 0
-      set_col_offset 0
-    end
-    # go to end of file (last line)
-    def goto_end
-      @current_index = @list.size-1
-    end
-    def scroll_down
-      @current_index += @scroll_lines
-    end
-    def scroll_up
-      @current_index -= @scroll_lines
-    end
-    def page_backward
-      @current_index -= @page_lines
-    end
-    def page_forward
-      @current_index += @page_lines
-    end
+    @curpos = blen # this is position in array where editing or motion is to happen regardless of what you see
+    # regardless of pcol (panning)
+  end
+  # go to start of file (first line)
+  def goto_start
+    @current_index = 0
+    @pcol = @curpos = 0
+    set_col_offset 0
+  end
+  # go to end of file (last line)
+  def goto_end
+    @current_index = @list.size-1
+  end
+  def scroll_down
+    @current_index += @scroll_lines
+  end
+  def scroll_up
+    @current_index -= @scroll_lines
+  end
+  def page_backward
+    @current_index -= @page_lines
+  end
+  def page_forward
+    @current_index += @page_lines
+  end
   # sets the visual cursor on the window at correct place
   # NOTE be careful of curpos - pcol being less than 0
   # @param [Integer] position in data on the line
@@ -351,6 +363,7 @@ class Textbox < Widget
   end
   def on_enter
     super
+    return unless @list
     on_enter_row @current_index
   end
   def on_leave
