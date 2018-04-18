@@ -9,7 +9,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-27 - 12:09
 #      License: MIT
-#  Last update: 2018-04-10 10:15
+#  Last update: 2018-04-17 22:54
 # ----------------------------------------------------------------------------- #
 #  dialog.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -136,6 +136,7 @@ class Dialog
     begin
       while (ch = win.getkey) != FFI::NCurses::KEY_RETURN
         begin
+          next if ch == -1
           break if ch == 32 or key(?q) == ch
           # go to next button if right or down or TAB pressed
           if ch == FFI::NCurses::KEY_TAB or ch == FFI::NCurses::KEY_RIGHT or FFI::NCurses::KEY_DOWN
