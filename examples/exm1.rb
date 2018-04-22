@@ -92,7 +92,6 @@ begin
   b4.command do
     ret = confirm "Do you wish to go?"
     message_label.text = "You selected #{ret}"
-    #message_label.touch
   end
   form.add_widget message_label, b1, b2, b3, b4
   form.pack
