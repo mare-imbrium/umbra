@@ -5,9 +5,9 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-04-14 11:03
+#  Last update: 2018-04-21 23:55
 # ----------------------------------------------------------------------------- #
-#  label.rb  Copyright (C) 2018-2020 j kepler
+#  label.rb  Copyright (C) 2018- j kepler
 #
 require 'umbra/widget'
 module Umbra
@@ -17,6 +17,8 @@ class Label < Widget
 
   # justify required a display length, esp if center.
   attr_accessor   :justify        #:right, :left, :center
+  attr_accessor   :mnemonic       # alt-key that passes focus to related field 
+  attr_accessor   :related_widget # field related to this label. See +mnemonic+.
 
   def initialize config={}, &block
 
@@ -36,32 +38,9 @@ class Label < Widget
   def getvalue
     @text
   end
-  # 2018-03-08 - NOT_SURE
-  def label_for field
-    @label_for = field
-  end
 
-  ## hotkey {{{
-  # for a button, fire it when label invoked without changing focus
-  # for other widgets, attempt to change focus to that field
-  def bind_hotkey
-    raise "calls to form"
-    if @mnemonic
-      ch = @mnemonic.downcase()[0].ord   ##  1.9 DONE 
-      # meta key 
-      mch = ?\M-a.getbyte(0) + (ch - ?a.getbyte(0))  ## 1.9
-      if (@label_for.is_a? Canis::Button ) && (@label_for.respond_to? :fire)
-        # FIXME call to form XXX
-        @form.bind_key(mch, "hotkey for button #{@label_for.text} ") { |_form, _butt| @label_for.fire }
-      else
-        $log.debug " bind_hotkey label for: #{@label_for}"
-        @form.bind_key(mch, "hotkey for label #{text} ") { |_form, _field| @label_for.focus }
-      end
-    end
-  end # }}}
 
   ##
-  # label's repaint - I am removing wrapping and Array stuff and making it simple 2011-11-12 
   # NOTE: width can be nil, i have not set a default, containers asking width can crash. WHY NOT ?
   def repaint
     return unless @repaint_required
@@ -95,7 +74,7 @@ class Label < Widget
     @graphic.printstring r, c, str % [len, value], acolor, @attr
     if @mnemonic
       ulindex = value.index(@mnemonic) || value.index(@mnemonic.swapcase)
-      @graphic.mvchgat(y=r, x=c+ulindex, max=1, Ncurses::A_BOLD|Ncurses::A_UNDERLINE, acolor, nil)
+      @graphic.mvchgat(y=r, x=c+ulindex, max=1, BOLD|UNDERLINE, acolor, nil)
     end
     @repaint_required = false
   end
@@ -105,6 +84,11 @@ class Label < Widget
   end
   def on_leave
     raise "Cannot leave Label"
+  end
+  # overriding so that label is redrawn, since this is the main property that is used.
+  def text=(_text)
+    @text = _text
+    self.touch
   end
   # ADD HERE LABEL
 end # }}}
