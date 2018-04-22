@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-12 - 23:35
 #      License: MIT
-#  Last update: 2018-04-14 10:52
+#  Last update: 2018-04-21 23:58
 # ----------------------------------------------------------------------------- #
 #  labeledfield.rb Copyright (C) 2018 j kepler
 require 'umbra/field'
@@ -40,6 +40,11 @@ module Umbra
     attr_accessor :label_highlight_color_pair   # label of field  high color_pair
     attr_accessor :label_highlight_attr         # label of field  high attribute
     attr_accessor :mnemonic         # mnemonic of field which shows up on label
+    attr_accessor :related_widget         #  to keep sync with label
+    def initialize config={}, &block
+      @related_widget = self
+      super
+    end
 
     def repaint
       return unless @repaint_required
