@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "umbra/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "umbra"
+  spec.name          = "ncumbra"
   spec.version       = Umbra::VERSION
   spec.authors       = ["kepler"]
   spec.email         = ["githubkepler.50s@gishpuppy.com"]
