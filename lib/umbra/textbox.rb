@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-04-16 22:51
+#  Last update: 2018-04-20 12:58
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -18,7 +18,7 @@
 require 'umbra/widget'
 module Umbra
 class Textbox < Widget 
-  attr_reader :list                   # list containing data 
+  attr_reader   :list                 # list containing data 
   attr_accessor :file_name            # filename passed in for reading
   attr_accessor :selection_key        # key used to select a row
   attr_accessor :selected_index       # row selected, may change to plural
@@ -32,7 +32,7 @@ class Textbox < Widget
 =end
 
   def initialize config={}, &block
-    @focusable          = true
+    @focusable          = false              # will only be set true if data is set
     @editable           = false
     @pstart             = 0                  # which row does printing start from
     @current_index      = 0                  # index of row on which cursor is
@@ -70,6 +70,11 @@ class Textbox < Widget
   # NOTE this can be called again and again, so we need to take care of change in size of data
   # as well as things like current_index and selected_index or indices.
   def list=(alist)
+    if !alist or alist.size == 0
+      self.focusable=(false)
+    else
+      self.focusable=(true)
+    end
     @list = alist
     @repaint_required = true
     @pstart = @current_index = 0
