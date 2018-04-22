@@ -33,11 +33,11 @@ class Form
   def initialize win, &block
     @window = win
     @widgets = []
-    @active_index = nil                  # 2018-03-07 - if a form has no focusable field
+    @active_index = nil
     @row = @col = 0                    # 2018-03-07 - umbra
     @focusables = []                   # focusable components
     instance_eval &block if block_given?
-    @name ||= ""
+    @name ||= ""                       # for debugging 
 
     # for storing error message NOT_SURE
     #$error_message ||= Variable.new ""
@@ -50,32 +50,37 @@ class Form
   # @param [Widget] widget to display on form
   # @return [Form] pointer to self
   def add_widget *widget
-    # FIXME check that user does not accidentally add same widget again
     widget.each do |w|
+      next if @widgets.include? w
       # NOTE: if form created with nil window (messagebox), then this would have to happen later
       w.graphic = @window if @window # 2018-03-19 - prevent widget from needing to call form back
+      w._form = self    # 2018-04-20 - so that update_focusables can be called.
       @widgets << w
     end
     return self
   end
-  #alias :add :add_widget
 
   # remove a widget from form. 
   # Will not be displayed or focussed.
   # @param [Widget] widget to remove from form
   def remove_widget widget
     @widgets.delete widget
-    # 2018-03-21 - remove from focusables - UNTESTED
     @focusables.delete widget
+  end
+  # maintain a list of focusable objects so form can traverse between them easily.
+  def update_focusables
+    $log.debug "1 inside update_focusables #{@focusables.count} "
+    @focusables = @widgets.select { |w| w.focusable }
+    $log.debug "2  inside update_focusables #{@focusables.count} "
   end
   # Decide layout of objects. User has to call this after creating components
   # More may come here.
   def pack
-    # creation of this array should be a separate method, so if property is changed after form creation
-    # then user can call this method and have it reflect. FIXME
 
-    @focusables = @widgets.select { |w| w.focusable }
-    @focusables.each do |w|
+    update_focusables
+
+    # set up hotkeys for buttons and labels with mnemonics and labels.
+    @widgets.each do |w|
       #$log.debug "  FOCUSABLES #{w.name} #{w.to_s} #{w.class}"
       if w.respond_to? :mnemonic
         if w.mnemonic
@@ -84,15 +89,15 @@ class Form
           mch = ?\M-a.getbyte(0) + (ch - ?a.getbyte(0))
 
           if w.respond_to? :fire
-            $log.debug "  setting hotkey #{mch} to button #{w} "
+            #$log.debug "  setting hotkey #{mch} to button #{w} "
             self.bind_key(mch, "hotkey for button #{w} ") { w.fire }
           else
             # case of labels and labeled field
-            $log.debug "  setting hotkey #{mch} to field #{w} "
-            self.bind_key(mch, "hotkey for field #{w} ") { 
+            #$log.debug "  setting hotkey #{mch} to field #{w} "
+            self.bind_key(mch, "hotkey for field #{w.related_widget} ") { 
               
-              $log.debug "  HOTKEY got key #{mch} : for #{w} "
-              self.select_field w }
+              #$log.debug "  HOTKEY got key #{mch} : for #{w.related_widget} "
+              self.select_field w.related_widget }
           end
         end
       end
@@ -135,7 +140,7 @@ class Form
     @focusables[@active_index]
   end
   alias :current_widget :get_current_field
-  # take focus to first focussable field
+  # take focus to first focusable field
   # we shoud not send to select_next. have a separate method to avoid bugs.
   # but check current_field, in case called from anotehr field TODO FIXME
   def select_first_field
