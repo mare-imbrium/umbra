@@ -3,7 +3,7 @@
 # 2018-03-10 
 require 'umbra'
 require 'umbra/label'
-require 'umbra/field'
+require 'umbra/button'
 require 'umbra/labeledfield'
 require 'umbra/messagebox'
 
@@ -21,13 +21,13 @@ def old_alert str
   win.destroy
 end
 def _alert array, title="Alert"
-  mb = MessageBox.new title: title do
+  mb = MessageBox.new title: title, buttons: "Ok"  do
     text array
   end
   mb.run
 end
-def _alert_message str 
-  mb = MessageBox.new title: "Testing Messageboxes" do
+def _alert_message str, title="Alert" 
+  mb = MessageBox.new title: title, buttons: "Okay" do
     message str
   end
   mb.run
@@ -71,53 +71,30 @@ begin
 
   form = Form.new win
   form.add_widget title
-  labels = ["Name:", "Age:", "Address:","Mobile No.:", "Email Id:","Hobbies:"]
-  labs = []
-  row = 3
-  col = 5
-  labels.each_with_index {|lab, ix| 
-    w = Label.new( :text => lab, :row => row, :col => col , :width => 20)
-    labs << w
-    row += 2
-    w.color_pair = CP_WHITE
-    w.justify = :right
-    w.attr = FFI::NCurses::A_BOLD
-    form.add_widget w
-  }
-  labels = ["Roger Federer", "20 Slam Drive","9810012345", "ihumble@tennis.com","golf, programming"]
-  labels = ["name", "age", "address","mobile", "email","hobbies"]
- 
-  row = 3
-  col = 30
-  fhash = {}
-  labels.each_with_index {|lab, ix| 
-    w = Field.new( :name => lab, :row => row, :col => col , :width => 50)
-    fhash[lab] = w
-    row += 2
-    w.color_pair = CP_CYAN
-    w.attr = FFI::NCurses::A_REVERSE
-    w.highlight_color_pair = CP_YELLOW
-    w.highlight_attr = REVERSE
-    w.null_allowed = true
-    form.add_widget w
-  }
+
+  b1 = Button.new text: "String", row: 10, col: 10
+  b2 = Button.new text: "Array", row: 10, col: 30
+  b3 = Button.new text: "Fields", row: 10, col: 50
+  b4 = Button.new text: "Confirm", row: 10, col: 70
   message_label = Label.new({text: "Message comes here C-q to quit",
                              :name=>"message_label",:row => win.height-2, :col => 2, :width => 60,
                              :height => 2, :color_pair => CP_MAGENTA})
-  form.add_widget message_label
-  #fhash["mobile"].type = :integer
-  fhash["mobile"].chars_allowed = /[\d\-]/
-  fhash["mobile"].maxlen = 10
-  fhash["mobile"].bind_event(:CHANGE) do |f|
-    message_label.text = "#{f.getvalue.size()} chars entered"
-    statusline(win, "#{f.getvalue.size()} chars entered")
-    message_label.repaint_required
+  b1.command do
+    _alert_message "This is an alert with a string"
   end
-  fhash["email"].chars_allowed = /[\w\+\.\@]/
-  fhash["email"].valid_regex = /\w+\@\w+\.\w+/
-  fhash["age"].valid_range = (18..100)
-  fhash["age"].type = :integer
-  fhash["hobbies"].maxlen = 100
+  b2.command do
+    array = File.read($0).split("\n")
+    _alert(array, $0)
+  end
+  b3.command do
+    _alert_fields "dummy"
+  end
+  b4.command do
+    ret = confirm "Do you wish to go?"
+    message_label.text = "You selected #{ret}"
+    #message_label.touch
+  end
+  form.add_widget message_label, b1, b2, b3, b4
   form.pack
   form.select_first_field
   win.wrefresh
