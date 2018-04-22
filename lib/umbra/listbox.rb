@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-17 09:35
+#  Last update: 2018-04-20 12:35
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -29,7 +29,7 @@ class Listbox < Widget
 
 
   def initialize config={}, &block
-    @focusable          = true
+    @focusable          = false
     @editable           = false
     @pstart             = 0                  # which row does printing start from
     @current_index      = 0                  # index of row on which cursor is
@@ -53,6 +53,14 @@ class Listbox < Widget
   # as well as things like current_index and selected_index or indices.
   # clear the listbox is list is smaller or empty FIXME
   def list=(alist)
+    if !alist or alist.size == 0
+      $log.debug "  setting focusable to false in listbox "
+      self.focusable=(false)
+      # should we return here
+    else
+      $log.debug "  setting focusable to true in listbox #{alist.count} "
+      self.focusable=(true)
+    end
     @list               = alist
     @repaint_required   = true
     @pstart = @current_index = 0
@@ -87,8 +95,10 @@ class Listbox < Widget
     when :CURRENT
       [@color_pair, @attr]
     when :NORMAL
+      #@alt_color_pair ||= create_color_pair(COLOR_BLUE, COLOR_WHITE)
       _color = CP_CYAN
       _color = CP_WHITE if index % 2 == 0
+      #_color = @alt_color_pair if index % 2 == 0
       [@color_pair || _color, @attr || NORMAL]
     end
     return arr
