@@ -14,10 +14,25 @@ module Umbra
     config[:title]             ||= "Alert"
     config[:window_color_pair] ||=  create_color_pair( COLOR_BLUE, COLOR_WHITE )
     config[:window_attr]       ||= NORMAL
+    config[:buttons]           ||= ["Ok"]
     
     #m = Dialog.new text: str, title: title, window_color_pair: cp, window_attr: attr
     m = Dialog.new config
     m.run
+  end
+  # confirmation dialog which prompts message with Ok and Cancel and returns true or false.
+  def confirm str, config={}
+    require 'umbra/dialog'
+
+    config[:text]              ||= str
+    config[:title]             ||= "Confirm"
+    config[:window_color_pair] ||=  create_color_pair( COLOR_BLUE, COLOR_WHITE )
+    config[:window_attr]       ||= NORMAL
+    config[:buttons]           ||= ["Ok", "Cancel"]
+    
+    m = Dialog.new config
+    ret = m.run
+    return ret == 0
   end
 
   # view an array in a popup window
