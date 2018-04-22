@@ -1,6 +1,7 @@
 # Umbra
 
-stripped version of canis (ncurses ruby)
+Stripped version of canis gem (ncurses ruby). Create ncurses applications using a simple small library.
+The source is small and simple, so easy to hack if need be. 
 
  - Minimal functionality
  - Very close to ncurses, should not try to wrap everything
@@ -11,8 +12,19 @@ stripped version of canis (ncurses ruby)
  - should be easy for others to change as per their needs, or copy parts.
  - 
 
+## Gem name
+  `umbra` was taken, so had to change the gem name to `ncumbra` but the packages and structure etc remain umbra.
 
-Currently, not looking at ALT keys, this may change in the future. Only single and control keys and function keys trapped 
+## Motivation for yet another ncurses library
+
+ rbcurse and canis are very large. Too many dependencies on other parts of system. This aims to be small and minimal, 
+ keeping parts as independent as possible. 
+
+## Future versions
+ - table
+ - combo list
+ - tree (maybe)
+
 ## Installation
 
 Add this line to your application's Gemfile:
