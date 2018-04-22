@@ -1,10 +1,10 @@
 # ----------------------------------------------------------------------------- #
 #         File: messagebox.rb
-#  Description: 
+#  Description: a small window with a list or message or fields and buttons which pops up.
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-13 - 23:10
 #      License: MIT
-#  Last update: 2018-04-14 23:28
+#  Last update: 2018-04-21 14:44
 # ----------------------------------------------------------------------------- #
 #  YFF Copyright (C) 2012-2018 j kepler
 require 'umbra/window'
@@ -21,7 +21,7 @@ module Umbra
     attr_reader :form
     attr_reader :window
     attr_accessor :title
-    #dsl_accessor :button_type TODO
+    attr_accessor :buttons     # button labels. e.g. [Ok, Cancel]
     #dsl_accessor :default_button
     #
     # a message to be printed, usually this will be the only thing supplied
@@ -44,6 +44,7 @@ module Umbra
         # repaint
       end
       @form = Form.new @window
+      @buttons = ["Ok", "Cancel"]
 
       config.each_pair { |k,v| instance_variable_set("@#{k}",v) }
       @config = config
@@ -143,7 +144,7 @@ module Umbra
       # You can also do 'acolor' to give you a sober title that does not take attention away, like mc
       @window.printstring(@row=1,@col=(@width-title.length)/2,title, color=@title_color, @title_attr)
       #print_message if @message
-      create_action_buttons("Ok", "Cancel") unless @action_buttons
+      create_action_buttons(*@buttons) unless @action_buttons
     end
     def create_action_buttons *labels
       @action_buttons = []
