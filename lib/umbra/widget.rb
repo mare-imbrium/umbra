@@ -37,7 +37,7 @@ class Widget
   attr_accessor  :visible                     # boolean     # 2008-12-09 11:29 
   # if changing focusable property of a field after form creation, you may need to call
   # pack again, or atl east update_focusables
-  attr_accessor  :focusable                   # boolean     can this get focus # 2018-03-21 - 23:13 
+  attr_reader   :focusable                   # boolean     can this get focus # 2018-03-21 - 23:13 
   # 2018-03-04 - we should use modified as accessor unless it is due to setting forms modified
   # 2018-03-22 - making it accessor
   attr_accessor :modified                     # boolean, value modified or not (moved from field 2009-01-18 00:14 )
@@ -205,6 +205,14 @@ class Widget
     else
       bind_event :CHANGED, *args, &block
     end
+  end
+  def _form=(aform)
+    @_form = aform
+  end
+  def focusable=(bool)
+    $log.debug "  inside focusable= with #{bool} "
+    @focusable = bool
+    @_form.update_focusables if @_form
   end
   #
   ## ADD HERE WIDGET
