@@ -2,11 +2,12 @@
   * Name: PadReader.rb
   * Description : This is an independent file viewer that uses a Pad and traps keys
                   I am using only ffi-ncurses and not window.rb or any other support classes
-                  so this can be used anywhere else.
+                  so this can be used anywhere else. This however, limits the pad to very simple
+                  printing.
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-04-17 11:25
+  * Last update:  2018-04-26 08:29
 
   == CHANGES
   == TODO 
@@ -25,11 +26,12 @@ class Pad
   # You may pass height, width, row and col for creating a window otherwise a fullscreen window
   # will be created. If you pass a window from caller then that window will be used.
   # Some keys are trapped, jkhl space, pgup, pgdown, end, home, t b
-  # This is currently very minimal and was created to get me started to integrating
-  # pads into other classes such as textview.
+  # NOTE: this is very minimal, and uses no widgets, so I am unable to yield an object
+  #  for further configuration. If we used a textbox, I could have yielded that. 
+  #  TODO handle passed block
   def initialize config={}, &block
 
-    $log.debug "  inside pad contructor"
+    $log.debug "  inside pad contructor" if $log
     @config = config
     @rows = FFI::NCurses.LINES-1
     @cols = FFI::NCurses.COLS-1
@@ -62,7 +64,7 @@ class Pad
       @rows -=3  # 3 is since print_border_only reduces one from width, to check whether this is correct
       @cols -=3
     end
-    $log.debug "top and left are: #{top}  #{left} "
+    $log.debug "top and left are: #{top}  #{left} " if $log
     #@window.box # 2018-03-28 - 
     FFI::NCurses.box @pointer, 0, 0
     title(config[:title])
@@ -120,21 +122,25 @@ class Pad
     destroy_pad
     @content_rows, @content_cols = content_dimensions(content)
     pad = FFI::NCurses.newpad(@content_rows, @content_cols)
-    FFI::NCurses.wbkgd(pad, FFI::NCurses.COLOR_PAIR(@color_pair) | @attr);
     FFI::NCurses.keypad(pad, true);         # function and arrow keys
 
     FFI::NCurses.update_panels
-    cp = @color_pair
-    #@attr = FFI::NCurses::A_BOLD
-    FFI::NCurses.wattron(pad, FFI::NCurses.COLOR_PAIR(cp) | @attr)
+    render(content, pad, @color_pair, @attr)
+    return pad
+  end
+  # renders the content in a loop.
+  #  NOTE: separated in the hope that caller can override.
+  def render content, pad, color_pair, attr
+    cp = color_pair
+    FFI::NCurses.wbkgd(pad, FFI::NCurses.COLOR_PAIR(color_pair) | attr);
+    FFI::NCurses.wattron(pad, FFI::NCurses.COLOR_PAIR(cp) | attr)
     # WRITE
-    filler = " "*@content_cols
+    #filler = " "*@content_cols
     content.each_index { |ix|
       #FFI::NCurses.mvwaddstr(pad,ix, 0, filler)
       FFI::NCurses.mvwaddstr(pad,ix, 0, content[ix])
     }
-    FFI::NCurses.wattroff(pad, FFI::NCurses.COLOR_PAIR(cp) | @attr)
-    return pad
+    FFI::NCurses.wattroff(pad, FFI::NCurses.COLOR_PAIR(cp) | attr)
   end
 
   # receive array as content source
@@ -174,7 +180,7 @@ class Pad
     x.getbyte(0)
   end
   def content_cols content
-    # FIXME bombs if content contains integer or nil.
+    # next line bombs if content contains integer or nil.
     #longest = content.max_by(&:length)
     #longest.length
     max = 1
