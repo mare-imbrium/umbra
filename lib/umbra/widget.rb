@@ -10,6 +10,36 @@ require 'umbra/keymappinghandler'    # for bind_key and process_key
 module Umbra
 class FieldValidationException < RuntimeError
 end
+class Module # {{{
+
+  def attr_property(*symbols)
+    symbols.each { |sym|
+      class_eval %{
+        def #{sym}=(val)
+          oldvalue = @#{sym}
+          newvalue = val
+          if oldvalue.nil? || @_object_created.nil?
+             @#{sym} = newvalue
+          end
+          return(self) if oldvalue.nil? || @_object_created.nil?
+
+          if oldvalue != newvalue
+            begin
+              @property_changed = true # FIXME not used here or in canis
+              fire_property_change("#{sym}", oldvalue, newvalue)
+              @#{sym} = newvalue
+              #@config["#{sym}"]=@#{sym}  # NOTE we don't have this anylonger FIXME
+            rescue PropertyVetoException
+              $log.warn "PropertyVetoException for #{sym}:" + oldvalue.to_s + "->  "+ newvalue.to_s
+            end
+          end # oldvalue !=
+          self
+        end # def
+    attr_reader sym
+      }
+    }
+  end # def
+end # module }}}
 class Widget   
     include EventHandler
     include KeyMappingHandler
@@ -29,7 +59,7 @@ class Widget
   attr_accessor  :attr                        # attribute bold, normal, reverse
   attr_accessor  :name                        # name to refr to or recall object by_name
   attr_accessor :curpos                       # cursor position inside object - column, not row.
-  attr_reader  :config                        # can be used for popping user objects too
+  attr_reader  :config                        # can be used for popping user objects too. NOTE unused
   #attr_accessor  :form                       # made accessor 2008-11-27 22:32 so menu can set
   attr_accessor  :graphic                     # window which should be set by form when adding 2018-03-19
   attr_accessor :state                        # normal, selected, highlighted
@@ -104,7 +134,7 @@ class Widget
   #alias :modified :set_modified
 
   # triggered whenever a widget is entered.
-  # TODO should we not fix cursor at this point ?
+  # NOTE should we not fix cursor at this point (on_enter) ?
   def on_enter
     @state = :HIGHLIGHTED    # duplicating since often these are inside containers
     @focussed = true
@@ -186,10 +216,13 @@ class Widget
   # is the entire widget to be repainted including things like borders and titles
   # earlier took a default of true, now must be explicit. Perhaps, not used currently.
   def repaint_all(tf)
+    # NOTE NOT USED
+    raise " not used repaint all"
     @repaint_all = tf
     @repaint_required = tf
   end
   # shortcut for users to indicate that a widget should be redrawn since some property has been changed.
+  # Now that I have created attr_property this may not be needed
   def touch
     @repaint_required = true
   end
