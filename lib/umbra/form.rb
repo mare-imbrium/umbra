@@ -81,7 +81,7 @@ class Form
 
     # set up hotkeys for buttons and labels with mnemonics and labels.
     @widgets.each do |w|
-      #$log.debug "  FOCUSABLES #{w.name} #{w.to_s} #{w.class}"
+      $log.debug "  FOCUSABLES #{w.name} #{w.to_s} #{w.class}"
       if w.respond_to? :mnemonic
         if w.mnemonic
           ch = w.mnemonic.downcase()[0].ord
