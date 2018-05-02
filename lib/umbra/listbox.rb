@@ -5,16 +5,16 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-04-20 12:35
+#  Last update: 2018-05-02 12:30
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
-#  currently only do single selection, we may do multiple at a later date.
+#  currently only do single selection, we may do multiple at a later date. TODO
 #  insert/delete a row ??
 #  ----------------
 module Umbra
 class Listbox < Widget 
-  attr_reader   :list                        # list containing data 
+  attr_reader   :list                        # array containing data (usually Strings)
   #
   # index of focussed row, starting 0, index into the list supplied
   attr_reader   :current_index
@@ -28,7 +28,7 @@ class Listbox < Widget
   attr_accessor :current_mark                # row current character (default is >)
 
 
-  def initialize config={}, &block
+  def initialize config={}, &block    # {{{
     @focusable          = false
     @editable           = false
     @pstart             = 0                  # which row does printing start from
@@ -51,7 +51,6 @@ class Listbox < Widget
   # set list of data to be displayed.
   # NOTE this can be called again and again, so we need to take care of change in size of data
   # as well as things like current_index and selected_index or indices.
-  # clear the listbox is list is smaller or empty FIXME
   def list=(alist)
     if !alist or alist.size == 0
       $log.debug "  setting focusable to false in listbox "
@@ -68,6 +67,8 @@ class Listbox < Widget
     @pcol               = 0
     fire_handler(:CHANGED, alist)
   end
+
+
   # Calculate dimensions as late as possible, since we can have some other container such as a box,
   # determine the dimensions after creation.
   private def _calc_dimensions
@@ -78,6 +79,100 @@ class Listbox < Widget
     @scroll_lines ||= @int_height/2
     @page_lines = @int_height
   end
+
+  def getvalue
+    @list
+  end
+
+  # }}}
+ 
+  ## repaints the entire listbox, called by +form+ {{{
+  def repaint 
+    _calc_dimensions unless @_calc_dimensions
+
+    return unless @repaint_required
+    win                 = @graphic
+    r,c                 = @row, @col 
+    _attr               = @attr || NORMAL
+    _color              = @color_pair || CP_WHITE
+    curpos              = 1
+    coffset             = 0
+    
+    rows               = getvalue 
+    
+    ht                  = @height
+    cur                 = @current_index
+    st                  = pstart = @pstart           # previous start
+    pend = pstart + ht -1                            # previous end
+    if cur > pend
+      st = (cur -ht) + 1 
+    elsif cur < pstart
+      st = cur
+    end
+    $log.debug "LISTBOX: cur = #{cur} st = #{st} pstart = #{pstart} pend = #{pend} listsize = #{@list.size} "
+    y = 0
+    ctr = 0
+    filler = " "*(@width)
+    rows.each_with_index {|_f, y| 
+      next if y < st
+
+      curpos = ctr if y == cur                                         ## used for setting row_offset
+
+      _state = state_of_row(y)
+
+      win.printstring(ctr + r, coffset+c, filler, _color )            ## print filler
+
+      paint_row( win, ctr+r, coffset+c, _f, y, _state)
+
+
+      ctr += 1 
+      @pstart = st
+      break if ctr >= ht 
+    }
+    ## if counter < ht then we need to clear the rest in case there was data earlier {{{
+    if ctr < ht
+      while ctr < ht
+        win.printstring(ctr + r, coffset+c, filler, _color )
+        ctr += 1
+      end
+    end # }}}
+    @row_offset = curpos                             ## used by +widget+ in +rowcol+ called by +Form+
+    @col_offset = coffset
+    @repaint_required = false
+  end  # }}}
+
+  ## Paint given row.  {{{
+  ## This is not be be called by user, but may be overridden if caller wishes
+  ##  to completely change the presentation of each row. In most cases, it should suffice
+  ##  to override just +_print_row+ or +_format_value+ or +_format_color+.
+  ##
+  ## @param [Window]   window pointer for printing
+  ## @param [Integer]  row number to print on
+  ## @param [Integer]  col:  column to print on
+  ## @param [String]   line to be printed, usually String. Whatever was passed in to +list+ method.
+  ## @param [Integer]  ctr: offset of row starting zero
+  ## @param [String]   state: state of row (SELECTED CURRENT HIGHLIGHTED NORMAL)
+  def paint_row(win, row, col, line, ctr, state)
+
+      f = _format_value(line)
+
+      mark = _format_mark(ctr, state)
+      ff = "#{mark}#{f}"
+
+      ff = _truncate_to_width( ff )   ## truncate and handle panning
+
+      _print_row(win, row, col, ff, ctr, state)
+  end
+
+
+  # do the actual printing of the row, depending on index and state
+  # This method starts with underscore since it is only required to be overriden
+  # if an object has special printing needs.
+  def _print_row(win, row, col, str, index, state)
+    arr = _format_color index, state
+    win.printstring(row, col, str, arr[0], arr[1])
+  end
+
   # Each row can be in one of the following states:
   #  1. HIGHLIGHTED: cursor is on the row, and the list is focussed (user is in it)
   #  2. CURRENT    : cursor was on this row, now user has exited the list
@@ -103,13 +198,9 @@ class Listbox < Widget
     end
     return arr
   end
-  # do the actual printing of the row, depending on index and state
-  # This method starts with underscore since it is only required to be overriden
-  # if an object has special printing needs.
-  def _print_row(win, row, col, str, index, state)
-    arr = _format_color index, state
-    win.printstring(row, col, str, arr[0], arr[1])
-  end
+  alias :color_of_row :_format_color 
+
+
   def _format_mark index, state
       mark = case state
              when :SELECTED
@@ -120,75 +211,45 @@ class Listbox < Widget
                @unselected_mark
              end
   end
+  alias :mark_of_row :_format_mark 
+   
 
-  def repaint 
-    _calc_dimensions unless @_calc_dimensions
-
-    return unless @repaint_required
-    win                 = @graphic
-    r,c                 = @row, @col 
-    _attr               = @attr || NORMAL
-    _color              = @color_pair || CP_WHITE
-    curpos              = 1
-    coffset             = 0
-    width               = @width
-    #files               = @list
-    files               = getvalue 
-    
-    ht                  = @height
-    cur                 = @current_index
-    st                  = pstart = @pstart           # previous start
-    pend = pstart + ht -1                            # previous end
-    if cur > pend
-      st = (cur -ht) + 1 
-    elsif cur < pstart
-      st = cur
-    end
-    $log.debug "LISTBOX: cur = #{cur} st = #{st} pstart = #{pstart} pend = #{pend} listsize = #{@list.size} "
-    hl = cur
-    y = 0
-    ctr = 0
-    filler = " "*(width)
-    files.each_with_index {|_f, y| 
-      next if y < st
-      f = _format_value(_f)
-      
-      # determine state of this row: NORMAL CURRENT HIGHLIGHTED SELECTED {{{
+  # how to convert the line of the array to a simple String.
+  # This is only required to be overridden if the list passed in is not an array of Strings.
+  # @param the current row which could be a string or array or whatever was passed in in +list=()+.
+  # @return [String] string to print. A String must be returned.
+  def _format_value line
+    line
+  end
+  alias :value_of_row :_format_value 
+  
+  def state_of_row ix
       _st = :NORMAL
-      if y == hl # current row, row on which cursor is or was
-        # highlight only if object is focussed, otherwise just show mark
+      cur = @current_index
+      if ix == cur # current row, row on which cursor is or was
+        ## highlight only if object is focussed, otherwise just show mark
         if @state == :HIGHLIGHTED
           _st = :HIGHLIGHTED
         else
-          # cursor was on this row, but now user has tabbed out
+          ## cursor was on this row, but now user has tabbed out
           _st = :CURRENT
         end
-        curpos          = ctr
       end
-      if y == @selected_index
+      if ix == @selected_index
         _st = :SELECTED
       end # }}}
-      #colr, attr, mark = _format_color y, _st
+      return _st
+  end
+  # }}}
 
-      mark = _format_mark(y, _st)
-=begin
-      mark = case _st
-             when :SELECTED
-               @selected_mark
-             when :HIGHLIGHTED, :CURRENT
-               @current_mark
-             else
-               @unselected_mark
-             end
-=end
-               
-      ff = "#{mark} #{f}"
-      # truncate string to width, and handle panning {{{
+
+  ## truncate string to width, and handle panning {{{
+  def _truncate_to_width ff
       if ff
-        if ff.size > width
+        if ff.size > @width
           # pcol can be greater than width then we get null
           if @pcol < ff.size
-            ff = ff[@pcol..@pcol+width-1] 
+            ff = ff[@pcol..@pcol+@width-1] 
           else
             ff = ""
           end
@@ -199,43 +260,13 @@ class Listbox < Widget
             ff = ""
           end
         end
-      end # }}}
+      end 
       ff = "" unless ff
-
-      win.printstring(ctr + r, coffset+c, filler, _color )     # print filler
-      #win.printstring(ctr + r, coffset+c, ff, colr, attr)
-      _print_row(win, ctr + r, coffset+c, ff, y, _st)
-      ctr += 1 
-      @pstart = st
-      break if ctr >= ht 
-    }
-    ## if counter < ht then we need to clear the rest in case there was data earlier {{{
-    if ctr < ht
-      while ctr < ht
-        win.printstring(ctr + r, coffset+c, filler, _color )
-        ctr += 1
-      end
-    end # }}}
-    @row_offset = curpos #+ border_offset
-    @col_offset = coffset
-    @repaint_required = false
-  end
-
-  def getvalue
-    @list
-  end
-
-  # 
-  # how to convert the line of the array to a simple String.
-  # This is only required to be overridden if the list passed in is not an array of Strings.
-  # @param the current row which could be a string or array or whatever was passed in in +list=()+.
-  # @return [String] string to print. A String must be returned.
-  def _format_value line
-    line
-  end
-  #alias :_format_value :getvalue_for_paint
+      return ff
+  end # }}}
 
 
+  ## mapping of keys for listbox {{{
   def map_keys
     bind_keys([?k,FFI::NCurses::KEY_UP], "Up")         { cursor_up }
     bind_keys([?j,FFI::NCurses::KEY_DOWN], "Down")     { cursor_down }
@@ -253,19 +284,23 @@ class Listbox < Widget
     return if @keys_mapped
   end
 
+  ## on enter of this listbox
   def on_enter
     super
     on_enter_row @current_index
     # basically I need to only highlight the current index, not repaint all OPTIMIZE 
     touch ; repaint
   end
+
+  # on leave of this listbox
   def on_leave
     super
     on_leave_row @current_index
     # basically I need to only unhighlight the current index, not repaint all OPTIMIZE 
     touch ; repaint
   end
-  # called when object leaves a row and when object is exited.
+  
+  ## called when user leaves a row and when object is exited.
   def on_leave_row index
     fire_handler(:LEAVE_ROW, [index])     # 2018-03-26 - improve this
   end
@@ -334,51 +369,44 @@ class Listbox < Widget
     def page_forward
       @current_index += @page_lines
     end
-  # listbox key handling
-  def handle_key ch
-    old_current_index = @current_index
-    old_pcol = @pcol
-    case ch
-    when @selection_key
-      @repaint_required = true  
-      if @selected_index == @current_index 
-        @selected_index = nil
+    # }}}
+
+
+    ## Listbox key handling. {{{
+    ## Called by +form+ from form's +handle_key+ when this object is in focus.
+    ## @param [Integer] ch: key caught by getch of window
+    def handle_key ch
+      old_current_index = @current_index
+      old_pcol = @pcol
+      case ch
+      when @selection_key
+        @repaint_required = true  
+        if @selected_index == @current_index 
+          @selected_index = nil
+        else
+          @selected_index = @current_index 
+        end
+        fire_handler :LIST_SELECTION_EVENT, self   # use selected_index to know which one
       else
-        @selected_index = @current_index 
+        ret = super
+        return ret
       end
-      fire_handler :LIST_SELECTION_EVENT, self   # use selected_index to know which one
-    else
-      ret = super
-      return ret
+    ensure
+      @current_index = 0 if @current_index < 0
+      @current_index = @list.size-1 if @current_index >= @list.size
+      if @current_index != old_current_index
+        on_leave_row old_current_index
+        on_enter_row @current_index
+        @repaint_required = true  
+      end
+      @repaint_required = true if old_pcol != @pcol
     end
-  ensure
-    @current_index = 0 if @current_index < 0
-    @current_index = @list.size-1 if @current_index >= @list.size
-    if @current_index != old_current_index
-      on_leave_row old_current_index
-      on_enter_row @current_index
-      @repaint_required = true  
-    end
-    @repaint_required = true if old_pcol != @pcol
-  end
 
-  def command *args, &block
-    bind_event :ENTER_ROW, *args, &block
-  end
-  def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
-    raise "deprecated"
-    pointer = @graphic.pointer
-    FFI::NCurses.wattron(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
-    FFI::NCurses.mvwaddch pointer, row, col, FFI::NCurses::ACS_ULCORNER
-    FFI::NCurses.mvwhline( pointer, row, col+1, FFI::NCurses::ACS_HLINE, width-2)
-    FFI::NCurses.mvwaddch pointer, row, col+width-1, FFI::NCurses::ACS_URCORNER
-    FFI::NCurses.mvwvline( pointer, row+1, col, FFI::NCurses::ACS_VLINE, height-2)
+    ## convenience method for calling most used event of a widget
+    ## Called by user programs.
+    def command *args, &block
+      bind_event :ENTER_ROW, *args, &block
+    end # }}}
 
-    FFI::NCurses.mvwaddch pointer, row+height-1, col, FFI::NCurses::ACS_LLCORNER
-    FFI::NCurses.mvwhline(pointer, row+height-1, col+1, FFI::NCurses::ACS_HLINE, width-2)
-    FFI::NCurses.mvwaddch pointer, row+height-1, col+width-1, FFI::NCurses::ACS_LRCORNER
-    FFI::NCurses.mvwvline( pointer, row+1, col+width-1, FFI::NCurses::ACS_VLINE, height-2)
-    FFI::NCurses.wattroff(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
-  end
 end 
 end # module
