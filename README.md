@@ -21,8 +21,10 @@ The source is small and simple, so easy to hack if need be.
  keeping parts as independent as possible. 
 
 ## Future versions
+ - Ampersand in Label and Button to signify shortcut/mnemonic.
  - table
  - combo list
+ - 256 colors
  - tree (maybe)
 
 ## Installation
