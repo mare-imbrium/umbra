@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-04-21 23:55
+#  Last update: 2018-05-02 14:42
 # ----------------------------------------------------------------------------- #
 #  label.rb  Copyright (C) 2018- j kepler
 #
@@ -16,7 +16,7 @@ module Umbra
 class Label < Widget 
 
   # justify required a display length, esp if center.
-  attr_accessor   :justify        #:right, :left, :center
+  attr_property   :justify        #:right, :left, :center
   attr_accessor   :mnemonic       # alt-key that passes focus to related field 
   attr_accessor   :related_widget # field related to this label. See +mnemonic+.
 
@@ -86,7 +86,8 @@ class Label < Widget
     raise "Cannot leave Label"
   end
   # overriding so that label is redrawn, since this is the main property that is used.
-  def text=(_text)
+  # attr_property should take care now
+  def OLDtext=(_text)
     @text = _text
     self.touch
   end
