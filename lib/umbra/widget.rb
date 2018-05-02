@@ -7,9 +7,6 @@
 require 'umbra/eventhandler'         # for register_events and fire_handler etc
 require 'umbra/keymappinghandler'    # for bind_key and process_key
 
-module Umbra
-class FieldValidationException < RuntimeError
-end
 class Module # {{{
 
   def attr_property(*symbols)
@@ -28,7 +25,7 @@ class Module # {{{
               @property_changed = true # FIXME not used here or in canis
               fire_property_change("#{sym}", oldvalue, newvalue)
               @#{sym} = newvalue
-              #@config["#{sym}"]=@#{sym}  # NOTE we don't have this anylonger FIXME
+              # @config["#{sym}"]=@#{sym}  # NOTE we don't have this anylonger FIXME
             rescue PropertyVetoException
               $log.warn "PropertyVetoException for #{sym}:" + oldvalue.to_s + "->  "+ newvalue.to_s
             end
@@ -40,23 +37,26 @@ class Module # {{{
     }
   end # def
 end # module }}}
+module Umbra
+class FieldValidationException < RuntimeError
+end
 class Widget   
     include EventHandler
     include KeyMappingHandler
   # common interface for text related to a field, label, textview, button etc
-  attr_accessor :text, :width, :height
+  attr_property :text, :width, :height
 
   # foreground and background colors when focussed. Currently used with buttons and field
   # Form checks and repaints on entry if these are set.
-  attr_accessor :highlight_color_pair
-  attr_accessor :highlight_attr
+  attr_property :highlight_color_pair
+  attr_property :highlight_attr
 
   # NOTE: 2018-03-04 - user will have to call repaint_required if he changes color or coordinates.
   attr_accessor  :row, :col                   # location of object
   #attr_writer :color, :bgcolor               # normal foreground and background 2018-03-08 - now color_pair
   # moved to a method which calculates color 2011-11-12 
-  attr_accessor  :color_pair                  # instead of colors give just color_pair
-  attr_accessor  :attr                        # attribute bold, normal, reverse
+  attr_property  :color_pair                  # instead of colors give just color_pair
+  attr_property  :attr                        # attribute bold, normal, reverse
   attr_accessor  :name                        # name to refr to or recall object by_name
   attr_accessor :curpos                       # cursor position inside object - column, not row.
   attr_reader  :config                        # can be used for popping user objects too. NOTE unused
@@ -64,7 +64,7 @@ class Widget
   attr_accessor  :graphic                     # window which should be set by form when adding 2018-03-19
   attr_accessor :state                        # normal, selected, highlighted
   attr_reader  :row_offset, :col_offset       # where should the cursor be placed to start with
-  attr_accessor  :visible                     # boolean     # 2008-12-09 11:29 
+  attr_property  :visible                     # boolean     # 2008-12-09 11:29 
   # if changing focusable property of a field after form creation, you may need to call
   # pack again, or atl east update_focusables
   attr_reader   :focusable                   # boolean     can this get focus # 2018-03-21 - 23:13 
@@ -217,7 +217,7 @@ class Widget
   # earlier took a default of true, now must be explicit. Perhaps, not used currently.
   def repaint_all(tf)
     # NOTE NOT USED
-    raise " not used repaint all"
+    #raise " not used repaint all"
     @repaint_all = tf
     @repaint_required = tf
   end
