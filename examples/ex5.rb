@@ -62,7 +62,6 @@ begin
       else
         box.justify = :left
       end
-      box.repaint_required  = true
     end
     lb.bind_event(:CURSOR_MOVE) {|arr|
       col_offset , current_index, curpos,  pcol = arr
