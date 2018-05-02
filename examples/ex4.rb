@@ -57,6 +57,11 @@ begin
     ab = Button.new text: "Processes" , row: brow, col: 30
     logb = Button.new text: "LogFile" , row: brow, col: 50
 
+    box.bind_event(:PROPERTY_CHANGE){ |e|
+      # statusline(win, "Property changed for box!") 
+      alert("Property changed for box: #{e.property_name} , #{e.oldvalue} -> #{e.newvalue} ")
+    }
+
     tb.command do
       if tb.value
         # we no longer have border in listboxes or textboxes
@@ -66,7 +71,7 @@ begin
         #lb.border false
         box.title = "Untoggled"
       end
-      box.repaint_required = true
+      #box.repaint_required = true
     end
     # bind the most common event for a listbox which is ENTER_ROW
     lb.command do |ix|
@@ -77,7 +82,7 @@ begin
       #lb.attr = REVERSE
       lb.list = %x{ ps aux }.split("\n")
       box.title = "Processes"
-      box.repaint_required = true
+      #box.repaint_required = true
     end
     logb.command do
       lb.list=[]
