@@ -4,9 +4,12 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-13 - 23:10
 #      License: MIT
-#  Last update: 2018-04-21 14:44
+#  Last update: 2018-04-27 19:20
 # ----------------------------------------------------------------------------- #
-#  YFF Copyright (C) 2012-2018 j kepler
+#  messagebox.rb  Copyright (C) 2012-2018 j kepler
+#  BUGS:
+#    - hangs if we add more than 23 items using +add+. Fixed. Don't let window size exceed LINES
+# ----------------------------------------------------------------------------- #
 require 'umbra/window'
 require 'umbra/form'
 require 'umbra/widget'
@@ -16,6 +19,17 @@ require 'umbra/label'
 require 'umbra/textbox'
 
 module Umbra
+
+
+  ###################################################################################################
+  ## Class:        MessageBox
+  ##
+  ## Description:  A configurable dialog box. Creates a window which allows caller to add 
+  ##               widgets such as fields and buttons to it. Returns the offset of the button pressed
+  ##               so the caller knows if Ok or Cancel etc was pressed.
+  ##
+  ###################################################################################################
+
   class MessageBox
 
     attr_reader :form
@@ -44,7 +58,7 @@ module Umbra
         # repaint
       end
       @form = Form.new @window
-      @buttons = ["Ok", "Cancel"]
+      @buttons = ["Ok", "Cancel"]                          ## default button, can be overridden
 
       config.each_pair { |k,v| instance_variable_set("@#{k}",v) }
       @config = config
@@ -53,56 +67,62 @@ module Umbra
       @row_offset = 1
       @col_offset = 2
       
-      #@color ||= :black
-      #@bgcolor ||= :white
       @color_pair  = CP_BLACK
-      # 2014-05-31 - 11:44 adding form color 
-      #   try not to set buttons color in this program, let button pick up user or form colors
-      #@form.color = @color
-      #@form.bgcolor = @bgcolor
-      #@form.color_pair = @color_pair
+
       @maxrow = 3
 
       instance_eval &block if block_given?
       #yield_or_eval &block if block_given? TODO
 
     end
+
+
+
+    ###########################################################################
+    ## Add a widget to the messagebox
+    ##
+    ## Example: item( field )
+    ##          or add ( field )
+    ##
+    ## If row is not specified, then each call will add 1 to the row
+    ## If height of the messagebox is not specified, then it will be computed
+    ##   from the row of the last widget.
+    ##
+    ###########################################################################
+
     def item widget
       # # normalcolor gives a white on black stark title like links and elinks
       # You can also do 'acolor' to give you a sober title that does not take attention away, like mc
       # remove from existing form if set, problem with this is mnemonics -- rare situation.
-      #if widget.form
-        #f = widget.form
-        #f.remove_widget widget
-      #end
       @maxrow ||= 3
-      #widget.set_form @form
       @form.add_widget widget
       widget.row ||= 0
       widget.col ||= 0
+
+      ## if caller does not specify row, then keep incrementing
       if widget.row == 0
-        widget.row = [@maxrow+1, 3].max if widget.row == 0
+        widget.row = [@maxrow+1, 3].max
       else
-        widget.row += @row_offset 
+        widget.row += @row_offset       ## add one to row if stated by user
       end
+
       if widget.col == 0
         widget.col = 5
       else
         # i don't know button_offset as yet
         widget.col += @col_offset 
       end
-      # in most cases this override is okay, but what if user has set it
-      # The problem is that widget and field are doing a default setting so i don't know
-      # if user has set or widget has done a default setting. NOTE
-      # 2014-05-31 - 12:40 CANIS BUTTONCOLOR i have commented out since it should take from form
-      #   to see effect
-      if false
-        widget.color ||= @color    # we are overriding colors, how to avoid since widget sets it
-        widget.bgcolor  ||= @bgcolor
-        widget.attr = @attr if @attr # we are overriding what user has put. DARN !
-      end
+
       @maxrow = widget.row if widget.row > @maxrow
       @suggested_h = @height || @maxrow+6
+
+      ## check that window does not exceed LINES else program will hang
+      lines = FFI::NCurses.LINES
+      @suggested_h = lines if @suggested_h > lines
+      if widget.row > lines
+        $log.warning "MESSAGEBOX placing widget at row (#{widget.row} > #{lines}. You are placing too many items."
+      end
+
       @suggested_w ||= 0
       ww = widget.width || 5  # some widgets do no set a default width, and could be null
       _w = [ww + 5, 15].max
@@ -110,11 +130,24 @@ module Umbra
       if ww >= @suggested_w
         @suggested_w = ww + widget.col + 10
       end
-      $log.debug "  MESSAGEBOX add suggested_w #{@suggested_w} "
+      #$log.debug "  MESSAGEBOX add suggested_w #{@suggested_w} , suggested_h : #{@suggested_h}, maxrow #{@maxrow}, LINES= #{FFI::NCurses.LINES}  "
       # if w's given col is > width then add to suggested_w or text.length
     end
     alias :add :item
-    # returns button index
+
+
+
+    ###########################################################################
+    ## Method:       run
+    #
+    # Description:   creates the window, paints all the objects, creates the
+    #                buttons and catches input in a loop.
+    #
+    # Example:       key - mb.run
+    #
+    # Returns:       offset of button pressed (starting 0)
+    ###########################################################################
+
     # Call this after instantiating the window
     def run
       repaint
@@ -123,6 +156,8 @@ module Umbra
       @window.wrefresh
       return handle_keys
     end
+
+    ## paints the messagebox and creates the buttons (INTERNAL)
     def repaint
       _create_window unless @window
       #acolor = get_color $reverscolor, @color, @bgcolor 
@@ -146,6 +181,9 @@ module Umbra
       #print_message if @message
       create_action_buttons(*@buttons) unless @action_buttons
     end
+
+
+    ## creates the buttons (INTERNAL)
     def create_action_buttons *labels
       @action_buttons = []
       _row = @height-3
@@ -163,11 +201,20 @@ module Umbra
         end
       end
     end
+
+    #################################################################################################### 
+    ##
+    ## Method:        message (String)
+    ##
+    ## Description:   prints a short message in a messagebox.
+    ##                This creates a label for a short message, and a scrollable field for a long one.
+    ##
+    ##  @yield        field created
+    ##  @param        [String] text to display
     # CLEAN THIS UP TODO
-    # Pass a short message to be printed. 
-    # This creates a label for a short message, and a field for a long one.
-    # @yield field created
-    # @param [String] text to display
+    #################################################################################################### 
+
+
     def message message # yield label or field being used for display for further customization
       @suggested_h = @height || 10
       message = message.gsub(/[\n\r\t]/,' ') rescue message
@@ -182,8 +229,6 @@ module Umbra
       display_length = @suggested_w-_pad
       display_length -= message_col
       message_height = 2
-      #clr = @color || :white
-      #bgclr = @bgcolor || :black
 
       color_pair = CP_WHITE
       # trying this out. sometimes very long labels get truncated, so i give a field in wchich user
