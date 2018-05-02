@@ -9,16 +9,19 @@ require 'umbra/keymappinghandler'    # for bind_key and process_key
 
 class Module # {{{
 
+  ## The first condition differs from canis. An object can be created with a nil property. If it is set
+  ## after object creation, we do need property_change to be fired. Perhaps user does not want property
+  ## to be set.
   def attr_property(*symbols)
     symbols.each { |sym|
       class_eval %{
         def #{sym}=(val)
           oldvalue = @#{sym}
           newvalue = val
-          if oldvalue.nil? || @_object_created.nil?
+          if @_object_created.nil?
              @#{sym} = newvalue
           end
-          return(self) if oldvalue.nil? || @_object_created.nil?
+          return(self) if @_object_created.nil?
 
           if oldvalue != newvalue
             begin
