@@ -122,6 +122,7 @@ class Form
         f.graphic = @window unless f.graphic   # messageboxes may not have a window till very late
         f.repaint 
         f.repaint_required = false
+        f.instance_variable_set(:@_object_created, true)   ## after this property_change handlers will fire
       end
     end
 
@@ -206,18 +207,14 @@ class Form
   # put focus on next field
   # will cycle by default, unless navigation policy not :CYCLICAL
   # in which case returns :NO_NEXT_FIELD.
-  # FIXME: in the beginning it comes in as -1 and does an on_leave of last field
   # 2018-03-07 - UMBRA: let us force user to run validation when he does next field
   def select_next_field
     return :UNHANDLED if @focusables.nil? || @focusables.empty?
-    #$log.debug "insdie sele nxt field :  #{@active_index} WL:#{@widgets.length}" 
     if @active_index.nil?  || @active_index == -1 # needs to be tested out A LOT
-      # what is this silly hack for still here 2014-04-24 - 13:04  DELETE FIXME
-      @active_index = -1 
-      @active_index = 0     # 2018-03-08 - NOT_SURE
+      @active_index = 0     
     end
     f = @focusables[@active_index]
-    # we need to call on_leave of this field or else state will never change back to normal TODO
+    # we need to call on_leave of this field or else state will never change back to normal
     on_leave f
     #index = @focusables.index(f)
     index = @active_index
@@ -312,7 +309,7 @@ class Form
     f.on_enter if f.respond_to? :on_enter
   end
 
-  def _process_key keycode, object, window
+  def OLD_process_key keycode, object, window
     return :UNHANDLED if @_key_map.nil?
     blk = @_key_map[keycode]
     $log.debug "XXX:  _process key keycode #{keycode} #{blk.class}, #{self.class} "
@@ -338,9 +335,9 @@ class Form
   # returns UNHANDLED if no block for it
   # after form handles basic keys, it gives unhandled key to current field, if current field returns
   # unhandled, then it checks this map.
-  # Please update widget with any changes here. TODO: match regexes as in mapper
+  # Please update widget with any changes here. 
 
-  def process_key keycode, object
+  def OLDprocess_key keycode, object # already there in keymappinghandler
     return _process_key keycode, object, @window
   end # }}}
 
