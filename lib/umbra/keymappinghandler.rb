@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-05 - 08:34
 #      License: MIT
-#  Last update: 2018-04-17 08:59
+#  Last update: 2018-04-22 23:01
 # ----------------------------------------------------------------------------- #
 #  keymappinghandler.rb  Copyright (C) 2018 j kepler
 
@@ -74,7 +74,7 @@ module Umbra
     def _process_key keycode, object, window
       return :UNHANDLED if @_key_map.nil?
       blk = @_key_map[keycode]
-      $log.debug "XXX:  _process key keycode #{keycode} #{blk.class}, #{self.class} "
+      #$log.debug "XXX:  _process key keycode #{keycode} #{blk.class}, #{self.class} "
       return :UNHANDLED if blk.nil?
 
       if blk.is_a? Symbol
@@ -82,12 +82,12 @@ module Umbra
           return send(blk, *@_key_args[keycode])
         else
           ## 2013-03-05 - 19:50 why the hell is there an alert here, nowhere else
-          $log.error "This ( #{self.class} ) does not respond to #{blk.to_s} [PROCESS-KEY]"
+          $log.error "This ( #{self.class} ) does not respond to #{blk.to_s} [PROCESS-KEY]" if $log
           # added 2013-03-05 - 19:50 so called can know
           return :UNHANDLED 
         end
       else
-        $log.debug "rwidget BLOCK called _process_key " if $log.debug? 
+        #$log.debug "rwidget BLOCK called _process_key " if $log.debug? 
         return blk.call object,  *@_key_args[keycode]
       end
     end
