@@ -4,12 +4,11 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-12 - 23:35
 #      License: MIT
-#  Last update: 2018-04-21 23:58
+#  Last update: 2018-04-22 23:05
 # ----------------------------------------------------------------------------- #
 #  labeledfield.rb Copyright (C) 2018 j kepler
 require 'umbra/field'
 module Umbra
-  # TODO should be able to add a mnemonic here for the label since the association exists
   # TODO we should consider creating a Label, so user can have more control. Or allow user
   #   to supply a Label i/o a String ???
   #
