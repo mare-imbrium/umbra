@@ -55,10 +55,14 @@ begin
     form.add_widget w
   }
   form.pack
+  form.repaint ##  earlier pack had this, now I have commented off but I seem to need it here since maybe
+        # I have no focusable field. all are readonly
   win.wrefresh
 
   y = x = 1
   while (ch = win.getkey) != 113
+    next if ch == -1
+    form.handle_key ch
     #y, x = win.getbegyx(win.pointer)
     old_y, old_x = y, x
     case ch
@@ -70,11 +74,14 @@ begin
     end
     #FIXME after scrolling, pointer is showing wrong file here
     statusline(win, "Pressed #{ch} on     ", 70)
+    form.repaint ## we need this since we have not called form.handle_key
     win.wrefresh
   end
 
 rescue Object => e
   @window.destroy if @window
+  $log.debug e
+  $log.debug(e.backtrace.join("\n"))
   FFI::NCurses.endwin
   puts e
   puts e.backtrace.join("\n")
