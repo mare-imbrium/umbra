@@ -36,12 +36,16 @@ module Umbra
   end
 
   # view an array in a popup window
-  def view array, config={}
+  def view array, config={}, &block
     require 'umbra/pad'
-    title = config[:title] || "Viewer"
-    cp    = config[:color_pair] || create_color_pair( COLOR_BLUE, COLOR_WHITE )
-    attr  = config[:attrib]     || NORMAL
-    m = Pad.new list: array, height: FFI::NCurses.LINES-2, width: FFI::NCurses.COLS-10, title: title, color_pair: cp, attrib: attr
+    config[:title] ||= "Viewer"
+    config[:color_pair] ||= create_color_pair( COLOR_BLUE, COLOR_WHITE )
+    config[:attrib]     ||= NORMAL
+    config[:list]       = array
+    config[:height]     ||= FFI::NCurses.LINES-2
+    config[:width]      ||= FFI::NCurses.COLS-10
+    #m = Pad.new list: array, height: FFI::NCurses.LINES-2, width: FFI::NCurses.COLS-10, title: title, color_pair: cp, attrib: attr
+    m = Pad.new config, &block
     m.run
   end
 end
