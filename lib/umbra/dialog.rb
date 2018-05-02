@@ -9,7 +9,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-27 - 12:09
 #      License: MIT
-#  Last update: 2018-04-20 11:05
+#  Last update: 2018-04-22 23:11
 # ----------------------------------------------------------------------------- #
 #  dialog.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -166,7 +166,6 @@ end # module
 
   # create a centered window. # {{{
   # NOTE: this should probably go into window class, or some util class.
-  # TODO: it hardcodes background color. fix this.
   def create_centered_window height, width, color_pair=0, attrib=REVERSE
     row = ((FFI::NCurses.LINES-height)/2).floor
     col = ((FFI::NCurses.COLS-width)/2).floor
