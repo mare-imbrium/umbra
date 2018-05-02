@@ -102,7 +102,7 @@ module Umbra
     end # }}}
 
       def fire_property_change text, oldvalue, newvalue
-        return if oldvalue.nil? || @_object_created.nil? 
+        return if @_object_created.nil? 
         $log.debug " FPC #{self}: #{text} "
         if @pce.nil?
           @pce = PropertyChangeEvent.new(self, text, oldvalue, newvalue)
