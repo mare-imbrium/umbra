@@ -39,7 +39,7 @@ def _alert_fields str
     add Field.new name:"name", default: "Rahul", width: 25, color_pair: CP_CYAN, attr: REVERSE
     add LabeledField.new label:"Age:", name:"age", text:"25", col: 15, color_pair: CP_CYAN, attr: REVERSE
     # unfortunately this exceeds since width only takes field into account not label
-    add LabeledField.new label:"Address:", name:"address", width:50 , col: 15, color_pair: CP_CYAN, attr: REVERSE
+    add LabeledField.new label:"Address:", name:"address", width:50 , maxlen: 70, col: 15, color_pair: CP_CYAN, attr: REVERSE
   end
   mb.run
 end
