@@ -66,11 +66,10 @@ module Umbra
               # added 2011-09-26 1.3.0 so a user raised exception on LEAVE
               # keeps cursor in same field.
               raise fve
-              #rescue PropertyVetoException => pve
-              # 2018-03-18 - commented off
+            rescue PropertyVetoException => pve
               # added 2011-09-26 1.3.0 so a user raised exception on LEAVE
               # keeps cursor in same field.
-              #raise pve
+              raise pve
             rescue => ex
               ## some don't have name
               # FIXME this should be displayed somewhere. It just goes into log file quietly.
@@ -102,10 +101,56 @@ module Umbra
       end # if
     end # }}}
 
+      def fire_property_change text, oldvalue, newvalue
+        return if oldvalue.nil? || @_object_created.nil? 
+        $log.debug " FPC #{self}: #{text} "
+        if @pce.nil?
+          @pce = PropertyChangeEvent.new(self, text, oldvalue, newvalue)
+        else
+          @pce.set( self, text, oldvalue, newvalue)
+        end
+        fire_handler :PROPERTY_CHANGE, @pce
+        @repaint_required = true 
+      end
+
+  ## Created and sent to all listeners whenever a property is changed
+  # @see fire_property_change
+  # @see fire_handler 
+  # @since 1.0.5 added 2010-02-25 23:06 
+  class PropertyChangeEvent # {{{
+    attr_accessor :source, :property_name, :oldvalue, :newvalue
+    def initialize source, property_name, oldvalue, newvalue
+      set source, property_name, oldvalue, newvalue
+    end
+    def set source, property_name, oldvalue, newvalue
+        @source, @property_name, @oldvalue, @newvalue =
+        source, property_name, oldvalue, newvalue
+    end
+    def to_s
+      "PROPERTY_CHANGE name: #{property_name}, oldval: #{@oldvalue}, newvalue: #{@newvalue}, source: #{@source}"
+    end
+    def inspect
+      to_s
+    end
+  end # }}}
+
     # event? : returns boolean depending on whether this widget has registered the given event {{{
     def event? eve
       @_events.include? eve
     end # }}}
+
+    # The property change is not acceptable, undo it. e.g. test2.rb
+    # @param [String] text message
+    # @param [Event] PropertyChangeEvent object
+    # @since 1.4.0
+    class PropertyVetoException < RuntimeError
+      def initialize(string, event)
+        @string = string
+        @event = event
+        super(string)
+      end
+      attr_reader :string, :event
+    end
 
 # ActionEvent # {{{
     # source - as always is the object whose event has been fired
