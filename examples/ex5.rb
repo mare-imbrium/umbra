@@ -55,6 +55,12 @@ begin
     win.printstring(box.row+box.height,1,"This prints below the Textbox")
     brow = box.row+box.height+3
     tb = ToggleButton.new onvalue: "Left", offvalue: "Center", row: brow, col: 10, value: true
+    box.bind_event(:PROPERTY_CHANGE){|e|
+      if e.property_name == "justify"
+        statusline(win, "changed boxes justify to #{e.newvalue}")
+      end
+    }
+
 
     tb.command do
       if tb.value
