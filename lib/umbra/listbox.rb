@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-02 12:30
+#  Last update: 2018-05-03 10:20
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -48,7 +48,8 @@ class Listbox < Widget
     @pcol               = 0
     @repaint_required   = true
   end
-  # set list of data to be displayed.
+  # Set list of data to be displayed.
+  # Also fires the CHANGED event.
   # NOTE this can be called again and again, so we need to take care of change in size of data
   # as well as things like current_index and selected_index or indices.
   def list=(alist)
