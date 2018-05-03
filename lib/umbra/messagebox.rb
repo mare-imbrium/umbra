@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-13 - 23:10
 #      License: MIT
-#  Last update: 2018-04-27 19:20
+#  Last update: 2018-05-03 10:26
 # ----------------------------------------------------------------------------- #
 #  messagebox.rb  Copyright (C) 2012-2018 j kepler
 #  BUGS:
@@ -167,7 +167,7 @@ module Umbra
 
       @color_pair ||= CP_BLACK
       bordercolor = @border_color || CP_BLACK
-      borderatt = @border_attrib || NORMAL
+      borderatt = @border_attr || NORMAL
       @window.wattron(FFI::NCurses.COLOR_PAIR(bordercolor) | (borderatt || FFI::NCurses::A_NORMAL))
       print_border_mb @window, 1,2, @height, @width, nil, nil
       @window.wattroff(FFI::NCurses.COLOR_PAIR(bordercolor) | (borderatt || FFI::NCurses::A_NORMAL))
