@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-03 10:20
+#  Last update: 2018-05-04 00:06
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -393,6 +393,11 @@ class Listbox < Widget
         return ret
       end
     ensure
+      ## 2018-05-04 -  if binding called from super empties the list then the rest still executes
+      ##       and on_enter_row is called which gives error since list is empty.
+      if @list.size == 0 or !self.focusable
+        return
+      end
       @current_index = 0 if @current_index < 0
       @current_index = @list.size-1 if @current_index >= @list.size
       if @current_index != old_current_index
