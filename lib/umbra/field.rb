@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-05-02 12:54
+#  Last update: 2018-05-04 12:56
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -218,7 +218,10 @@ end # }}}
     # fires CHANGE handler
     # Please don't use this directly, use +text+
     # This name is from ncurses field, added underscore to emphasize not to use
+    # NOTE: should handlers be fired the first time field is set. what if set with blank
+    #   value or same value as previous
     private def _set_buffer value   #:nodoc:
+      return if value == @buffer    ## 2018-05-04 - trying out
       @repaint_required = true
       @datatype = value.class
       @delete_buffer = @buffer.dup
@@ -326,7 +329,7 @@ end # }}}
     return if @delete_buffer.nil?
     #oldvalue = @buffer
     @buffer.insert @curpos, @delete_buffer 
-    fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :INSERT, 0, @delete_buffer)     # 2010-09-11 13:01 
+    fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :INSERT, 0, @delete_buffer)    # 2010-09-11 13:01 
   end
   ## 
   # position cursor at start of field
