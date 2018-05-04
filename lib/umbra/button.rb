@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-04-07 23:07
+#  Last update: 2018-05-04 12:57
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -33,6 +33,7 @@ module Umbra
       @surround_chars ||= ['[ ', ' ]'] 
       @col_offset = @surround_chars[0].length 
       @text_offset = 0      # used to determine where underline should fall TODO ???
+      @name ||= @text
       map_keys
     end
     ##
