@@ -46,8 +46,9 @@ module Umbra
     # in the block sent in by application, not our error.
     # TODO: if an object throws a subclass of VetoException we should not catch it and throw it back for 
     # caller to catch and take care of, such as prevent LEAVE or update etc.
-    def fire_handler event, object
-      $log.debug "inside def fire_handler evt:#{event}, o: #{object.class}"
+    # 2018-05-04 - adding optional name for debugging, usually object.name
+    def fire_handler event, object, x="?"
+      $log.debug "inside def fire_handler evt:#{event}, n: #{@name}, o: #{object.class}"
       if !@handler.nil?
         if @_events
           raise ArgumentError, "fire_handler: #{self.class} does not support this event: #{event}. #{@_events} " if !event? event
