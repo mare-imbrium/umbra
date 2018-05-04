@@ -6,7 +6,7 @@ require 'umbra/button'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-03-17 - 22:50
 #      License: MIT
-#  Last update: 2018-05-02 14:44
+#  Last update: 2018-05-04 14:20
 # ----------------------------------------------------------------------------- #
 #  togglebutton.rb Copyright (C) 2012-2018 j kepler
 #
@@ -126,15 +126,6 @@ class ToggleButton < Button
   # user may programmatically want to check or uncheck
   def checked tf
     @value = tf
-=begin
-    if @variable
-      if @value 
-        @variable.set_value((@onvalue || 1), @name)
-      else
-        @variable.set_value((@offvalue || 0), @name)
-      end
-    end
-=end
   end
 end # class 
 end # module
