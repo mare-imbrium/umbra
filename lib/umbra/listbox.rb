@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-04 00:06
+#  Last update: 2018-05-04 12:55
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -66,7 +66,8 @@ class Listbox < Widget
     @pstart = @current_index = 0
     @selected_index     = nil
     @pcol               = 0
-    fire_handler(:CHANGED, alist)
+    # in canis this was another property_change for :text
+    fire_handler(:CHANGED, self)  ## 2018-05-04 - earlier alist, now self
   end
 
 
@@ -303,7 +304,7 @@ class Listbox < Widget
   
   ## called when user leaves a row and when object is exited.
   def on_leave_row index
-    fire_handler(:LEAVE_ROW, [index])     # 2018-03-26 - improve this
+    fire_handler(:LEAVE_ROW, [index])      # 2018-03-26 - improve this
   end
   # called whenever a row entered.
   # Call when object entered, also. 
