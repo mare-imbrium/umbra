@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-02 12:30
+#  Last update: 2018-05-07 14:47
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -53,11 +53,9 @@ class Listbox < Widget
   # as well as things like current_index and selected_index or indices.
   def list=(alist)
     if !alist or alist.size == 0
-      $log.debug "  setting focusable to false in listbox "
       self.focusable=(false)
       # should we return here
     else
-      $log.debug "  setting focusable to true in listbox #{alist.count} "
       self.focusable=(true)
     end
     @list               = alist
@@ -65,7 +63,7 @@ class Listbox < Widget
     @pstart = @current_index = 0
     @selected_index     = nil
     @pcol               = 0
-    fire_handler(:CHANGED, alist)
+    fire_handler(:CHANGED, self)
   end
 
 
@@ -178,7 +176,7 @@ class Listbox < Widget
   #  2. CURRENT    : cursor was on this row, now user has exited the list
   #  3. SELECTED   : user has selected this row (this can also have above two states actually)
   #  4. NORMAL     : All other rows: not selected, not under cursor
-  # returns color, attrib and left marker for given row
+  # returns color, attrib for given row
   # @param index of row in the list
   # @param state of row in the list (see above states)
   def _format_color index, state
@@ -190,7 +188,6 @@ class Listbox < Widget
     when :CURRENT
       [@color_pair, @attr]
     when :NORMAL
-      #@alt_color_pair ||= create_color_pair(COLOR_BLUE, COLOR_WHITE)
       _color = CP_CYAN
       _color = CP_WHITE if index % 2 == 0
       #_color = @alt_color_pair if index % 2 == 0
