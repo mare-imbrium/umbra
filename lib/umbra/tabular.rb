@@ -10,11 +10,13 @@
   *               :
   * Author        : jkepler
   * Date          : 
+  * Last Update   : 2018-05-07 11:24
   * License       : MIT
-    
-
 =end
 
+## Todo --------------
+## TODO take care of truncate in format string
+## NOTE: we are setting the ColumnInfo objects but not using them. We are using cw and @calign
 #
 # A simple tabular data generator. Given table data in arrays and a column heading row in arrays, it 
 # quickely generates tabular data. It only takes left and right alignment of columns into account.
@@ -38,8 +40,8 @@ module Umbra
     end
 
 
-    # stores column info internally
-    class ColumnInfo < Struct.new(:name, :w, :align) 
+    ## stores column info internally: name, width and alignment
+    class ColumnInfo < Struct.new(:name, :width, :align) 
     end
 
 
@@ -47,9 +49,14 @@ module Umbra
 
     # an array of column titles
     attr_reader :columns
+
+    attr_reader :list
+
     # boolean, does user want lines numbered
     attr_accessor :numbering
-    attr_accessor :use_separator
+
+    attr_accessor :use_separator          ## boolean. Use a separator after heading or not.
+
     # x is the + character used a field delim in separators
     # y is the field delim used in data rows, default is pipe or bar
     attr_accessor :x, :y
@@ -62,6 +69,7 @@ module Umbra
       @chash = {}
       @cw = {}
       @calign = {}
+      @skip_columns = {}   # internal, which columns not to calc width of since user has specified
       @separ = @columns = @numbering =  nil
       @y = '|'
       @x = '+'
@@ -104,15 +112,18 @@ module Umbra
     alias :<< :add
     alias :add_row :add
 
-    # set width of a given column
+    # set width of a given column, any data beyond this will be truncated at display time.
     # @param [Number] column offset, starting 0
     # @param [Number] width
     def column_width colindex, width
-      @cw[colindex] ||= width
+      @cw[colindex] ||= width    ## this is not updating it, if set. why is this. XXX
+                                 ## this will carry the value of column headers width
+      @cw[colindex] = width      ## 2018-05-06 - setting it, overwriting earlier value
+      @skip_columns[colindex] = true   ## don't calculate col width for this.
       if @chash[colindex].nil?
         @chash[colindex] = ColumnInfo.new("", width) 
       else
-        @chash[colindex].w = width
+        @chash[colindex].width = width
       end
       @chash
     end
@@ -136,6 +147,8 @@ module Umbra
     # @return [Array<String>] array of formatted data
     def render
       raise "tabular:: list is nil " unless @list
+      $log.debug "  render list:: #{@list.size} "
+      $log.debug "  render list:1: #{@list} "
       raise "tabular:: columns is nil " unless @columns
       buffer = []
       _guess_col_widths
@@ -206,11 +219,13 @@ module Umbra
         break if i > GUESSCOLUMNS
         next if r == :separator
         r.each_with_index { |c, j|
+          ## we need to skip those columns which user has specified
+          next if @skip_columns[j] == true
           x = c.to_s.length
           if @cw[j].nil?
             @cw[j] = x
           else
-            @cw[j] = x if x > @cw[j]
+            @cw[j] = x if x > @cw[j]      ## here we are overwriting if user has specified XXX FIXME
           end
         }
       }
@@ -223,9 +238,10 @@ module Umbra
         w = @cw[i]
         case @calign[i]
         when :right
-          fmt << "%#{w}s "
+          #fmt << "%.#{w}s "
+          fmt << "%#{w}.#{w}s "
         else
-          fmt << "%-#{w}s "
+          fmt << "%-#{w}.#{w}s "
         end
       }
       @fmstr = fmt.join(@y)
