@@ -5,7 +5,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-07 14:47
+#  Last update: 2018-05-08 00:06
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -63,7 +63,7 @@ class Listbox < Widget
     @pstart = @current_index = 0
     @selected_index     = nil
     @pcol               = 0
-    fire_handler(:CHANGED, self)
+    fire_handler(:CHANGED, self)    ## added 2018-05-08 - 
   end
 
 
@@ -116,7 +116,7 @@ class Listbox < Widget
 
       curpos = ctr if y == cur                                         ## used for setting row_offset
 
-      _state = state_of_row(y)
+      _state = state_of_row(y)     ## XXX should be move this into paint_row
 
       win.printstring(ctr + r, coffset+c, filler, _color )            ## print filler
 
@@ -234,7 +234,7 @@ class Listbox < Widget
       end
       if ix == @selected_index
         _st = :SELECTED
-      end # }}}
+      end # 
       return _st
   end
   # }}}
@@ -389,6 +389,9 @@ class Listbox < Widget
         return ret
       end
     ensure
+      ## NOTE: it is possible that a block called above may have cleared the list.
+      ##  In that case, the on_enter_row will crash. I had put a check here, but it 
+      ##    has vanished ???
       @current_index = 0 if @current_index < 0
       @current_index = @list.size-1 if @current_index >= @list.size
       if @current_index != old_current_index
