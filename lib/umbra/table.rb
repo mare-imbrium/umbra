@@ -4,14 +4,15 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-06 - 09:56
 #      License: MIT
-#  Last update: 2018-05-07 15:03
+#  Last update: 2018-05-08 10:17
 # ----------------------------------------------------------------------------- #
 #  table.rb  Copyright (C) 2018 j kepler
 
 ##--------- Todo section ---------------
-## TODO how to format the header
-## TODO formatting rows
-## TODO if we want to color specific columns based on values then I think we have to format (render) the row at the last 
+## TODO change a value value_at(x,y, value)
+## DONE how to format the header
+## DONE formatting rows
+## DONE if we want to color specific columns based on values then I think we have to format (render) the row at the last 
 ##      moment in _print_row and not in advance
 #
 require 'forwardable'
@@ -29,8 +30,13 @@ module Umbra
     extend Forwardable
 
 
+    ## tabular is the data model for Table
+    ## It may be passed in in the constructor, or else is created when columns and data are passed in.
     attr_accessor :tabular
+
+    ## color pair and attribute for header row
     attr_accessor :header_color_pair, :header_attr
+
     attr_accessor :rendered                 ## boolean, if data has changed, we need to re-render
 
     # if a variable has been defined, off and on value will be set in it (default 0,1)
@@ -49,12 +55,14 @@ module Umbra
       @rendered = nil
       super
     end
+
     def render
       @data_offset = 0
       @data_offset +=1 if @tabular.use_separator
       @data_offset +=1 if @tabular.columns
       self.list = @tabular.render
     end
+
     def repaint
       render if !@rendered
       super
@@ -62,15 +70,19 @@ module Umbra
       @rendered = true
     end
 
-    # how to print the header or separator
+    ## how to print the header and separator
+    ## index can be 0 or 1
+    ## returns an array of color_pair and attribute
     def color_of_header_row index, state
         arr =  [ @header_color_pair || CP_MAGENTA, @header_attr || REVERSE ] 
         return arr if index == 0
         [ arr[0], NORMAL ]
     end
+
     def color_of_data_row index, state, data_index
       _format_color(index, state)         ## calling superclass here
     end
+
     def _print_row(win, row, col, str, index, state)
       if index <= @data_offset - 1
         _print_headings(win, row, col, str, index, state)
@@ -93,6 +105,7 @@ module Umbra
       win.printstring(row, col, str, arr[0], arr[1])
     end
     def color_of_column ix, value, defaultcolor
+      raise "unused yet"
     end
     ## returns the raw data as array of arrays in tabular
     def data
