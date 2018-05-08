@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-05-06 15:02
+#  Last update: 2018-05-08 11:48
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -39,7 +39,6 @@ class Textbox < Widget
     @selected_index     = nil                # index of row selected
     @selection_key      = 0                  # presently no selection. Actually 0 is Ctrl-Space.
     @highlight_attr     = FFI::NCurses::A_BOLD
-    @to_print_border    = false
     @row_offset         = 0
     @col_offset         = 0
     @pcol               = 0
@@ -80,6 +79,7 @@ class Textbox < Widget
     @pstart = @current_index = 0
     @selected_index = nil
     @focusable = true         # too late since form is not rechecking its array
+    fire_handler(:CHANGED, self)
   end
   def file_name=(fp)
     raise "File #{fp} not readable"  unless File.readable? fp 
@@ -116,14 +116,14 @@ class Textbox < Widget
     r,c = @row, @col 
     _attr = @attr || NORMAL
     _color = @color_pair || CP_WHITE
-    #_bordercolor = @border_color_pair || CP_BLUE
-    rowpos = 1
+  
+    curpos = 1
     coffset = 0
-    #width = win.width-1
+
     width = @width
-    files = @list
+    rows = getvalue
     
-    #ht = win.height-2
+ 
     ht = @height
     cur = @current_index
     st = pstart = @pstart           # previous start
@@ -134,27 +134,44 @@ class Textbox < Widget
       st = cur
     end
     $log.debug "TEXTBOX: cur = #{cur} st = #{st} pstart = #{pstart} pend = #{pend} listsize = #{@list.size} "
-    hl = cur
     y = 0
     ctr = 0
     filler = " "*(width)
-    files.each_with_index {|f, y| 
+    rows.each_with_index {|_f, y| 
       next if y < st
-      colr = CP_WHITE # white on bg -1
-      mark = @unselected_mark
-      if y == hl
-        attr = @highlight_attr #FFI::NCurses::A_REVERSE
-        mark = @current_mark
-        rowpos = ctr
-      else
-        attr = FFI::NCurses::A_NORMAL
+      curpos = ctr if y == cur                                         ## used for setting row_offset
+
+      colr = _color
+      attr = _attr
+      win.printstring(ctr + r, coffset+c, filler, colr )
+      _state = state_of_row(y)     ## XXX should be move this into paint_row
+      paint_row( win, ctr+r, coffset+c, _f, y, _state)
+      ctr += 1 
+      @pstart = st
+      break if ctr >= ht #-
+    }
+    ## if counter < ht then we need to clear the rest in case there was data earlier {{{
+    if ctr < ht
+      while ctr < ht
+        win.printstring(ctr + r, coffset+c, filler, _color )
+        ctr += 1
       end
-      if y == @selected_index
+    end # }}}
+    @row_offset = curpos 
+    #@col_offset = coffset # this way form can pick it up XXX can't override it like this
+    @repaint_required = false
+  end
+  def paint_row(win, row, col, line, ctr, state)
+    colr = @color_pair || CP_WHITE
+      if ctr == @current_index
+        attr = @highlight_attr 
+      else
+        attr = @attr || NORMAL
+      end
+      if ctr == @selected_index
         colr = @selected_color_pair
         attr = @selected_attr
-        mark = @selected_mark
       end
-      #ff = "#{mark} #{f}"
       ff = f
       if ff
         if ff.size > width
@@ -175,23 +192,42 @@ class Textbox < Widget
       end
       ff = "" unless ff
 
-      win.printstring(ctr + r, coffset+c, filler, colr )
-      win.printstring(ctr + r, coffset+c, ff, colr, attr)
-      ctr += 1 
-      @pstart = st
-      break if ctr >= ht #-
-    }
-    ## if counter < ht then we need to clear the rest in case there was data earlier {{{
-    if ctr < ht
-      while ctr < ht
-        win.printstring(ctr + r, coffset+c, filler, _color )
-        ctr += 1
-      end
-    end # }}}
-    @row_offset = rowpos 
-    #@col_offset = coffset # this way form can pick it up XXX can't override it like this
-    @repaint_required = false
+      win.printstring(row, col, ff, colr, attr)
   end
+  def state_of_row ix
+      _st = :NORMAL
+      cur = @current_index
+      if ix == cur # current row, row on which cursor is or was
+        ## highlight only if object is focussed, otherwise just show mark
+        if @state == :HIGHLIGHTED
+          _st = :HIGHLIGHTED
+        else
+          ## cursor was on this row, but now user has tabbed out
+          _st = :CURRENT
+        end
+      end
+      if ix == @selected_index
+        _st = :SELECTED
+      end # 
+      return _st
+  end
+  def _format_color index, state
+    arr = case state
+    when :SELECTED
+      [@selected_color_pair, @selected_attr]
+    when :HIGHLIGHTED
+      [@highlight_color_pair || CP_WHITE, @highlight_attr || REVERSE]
+    when :CURRENT
+      [@color_pair, @attr]
+    when :NORMAL
+      _color = CP_CYAN
+      _color = CP_WHITE if index % 2 == 0
+      #_color = @alt_color_pair if index % 2 == 0
+      [@color_pair || _color, @attr || NORMAL]
+    end
+    return arr
+  end
+  alias :color_of_row :_format_color 
 
   def getvalue
     @list
