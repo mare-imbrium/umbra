@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-24 - 12:39
 #      License: MIT
-#  Last update: 2018-05-09 00:05
+#  Last update: 2018-05-10 11:06
 # ----------------------------------------------------------------------------- #
 #  textbox.rb  Copyright (C) 2012-2018 j kepler
 ##  TODO -----------------------------------
@@ -36,7 +36,7 @@ class Textbox < Multiline
     super
 
   end
-  # set list of data to be displayed.
+  # set list of data to be displayed from filename.  {{{
   # NOTE this can be called again and again, so we need to take care of change in size of data
   # as well as things like current_index and selected_index or indices.
   def file_name=(fp)
@@ -64,12 +64,28 @@ class Textbox < Multiline
     self.list = content
     raise "list not set" unless @list
 
+  end # }}}
+
+  # returns current row
+  def current_row
+    @list[@current_index]
   end
 
 
-
-  # listbox key handling
+  ## textbox key handling  
+  ## Textbox varies from multiline in that it fires a cursor_move event whrease the parent 
+  ##  fires a cursor_move event which is mostly used for testing out
   def handle_key ch
+    begin 
+      ret = super
+      return ret
+    ensure
+      if @repaint_required
+        fire_handler(:CURSOR_MOVE, [@col_offset, @current_index, @curpos, @pcol, ch ])     # 2018-03-25 - improve this
+      end
+    end
+  end
+  def OLDhandle_key ch # {{{
     return :UNHANDLED unless @list
     #   save old positions so we know movement has happened
     old_current_index = @current_index
@@ -87,30 +103,25 @@ class Textbox < Multiline
         if @current_index != old_current_index 
           on_leave_row old_current_index
           on_enter_row @current_index
-          #fire_handler(:CHANGE_ROW, [old_current_index, @current_index, ch ])     # 2018-03-26 - improve this
         end
         @repaint_required = true 
         fire_handler(:CURSOR_MOVE, [@col_offset, @current_index, @curpos, @pcol, ch ])     # 2018-03-25 - improve this
       end
     end
-  end
-  # advance col_offset (where cursor will be displayed on screen)
+  end # }}}
+  # advance col_offset (where cursor will be displayed on screen) {{{
   # @param [Integer] advance by n (can be negative or positive)
   # @return -1 if cannot advance
-  private def add_col_offset num
+  private def OLDadd_col_offset num
     x = @col_offset + num
     return -1 if x < 0
     return -1 if x > @int_width 
     # is it a problem that i am directly changing col_offset ??? XXX
     @col_offset += num 
   end
-  # returns current row
-  def current_row
-    @list[@current_index]
-  end
 
   # move cursor forward one character, called with KEY_RIGHT action.
-  def cursor_forward
+  def OLDcursor_forward
     blen = current_row().size-1
     if @curpos < blen
       if add_col_offset(1)==-1  # go forward if you can, else scroll
@@ -120,7 +131,7 @@ class Textbox < Multiline
       @curpos += 1
     end
   end
-  def cursor_backward
+  def OLDcursor_backward
 
     if @col_offset > 0
       @curpos -= 1
@@ -136,14 +147,14 @@ class Textbox < Multiline
     end
   end
   # position cursor at start of field
-  def cursor_home
+  def OLDcursor_home
     @curpos = 0
     @pcol = 0
     set_col_offset 0
   end
   # goto end of line. 
   # This should be consistent with moving the cursor to the end of the row with right arrow
-  def cursor_end
+  def OLDcursor_end
     blen = current_row().length
     if blen < @int_width
       set_col_offset blen # just after the last character
@@ -156,19 +167,19 @@ class Textbox < Multiline
     # regardless of pcol (panning)
   end
   # go to start of file (first line)
-  def goto_start
+  def OLDgoto_start
     @current_index = 0
     @pcol = @curpos = 0
     set_col_offset 0
   end
   # go to end of file (last line)
-  def goto_end
+  def OLDgoto_end
     @current_index = @list.size-1
   end
   # sets the visual cursor on the window at correct place
   # NOTE be careful of curpos - pcol being less than 0
   # @param [Integer] position in data on the line
-  private def set_col_offset x=@curpos
+  private def OLD_set_col_offset x=@curpos
     @curpos = x || 0 # NOTE we set the index of cursor here - WHY TWO THINGS ??? XXX
     #return -1 if x < 0
     #return -1 if x > @width
@@ -183,7 +194,7 @@ class Textbox < Multiline
   end
   # called whenever a row entered.
   # Call when object entered, also. 
-  def on_enter_row index
+  def OLD_on_enter_row index
     #fire_handler(:ENTER_ROW, [old_current_index, @current_index, ch ])     # 2018-03-26 - improve this
     fire_handler(:ENTER_ROW, [@current_index])     # 2018-03-26 - improve this
     # if cursor ahead of blen then fix it
@@ -198,10 +209,7 @@ class Textbox < Multiline
       end
     end
     @col_offset = 0 if @col_offset < 0
-  end
-  def _format_mark index, state
-    return ""
-  end
+  end # }}}
   ## border {{{
   private def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
     raise
