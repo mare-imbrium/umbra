@@ -1,54 +1,46 @@
 require 'umbra/widget'
 # ----------------------------------------------------------------------------- #
 #         File: multiline.rb
-#  Description: 
+#  Description: A base class for lists and textboxes and tables, i.e. components
+#               having multiple lines that are scrollable.
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-09 10:05
+#  Last update: 2018-05-10 11:20
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
+#
+##  TODO search through text and put cursor on next result.
+#/
+
+
 module Umbra
 class Multiline < Widget 
+
   attr_reader   :list                        # array containing data (usually Strings)
-  #
+
   # index of focussed row, starting 0, index into the list supplied
   attr_reader   :current_index
-
-  attr_accessor :selection_allowed           # does this class allow row selection (should be class level)
-  attr_accessor :selection_key               # key used to select a row
-  attr_accessor :selected_index              # row selected, may change to plural
-  attr_accessor :selected_color_pair         # row selected color_pair
-  attr_accessor :selected_attr               # row selected color_pair
-  attr_accessor :selected_mark               # row selected character
-  attr_accessor :unselected_mark             # row unselected character (usually blank)
-  attr_accessor :current_mark                # row current character (default is >)
-
 
   def initialize config={}, &block    # {{{
     @focusable          = false
     @editable           = false
     @pstart             = 0                  # which row does printing start from
     @current_index      = 0                  # index of row on which cursor is
-    @selection_allowed  = false              # does this class allow selection of row
-    @selected_index     = nil                # index of row selected
-    @selection_key      = ?s.getbyte(0)      # 's' used to select/deselect
-    @selected_color_pair = CP_RED 
-    @selected_attr      = REVERSE
-    @row_offset         = 0
-    @selected_mark      = 'x'                # row selected character
-    @unselected_mark    = ' '                # row unselected character (usually blank)
-    @current_mark       = '>'                # row current character (default is >)
-    register_events([:LEAVE_ROW, :ENTER_ROW, :LIST_SELECTION_EVENT])
+    #register_events([:LEAVE_ROW, :ENTER_ROW, :LIST_SELECTION_EVENT])
+    register_events([:LEAVE_ROW, :ENTER_ROW])
     super
 
     map_keys
+    @row_offset         = 0
     @pcol               = 0
+    @curpos             = 0  
     @repaint_required   = true
   end
-  # set list of data to be displayed.
-  # NOTE this can be called again and again, so we need to take care of change in size of data
-  # as well as things like current_index and selected_index or indices.
+
+  ## Set list of data to be displayed.
+  ## NOTE this can be called again and again, so we need to take care of change in size of data
+  ## as well as things like current_index and selected_index or indices.
   def list=(alist)
     if !alist or alist.size == 0
       self.focusable=(false)
@@ -58,7 +50,6 @@ class Multiline < Widget
     @list               = alist
     @repaint_required   = true
     @pstart = @current_index = 0
-    @selected_index     = nil
     @pcol               = 0
     fire_handler(:CHANGED, self)    ## added 2018-05-08 - 
   end
@@ -67,7 +58,7 @@ class Multiline < Widget
   # Calculate dimensions as late as possible, since we can have some other container such as a box,
   # determine the dimensions after creation.
   private def _calc_dimensions
-    raise "Dimensions not supplied to listbox" if @row.nil? or @col.nil? or @width.nil? or @height.nil?
+    raise "Dimensions not supplied to multiline" if @row.nil? or @col.nil? or @width.nil? or @height.nil?
     @_calc_dimensions = true
     @int_width  = @width                     # internal width NOT USED ELSEWHERE
     @int_height = @height                    # internal height  USED HERE ONLy REDUNDANT FIXME
@@ -81,7 +72,7 @@ class Multiline < Widget
 
   # }}}
  
-  ## repaints the entire listbox, called by +form+ {{{
+  ## repaints the entire multiline, called by +form+ {{{
   def repaint 
     _calc_dimensions unless @_calc_dimensions
 
@@ -150,10 +141,10 @@ class Multiline < Widget
   ## @param [String]   state: state of row (SELECTED CURRENT HIGHLIGHTED NORMAL)
   def paint_row(win, row, col, line, ctr, state)
 
-      f = _format_value(line)
+      ff = _format_value(line, ctr, state)
 
-      mark = _format_mark(ctr, state)
-      ff = "#{mark}#{f}"
+      #mark = _format_mark(ctr, state)
+      #ff = "#{mark}#{f}"
 
       ff = _truncate_to_width( ff )   ## truncate and handle panning
 
@@ -179,8 +170,8 @@ class Multiline < Widget
   # @param state of row in the list (see above states)
   def _format_color index, state
     arr = case state
-    when :SELECTED
-      [@selected_color_pair, @selected_attr]
+    #when :SELECTED
+      #[@selected_color_pair, @selected_attr]
     when :HIGHLIGHTED
       [@highlight_color_pair || CP_WHITE, @highlight_attr || REVERSE]
     when :CURRENT
@@ -196,24 +187,13 @@ class Multiline < Widget
   alias :color_of_row :_format_color 
 
 
-  def _format_mark index, state
-      mark = case state
-             when :SELECTED
-               @selected_mark
-             when :HIGHLIGHTED, :CURRENT
-               @current_mark
-             else
-               @unselected_mark
-             end
-  end
-  alias :mark_of_row :_format_mark 
    
 
   # how to convert the line of the array to a simple String.
   # This is only required to be overridden if the list passed in is not an array of Strings.
   # @param the current row which could be a string or array or whatever was passed in in +list=()+.
   # @return [String] string to print. A String must be returned.
-  def _format_value line
+  def _format_value line, ctr, state
     line
   end
   alias :value_of_row :_format_value 
@@ -230,9 +210,6 @@ class Multiline < Widget
           _st = :CURRENT
         end
       end
-      if ix == @selected_index
-        _st = :SELECTED
-      end # 
       return _st
   end
   # }}}
@@ -261,7 +238,7 @@ class Multiline < Widget
   end # }}}
 
 
-  ## mapping of keys for listbox {{{
+  ## mapping of keys for multiline {{{
   def map_keys
     return if @keys_mapped
     bind_keys([?k,FFI::NCurses::KEY_UP], "Up")         { cursor_up }
@@ -277,10 +254,13 @@ class Multiline < Widget
     bind_key(FFI::NCurses::KEY_CTRL_B, 'page_backward'){ page_backward }
     bind_key(FFI::NCurses::KEY_CTRL_U, 'scroll_up')    { scroll_up }
     bind_key(FFI::NCurses::KEY_CTRL_D, 'scroll_down')  { scroll_down }
+    ## C-h was not working, so trying C-j
+    bind_key(FFI::NCurses::KEY_CTRL_J, 'scroll_left')  { scroll_left }
+    bind_key(FFI::NCurses::KEY_CTRL_L, 'scroll_right')  { scroll_right }
     @keys_mapped = true
   end
 
-  ## on enter of this listbox
+  ## on enter of this multiline
   def on_enter
     super
     on_enter_row @current_index
@@ -288,7 +268,7 @@ class Multiline < Widget
     touch ; repaint
   end
 
-  # on leave of this listbox
+  # on leave of this multiline
   def on_leave
     super
     on_leave_row @current_index
@@ -304,6 +284,18 @@ class Multiline < Widget
   # Call when object entered, also. 
   def on_enter_row index
     fire_handler(:ENTER_ROW, [@current_index])     # 2018-03-26 - improve this
+    # if cursor ahead of blen then fix it
+    blen = current_row().size-1
+    if @curpos > blen
+      @col_offset = blen - @pcol 
+      @curpos = blen
+      if @pcol > blen
+        @pcol = blen - @int_width
+        @pcol = 0 if @pcol < 0
+        @col_offset = blen - @pcol 
+      end
+    end
+    @col_offset = 0 if @col_offset < 0
   end
   def cursor_up
     @current_index -= 1
@@ -314,17 +306,20 @@ class Multiline < Widget
   end
     # position cursor at start of field
     def cursor_home
-      @curpos  = 0  # UNUSED RIGHT NOW
+      @curpos  = 0 
       @pcol    = 0
+      set_col_offset 0
     end
     # goto end of line. 
     # This should be consistent with moving the cursor to the end of the row with right arrow
     def cursor_end
       blen = current_row().length
       if blen < @width
+        set_col_offset blen # just after the last character
         @pcol = 0
       else
-        @pcol = blen-@width+2  # 2 is due to mark and space XXX could be a problem with textbox
+        @pcol = blen-@width #+2  # 2 is due to mark and space XXX could be a problem with textbox
+        set_col_offset blen # just after the last character
       end
       @curpos = blen # this is position in array where editing or motion is to happen regardless of what you see
       # regardless of pcol (panning)
@@ -334,21 +329,72 @@ class Multiline < Widget
     # @return [String] row the cursor/user is on
     def current_row
       s = @list[@current_index]
-      _format_value s
+      _format_value s, @current_index, :CURRENT
     end
-    def cursor_forward
-      # FIXME Take from textbox
+  # move cursor forward one character, called with KEY_RIGHT action.
+  def cursor_forward
+    blen = current_row().size # -1
+    if @curpos < blen
+      if add_col_offset(1)==-1  # go forward if you can, else scroll
+        #@pcol += 1 if @pcol < @width 
+        @pcol += 1 if @pcol < blen
+      end
+      @curpos += 1
+    end
+  end
+  def cursor_backward
+
+    if @col_offset > 0
+      @curpos -= 1
+      add_col_offset -1
+    else
+      # cur is on the first col, then scroll left
+      if @pcol > 0
+        @pcol -= 1
+        @curpos -= 1
+      else
+        # do nothing
+      end
+    end
+  end
+  # advance col_offset (where cursor will be displayed on screen)
+  # @param [Integer] advance by n (can be negative or positive)
+  # @return -1 if cannot advance
+  private def add_col_offset num
+    x = @col_offset + num
+    return -1 if x < 0
+    return -1 if x > @int_width 
+    # is it a problem that i am directly changing col_offset ??? XXX
+    @col_offset += num 
+  end
+  # sets the visual cursor on the window at correct place
+  # NOTE be careful of curpos - pcol being less than 0
+  # @param [Integer] position in data on the line
+  private def set_col_offset x=@curpos
+    @curpos = x || 0 # NOTE we set the index of cursor here - WHY TWO THINGS ??? XXX
+    #return -1 if x < 0
+    #return -1 if x > @width
+    if x >= @int_width
+      x = @int_width
+      @col_offset = @int_width 
+      return
+    end
+    @col_offset = x 
+    @col_offset = @int_width if @col_offset > @int_width
+    return
+  end
+    def scroll_right ## cursor_forward
       blen = current_row().size-1
       @pcol += 1 if @pcol < blen
     end
-    def cursor_backward
-      # FIXME Take from textbox
+    def scroll_left  ##cursor_backward
       @pcol -= 1 if @pcol > 0
     end
     # go to start of file (first line)
     def goto_start
       @current_index = 0
       @pcol = @curpos = 0
+      set_col_offset 0
     end
     # go to end of file (last line)
     def goto_end
@@ -370,24 +416,16 @@ class Multiline < Widget
     # }}}
 
 
-    ## Listbox key handling. {{{
+    ## Multiline key handling. {{{
     ## Called by +form+ from form's +handle_key+ when this object is in focus.
     ## @param [Integer] ch: key caught by getch of window
     def handle_key ch
       old_current_index = @current_index
       old_pcol = @pcol
-      if @selection_allowed and ch == @selection_key
-        @repaint_required = true  
-        if @selected_index == @current_index 
-          @selected_index = nil
-        else
-          @selected_index = @current_index 
-        end
-        fire_handler :LIST_SELECTION_EVENT, self   # use selected_index to know which one
-      else
-        ret = super
-        return ret
-      end
+      old_col_offset = @col_offset
+
+      ret = super
+      return ret
     ensure
       ## NOTE: it is possible that a block called above may have cleared the list.
       ##  In that case, the on_enter_row will crash. I had put a check here, but it 
@@ -399,7 +437,7 @@ class Multiline < Widget
         on_enter_row @current_index
         @repaint_required = true  
       end
-      @repaint_required = true if old_pcol != @pcol
+      @repaint_required = true if old_pcol != @pcol or old_col_offset != @col_offset
     end
 
     ## convenience method for calling most used event of a widget
