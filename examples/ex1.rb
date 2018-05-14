@@ -55,10 +55,12 @@ begin
     form.add_widget w
   }
   form.pack
+  form.repaint
   win.wrefresh
 
   y = x = 1
   while (ch = win.getkey) != 113
+    next if ch == -1
     #y, x = win.getbegyx(win.pointer)
     old_y, old_x = y, x
     case ch
