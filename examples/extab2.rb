@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-06 - 11:20
 #      License: MIT
-#  Last update: 2018-05-07 15:04
+#  Last update: 2018-05-10 23:37
 # ----------------------------------------------------------------------------- #
 #  extab2.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -116,6 +116,10 @@ begin
   end
 
   # testing out coloring different columns in different color
+  ## NOTE that as we scroll the colors will change for a column
+  ##   We don't know which columns have come in since scrolling will cut off some columns.
+  ##   We need to access pcol to find out which the starting column is, so which know which columns
+  ##   we actually have.
   def table3._print_row(win, row, col, str, index, state)
     f = str.split('|')
     attrib = NORMAL
