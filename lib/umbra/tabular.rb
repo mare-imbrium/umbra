@@ -10,13 +10,14 @@
   *               :
   * Author        : jkepler
   * Date          : 
-  * Last Update   : 2018-05-07 11:24
+  * Last Update   : 2018-05-12 14:56
   * License       : MIT
 =end
 
 ## Todo --------------
 ## TODO take care of truncate in format string
 ## NOTE: we are setting the ColumnInfo objects but not using them. We are using cw and @calign
+## What if user wishes to supply formatstring and override ours
 #
 # A simple tabular data generator. Given table data in arrays and a column heading row in arrays, it 
 # quickely generates tabular data. It only takes left and right alignment of columns into account.
@@ -69,11 +70,13 @@ module Umbra
       @chash = {}
       @cw = {}
       @calign = {}
+      @chide = {}          # columns not to be displayed. usually rowid which we need for detailed data of row or update
       @skip_columns = {}   # internal, which columns not to calc width of since user has specified
       @separ = @columns = @numbering =  nil
       @y = '|'
       @x = '+'
       @use_separator = true
+      @hidden_columns_flag = false
       self.columns = cols if cols
       if !args.empty?
         self.data = args
@@ -105,7 +108,7 @@ module Umbra
     # add a row of data 
     # @param [Array] an array containing entries for each column
     def add array
-      $log.debug "tabular got add  #{array.count} #{array.inspect} " if $log
+      #$log.debug "tabular got add  #{array.count} #{array.inspect} " if $log
       @list ||= []
       @list << array
     end
@@ -127,6 +130,13 @@ module Umbra
       end
       @chash
     end
+    def column_hide *colindexes
+      @hidden_columns_flag = true
+      colindexes.each do |ix|
+        @chide[ix] = true
+        @cw[ix] = 0
+      end
+    end
 
     # set alignment of given column offset
     # @param [Number] column offset, starting 0
@@ -141,6 +151,20 @@ module Umbra
       end
       @chash
     end
+    def visible_column_names
+      visible = []
+      @columns.each_with_index do |e, ix|
+        visible << e if !@chide[ix]
+      end
+      visible
+    end
+    def visible_columns(row)
+      visible = []
+      row.each_with_index do |e, ix|
+        visible << e if !@chide[ix]
+      end
+      visible
+    end
 
     # 
     # Now returns an array with formatted data
@@ -148,33 +172,45 @@ module Umbra
     def render
       raise "tabular:: list is nil " unless @list
       $log.debug "  render list:: #{@list.size} "
-      $log.debug "  render list:1: #{@list} "
+      #$log.debug "  render list:1: #{@list} "
       raise "tabular:: columns is nil " unless @columns
       buffer = []
       _guess_col_widths
       rows = @list.size.to_s.length
-      @rows = rows
-      _prepare_format
-      $log.debug "tabular: fmstr:: #{@fmstr}"
+      #@rows = rows
+      fmstr = _prepare_format
+      $log.debug "tabular: fmstr:: #{fmstr}"
       $log.debug "tabular: cols: #{@columns}"
-      $log.debug "tabular: data: #{@list}"
+      #$log.debug "tabular: data: #{@list}"
 
       str = ""
       if @numbering
         str = " "*(rows+1)+@y
       end
-      str <<  @fmstr % @columns
+      #str <<  fmstr % visible_column_names()
+      str <<  convert_heading_to_text(visible_column_names(), fmstr)
       buffer << str
       #puts "-" * str.length
       buffer << separator if @use_separator
-      if @list
+      if @list    ## XXX why wasn't this done in _prepare_format ???? FIXME
         if @numbering
-          @fmstr = "%#{rows}d "+ @y + @fmstr
+          fmstr = "%#{rows}d "+ @y + fmstr
         end
         #@list.each { |e| puts e.join(@y) }
         count = 0
         @list.each_with_index { |r,i|  
-          value = convert_value_to_text r, count
+          if r == :separator
+            buffer << separator
+            next
+          end
+          if @hidden_columns_flag
+            r = visible_columns(r)
+          end
+          if @numbering
+            r.insert 0, count+1
+          end
+          #value = convert_value_to_text r, count
+          value = convert_value_to_text r, fmstr, i
           buffer << value
           count += 1
         }
@@ -183,19 +219,17 @@ module Umbra
     end
 
     ## render_row
-    def convert_value_to_text r, count
-      if r == :separator
-        return separator
-      end
-      if @numbering
-        r.insert 0, count+1
-      end
-      return @fmstr % r;  
+    def convert_value_to_text r, fmstr, index
+      return fmstr % r;  
+    end
+    def convert_heading_to_text r, fmstr
+      return fmstr % r;  
     end
     # use this for printing out on terminal
+    # NOTE: Do not name this to_s as it will print the entire content in many places in debug statements
     # @example
     #     puts t.to_s
-    def to_s
+    def to_string
       render().join "\n"
     end
     def add_separator
@@ -205,9 +239,12 @@ module Umbra
       return @separ if @separ
       str = ""
       if @numbering
-        str = "-"*(@rows+1)+@x
+        str = "-"*(rows+1)+@x
       end
-      @cw.each_pair { |k,v| str << "-" * (v+1) + @x }
+      @cw.each_pair { |k,v| 
+        next if v == 0     ## hidden column
+        str << "-" * (v+1) + @x 
+      }
       @separ = str.chop
     end
 
@@ -221,6 +258,7 @@ module Umbra
         r.each_with_index { |c, j|
           ## we need to skip those columns which user has specified
           next if @skip_columns[j] == true
+          next if @chide[j]
           x = c.to_s.length
           if @cw[j].nil?
             @cw[j] = x
@@ -231,11 +269,22 @@ module Umbra
       }
     end
 
+    ## prepare formatstring.
+    ## NOTE: this is not the final value.
+    ## render adds numbering to this, if user has set numbering option.!!!!
     def _prepare_format  #:nodoc:
-      @fmtstr = nil
+      fmstr = nil
       fmt = []
       @cw.each_with_index { |c, i| 
-        w = @cw[i]
+        ## trying a zero for hidden columns
+        ## worked but an extra space is added below and the sep
+        if @chide[i]
+          #w = 0
+          #fmt << "%#{w}.#{w}s"
+          next
+        else
+          w = @cw[i]
+        end
         case @calign[i]
         when :right
           #fmt << "%.#{w}s "
@@ -244,8 +293,10 @@ module Umbra
           fmt << "%-#{w}.#{w}s "
         end
       }
-      @fmstr = fmt.join(@y)
-      #puts "format: #{@fmstr} " # 2011-12-09 23:09:57
+      ## the next line will put a separator after hidden columns also
+      fmstr = fmt.join(@y)
+      #puts "format: #{fmstr} " # 2011-12-09 23:09:57
+      return fmstr
     end
   end
 end
@@ -254,7 +305,7 @@ if __FILE__ == $PROGRAM_NAME
   include Umbra
   $log = nil
   t = Tabular.new(['a', 'b'], [1, 2], [3, 4])
-  puts t.to_s
+  puts t.to_string
   puts 
   t = Tabular.new([" Name ", " Number ", "  Email    "])
   t.add %w{ rahul 32 r@ruby.org }
@@ -262,7 +313,7 @@ if __FILE__ == $PROGRAM_NAME
   t << %w{ Jane 1331 jane@gnu.org }
   t.column_width 1, 10
   t.align_column 1, :right
-  puts t.to_s
+  puts t.to_string
   puts
 
   s = Tabular.new do |b|
@@ -272,7 +323,7 @@ if __FILE__ == $PROGRAM_NAME
     b << ["russia","europe","a hot country" ] 
     b.column_width 2, 30
   end
-  puts s.to_s
+  puts s.to_string
   puts
   puts "::::"
   puts
@@ -292,5 +343,5 @@ if __FILE__ == $PROGRAM_NAME
     b.column_width 1, 12
     b.numbering = true
   end
-  puts s.to_s
+  puts s.to_string
 end
