@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-12 - 23:35
 #      License: MIT
-#  Last update: 2018-04-22 23:05
+#  Last update: 2018-05-14 14:34
 # ----------------------------------------------------------------------------- #
 #  labeledfield.rb Copyright (C) 2018 j kepler
 require 'umbra/field'
@@ -29,15 +29,15 @@ module Umbra
     # It is initialized exactly like a Field, with the addition of label (and optionally label_color_pair,
     #   label_attr, and lcol, lrow)
     # 
-    attr_accessor :label              # label of field, just a String  
+    attr_property :label              # label of field, just a String  
     # if lrow and lcol are specified then label is printed exactly at that spot.
     # If they are omitted, then label is printed on left of field. Omit the lcol if you want
     #   the fields to be aligned, one under another, with the labels right-aligned.
-    attr_accessor :lrow, :lcol        # coordinates of the label
-    attr_accessor :label_color_pair   # label of field  color_pair
-    attr_accessor :label_attr         # label of field  attribute
-    attr_accessor :label_highlight_color_pair   # label of field  high color_pair
-    attr_accessor :label_highlight_attr         # label of field  high attribute
+    attr_property :lrow, :lcol        # coordinates of the label
+    attr_property :label_color_pair   # label of field  color_pair
+    attr_property :label_attr         # label of field  attribute
+    attr_property :label_highlight_color_pair   # label of field  high color_pair
+    attr_property :label_highlight_attr         # label of field  high attribute
     attr_accessor :mnemonic         # mnemonic of field which shows up on label
     attr_accessor :related_widget         #  to keep sync with label
     def initialize config={}, &block
