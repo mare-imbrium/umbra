@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-01 - 16:08
 #      License: MIT
-#  Last update: 2018-04-01 16:21
+#  Last update: 2018-05-14 14:34
 # ----------------------------------------------------------------------------- #
 #  checkbox.rb  Copyright (C) 2012-2018 j kepler
 module Umbra
@@ -12,7 +12,7 @@ module Umbra
   # A checkbox, may be selected or unselected
   #
   class Checkbox < ToggleButton 
-    attr_accessor :align_right    # the button will be on the right 2008-12-09 23:41 
+    attr_property :align_right    # the button will be on the right 2008-12-09 23:41 
     # if a variable has been defined, off and on value will be set in it (default 0,1)
     def initialize config={}, &block
       @surround_chars = ['[', ']']    # 2008-12-23 23:16 added space in Button so overriding
