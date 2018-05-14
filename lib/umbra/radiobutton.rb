@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-02 - 10:37
 #      License: MIT
-#  Last update: 2018-04-03 14:22
+#  Last update: 2018-05-14 14:31
 # ----------------------------------------------------------------------------- #
 #  radiobutton.rb  Copyright (C) 2012-2018 j kepler
 
@@ -21,7 +21,7 @@ module Umbra
   # radiobuttons of this group is fired.
 
   class RadioButton < ToggleButton
-    attr_accessor :align_right    # the button will be on the right 
+    attr_property :align_right    # the button will be on the right 
     attr_accessor :button_group   # group that this button belongs to.
 
     def initialize config={}, &block
