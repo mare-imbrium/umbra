@@ -99,6 +99,7 @@ begin
 
   y = x = 1
   while (ch = win.getkey) != FFI::NCurses::KEY_CTRL_Q
+    next if ch == -1
     begin
       form.handle_key ch
     rescue => e
