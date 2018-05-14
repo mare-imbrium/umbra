@@ -59,7 +59,8 @@ module Umbra
           aeve = @event_args[event]
           ablk.each_with_index do |blk, ix|
             #$log.debug "#{self} called EventHandler firehander #{@name}, #{event}, obj: #{object},args: #{aeve[ix]}"
-            $log.debug "#{self} called EventHandler firehander #{@name}, #{event}"
+            # self prints the entire content of list or table!
+            $log.debug "EVENTHANDLER: #{self} called EventHandler firehander #{@name}, #{event}"
             begin
               blk.call object,  *aeve[ix]
             rescue FieldValidationException => fve
@@ -102,7 +103,9 @@ module Umbra
     end # }}}
 
       def fire_property_change text, oldvalue, newvalue
-        return if oldvalue.nil? || @_object_created.nil? 
+        # canis returns if oldvalue is nil, but if object created with nil and later
+        # prop is set then we need a handler fired.
+        return if @_object_created.nil? 
         $log.debug " FPC #{self}: #{text} "
         if @pce.nil?
           @pce = PropertyChangeEvent.new(self, text, oldvalue, newvalue)
