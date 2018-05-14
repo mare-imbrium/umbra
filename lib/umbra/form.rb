@@ -10,6 +10,9 @@ require 'umbra/keymappinghandler'    # for bind_key and process_key
 # has bound the key via +bind_key+.    
 # NOTE : 2018-03-08 - now using @focusables instead of @widgets in traversal.
 #        active_index is now index into focusables.
+##  Events: RESIZE (allows listener to reposition objects that have variable widths or heights)
+#
+
 module Umbra
 class Form 
   # array of widgets, and those that can be traversed
@@ -69,9 +72,9 @@ class Form
   end
   # maintain a list of focusable objects so form can traverse between them easily.
   def update_focusables
-    $log.debug "1 inside update_focusables #{@focusables.count} "
+    #$log.debug "1 inside update_focusables #{@focusables.count} "
     @focusables = @widgets.select { |w| w.focusable }
-    $log.debug "2  inside update_focusables #{@focusables.count} "
+    #$log.debug "2  inside update_focusables #{@focusables.count} "
   end
   # Decide layout of objects. User has to call this after creating components
   # More may come here.
@@ -352,7 +355,6 @@ class Form
     @keys_mapped = true
   end
 
-=begin
   # repaint all # {{{
   # this forces a repaint of all visible widgets and has been added for the case of overlapping
   # windows, since a black rectangle is often left when a window is destroyed. This is internally
@@ -361,20 +363,21 @@ class Form
   # the window itself may need recreating ? 2014-08-18 - 21:03 
   def repaint_all_widgets
     $log.debug "  REPAINT ALL in FORM called "
-    raise "it has come to repaint_all"
+    #raise "it has come to repaint_all"
     @widgets.each do |w|
       next if w.visible == false
       #next if w.class.to_s == "Canis::MenuBar"
       $log.debug "   ---- REPAINT ALL #{w.name} "
-      #w.repaint_required true
-      w.repaint_all true
+      w.repaint_required = true
+      #w.repaint_all true
       w.repaint
     end
     $log.debug "  REPAINT ALL in FORM complete "
     #  place cursor on current_widget 
     _setpos
   end # }}}
-=end
+
+
   ## forms handle keys {{{
   # mainly traps tab and backtab to navigate between widgets.
   # I know some widgets will want to use tab, e.g edit boxes for entering a tab
@@ -389,21 +392,24 @@ class Form
     when -1
       #repaint # only for continuous updates, and will need to use wtimeout and not nodelay in getch
       return
-=begin
-    when 1000, 12
+    when 1000, 18  # what if someone has trapped this.
       # NOTE this works if widgets cover entire screen like text areas and lists but not in 
       #  dialogs where there is blank space. only widgets are painted.
-      # testing out 12 is C-l
+      # testing out 12 is C-l, 18 is C-r
       $log.debug " form REFRESH_ALL repaint_all HK #{ch} #{self}, #{@name} "
       repaint_all_widgets
-      return
+      return 0
     when FFI::NCurses::KEY_RESIZE  # SIGWINCH # UNTESTED XXX
+      ## NOTE: this works but boxes are not resized since hardcoded height and width were given.
+      ## 2018-05-13 - only if a layout is used, can a recalc happen.
       # note that in windows that have dialogs or text painted on window such as title or 
       #  box, the clear call will clear it out. these are not redrawn.
       lines = FFI::NCurses.LINES
       cols = FFI::NCurses.COLS
-      x = FFI::NCurses.stdscr.getmaxy
-      y = FFI::NCurses.stdscr.getmaxx
+      #x = FFI::NCurses.stdscr.getmaxy
+      x = @window.getmaxy
+      #y = FFI::NCurses.stdscr.getmaxx
+      y = @window.getmaxx
       $log.debug " form RESIZE HK #{ch} #{self}, #{@name}, #{ch}, x #{x} y #{y}  lines #{lines} , cols: #{cols} "
       #alert "SIGWINCH WE NEED TO RECALC AND REPAINT resize #{lines}, #{cols}: #{x}, #{y} "
 
@@ -411,20 +417,21 @@ class Form
       FFI::NCurses.endwin
       @window.wrefresh
       @window.wclear
-      if @layout_manager
-        @layout_manager.do_layout
-        # we need to redo statusline and others that layout ignores
-      else
-        @widgets.each { |e| e.repaint_all(true) } # trying out
-      end
+      #if @layout_manager
+        #@layout_manager.do_layout
+        ## we need to redo statusline and others that layout ignores
+      #else
+        #@widgets.each { |e| e.repaint_all(true) } # trying out
+        @widgets.each { |e| e.repaint_required=(true) } # trying out
+      #end
       ## added RESIZE on 2012-01-5 
       ## stuff that relies on last line such as statusline dock etc will need to be redrawn.
       fire_handler :RESIZE, self 
-=end
     else
       field =  get_current_field
       handled = :UNHANDLED 
       handled = field.handle_key ch unless field.nil? # no field focussable
+      ## next line "field" can print entire content of a list or table if to_s is large
       $log.debug "handled inside Form #{ch} from #{field} got #{handled}  "
       # some widgets like textarea and list handle up and down
       if handled == :UNHANDLED or handled == -1 or field.nil?
