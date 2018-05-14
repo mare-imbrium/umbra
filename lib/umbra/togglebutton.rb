@@ -6,7 +6,7 @@ require 'umbra/button'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-03-17 - 22:50
 #      License: MIT
-#  Last update: 2018-04-07 23:08
+#  Last update: 2018-05-14 14:35
 # ----------------------------------------------------------------------------- #
 #  togglebutton.rb Copyright (C) 2012-2018 j kepler
 #
@@ -50,14 +50,12 @@ class ToggleButton < Button
   # boolean, which value to use currently, onvalue or offvalue
   attr_accessor :value
   # characters to use for surround, array, default square brackets
-  attr_accessor :surround_chars 
+  attr_property :surround_chars 
   # 2018-04-02 - removing variable
   #attr_accessor :variable    # value linked to this variable which is a boolean
   # background to use when selected, if not set then default
   # 2018-04-02 - unused so commenting off. color_pair is not used here or in checkbox
-  #attr_accessor :selected_bgcolor
-  #attr_accessor :selected_color 
-  attr_accessor :selected_color_pair
+  attr_property :selected_color_pair
 
   def initialize config={}, &block
     super
