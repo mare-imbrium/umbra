@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-04-21 23:55
+#  Last update: 2018-05-14 14:33
 # ----------------------------------------------------------------------------- #
 #  label.rb  Copyright (C) 2018- j kepler
 #
@@ -16,7 +16,7 @@ module Umbra
 class Label < Widget 
 
   # justify required a display length, esp if center.
-  attr_accessor   :justify        #:right, :left, :center
+  attr_property   :justify        #:right, :left, :center
   attr_accessor   :mnemonic       # alt-key that passes focus to related field 
   attr_accessor   :related_widget # field related to this label. See +mnemonic+.
 
