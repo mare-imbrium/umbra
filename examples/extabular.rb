@@ -4,7 +4,7 @@
 #  Description: This file does the following:
 #       Author:  r kumar
 #         Date: ,,D
-#  Last update: 2018-05-06 12:27
+#  Last update: 2018-05-11 10:06
 #      License: MIT License
 # ----------------------------------------------------------------------------- #
 require 'umbra'
@@ -35,7 +35,7 @@ begin
   startup
   win = Window.new
   statusline(win, " "*(win.width-0), 0)
-  statusline(win, "Press q to quit #{win.height}:#{win.width}", 20)
+  statusline(win, "Press Ctrl-q to quit #{win.height}:#{win.width}", 20)
   title = Label.new( :text => "Demo of Tabular", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
                     :justify => :center, :color_pair => 0)
 
