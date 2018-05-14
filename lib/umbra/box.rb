@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-07
 #      License: MIT
-#  Last update: 2018-04-08 09:12
+#  Last update: 2018-05-14 15:05
 # ----------------------------------------------------------------------------- #
 #  box.rb  Copyright (C) 2018 j kepler
 module Umbra
@@ -12,15 +12,15 @@ module Umbra
   # A box is a container around one, maybe more, widgets.
   #
   class Box < Widget 
-    attr_accessor :title
-    attr_accessor :width
-    attr_accessor :height
+    attr_property :title
+    attr_property :width
+    attr_property :height
     attr_accessor :row_offset     # not used yet
     attr_accessor :col_offset     # not used yet
-    attr_accessor :visible
+    attr_property :visible
     attr_reader   :widgets
     attr_reader   :widget
-    attr_accessor :justify       # right, left or center TODO
+    attr_property :justify       # right, left or center TODO
 
     def initialize config={}, &block
       @focusable  = false
