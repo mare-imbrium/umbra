@@ -1,36 +1,45 @@
 # ----------------------------------------------------------------------------- #
 #         File: table.rb
 #  Description: widget for tabular data
-#       Author: j kepler  http://github.com/mare-imbrium/canis/
+#       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-06 - 09:56
 #      License: MIT
-#  Last update: 2018-05-08 10:17
+#  Last update: 2018-05-14 14:22
 # ----------------------------------------------------------------------------- #
 #  table.rb  Copyright (C) 2018 j kepler
 
 ##--------- Todo section ---------------
+## TODO starting visual column (required when scrolling)
 ## TODO change a value value_at(x,y, value)
+## TODO change column width interactively, hide column , move column
+## TODO maybe even column_color(n, color_pair, attr)
+## TODO sort on column/s.
+## TODO selection will have to be added. maybe we should have extended listbox after all. Or made multiline selectable.
 ## DONE how to format the header
 ## DONE formatting rows
 ## DONE if we want to color specific columns based on values then I think we have to format (render) the row at the last 
 ##      moment in _print_row and not in advance
+## NOTE: we are setting the data in tabular, not list. So calling list() will give nil until a render has happened.
+##     callers will have to use data() instead of list() which is not consistent.
+## NOTE: current_index in this object refers to index including header and separator. It is not the offset in the data array.
+##    For that we need to adjust with @data_offset.
 #
 require 'forwardable'
 require 'umbra/tabular'
-require 'umbra/textbox'
+require 'umbra/multiline'
 
 module Umbra
   ##
   ## A table of columnar data.
-  ## This is not truly a table. This is a quick rough take - it contains a tabular object, and a 
-  ##  textbox, and delegates most calls to these.
+  ## This is not truly a table. This is a quick rough take - it contains a tabular object, and  
+  ##  extends Multiline.
   #
-  class Table < Listbox
+  class Table < Multiline
 
     extend Forwardable
 
 
-    ## tabular is the data model for Table
+    ## tabular is the data model for Table.
     ## It may be passed in in the constructor, or else is created when columns and data are passed in.
     attr_accessor :tabular
 
@@ -39,8 +48,11 @@ module Umbra
 
     attr_accessor :rendered                 ## boolean, if data has changed, we need to re-render
 
-    # if a variable has been defined, off and on value will be set in it (default 0,1)
-    # FIXME we can't have config and args !!!
+    
+    ## Create a Table object passing either a Tabular object or columns and list
+    ## e.g. Table.new tabular: tabular
+    ##      Table.new columns: cols, list: mylist
+    ##
     def initialize config={}, &block
       if config.key? :tabular
         @tabular = config.delete(:tabular)
@@ -54,8 +66,30 @@ module Umbra
       end
       @rendered = nil
       super
+
+      ## NOTE: a tabular object should be existing at this point.
     end
 
+    ## returns the raw data as array of arrays in tabular
+    def data
+      @tabular.list
+    end
+
+
+    def data=(list)
+      @rendered = false
+      @tabular.data = list
+      @repaint_required = true
+      self.focusable = true
+      @pstart = @current_index = 0
+      @pcol               = 0
+    $log.debug "  before table data= CHANGED "
+      #fire_handler(:CHANGED, self)    ## added 2018-05-08 - 
+    end
+    #alias :list= :data=
+
+    ## render the two-dimensional array of data as an array of Strings.
+    ## Calculates data_offset which is the row offset from which data starts.
     def render
       @data_offset = 0
       @data_offset +=1 if @tabular.use_separator
@@ -63,6 +97,7 @@ module Umbra
       self.list = @tabular.render
     end
 
+    ## paint the table
     def repaint
       render if !@rendered
       super
@@ -70,7 +105,7 @@ module Umbra
       @rendered = true
     end
 
-    ## how to print the header and separator
+    ## Specify how to print the header and separator.
     ## index can be 0 or 1
     ## returns an array of color_pair and attribute
     def color_of_header_row index, state
@@ -79,10 +114,15 @@ module Umbra
         [ arr[0], NORMAL ]
     end
 
+    ## Specify how the data rows are to be coloured.
+    ## Override this to have customised row coloring.
+    ## @return array of color_pair and attrib.
     def color_of_data_row index, state, data_index
       _format_color(index, state)         ## calling superclass here
     end
 
+    ## Print the row which could be header or data
+    ## @param index [Integer] - index of list, starting with header and separator
     def _print_row(win, row, col, str, index, state)
       if index <= @data_offset - 1
         _print_headings(win, row, col, str, index, state)
@@ -91,31 +131,60 @@ module Umbra
         _print_data(win, row, col, str, index, state, data_index)
       end
     end
+
+    ## Print the header row
+    ## index [Integer] - should be 0 or 1 (1 for optional separator)
     def _print_headings(win, row, col, str, index, state)
       arr = color_of_header_row(index, state)
       win.printstring(row, col, str, arr[0], arr[1])
     end
-    ## prints the data
+
+
+
+    ## Print the data.
     ## index is index into visual row, starting 0 for headings, and 1 for separator
     ## data_index is index into actual data object. Use this if checking actual data array
     def _print_data(win, row, col, str, index, state, data_index)
       data_index = index - @data_offset  ## index into actual data object
       arr = color_of_data_row(index, state, data_index)
-      #arr = _format_color(index, state)
+
       win.printstring(row, col, str, arr[0], arr[1])
     end
     def color_of_column ix, value, defaultcolor
       raise "unused yet"
     end
-    ## returns the raw data as array of arrays in tabular
-    def data
-      @tabular.list
+
+
+
+    def row_count
+      @tabular.list.size
     end
-    def data=(list)
-      @rendered = false
-      @tabular.data = list
+
+
+    ## return rowid (assumed to be first column)
+    def current_id
+      data = current_row_as_array()
+      return nil unless data
+      data.first
     end
-    def_delegators :@tabular, :headings=, :columns= , :add, :add_row, :<< , :column_width, :align_column, :convert_value_to_text, :separator, :to_s, :x=, :y=
+    # How do I deal with separators and headers here - return nil
+    ## This returns all columns including hidden so rowid can be accessed
+    def current_row_as_array
+      data_index = @current_index - @data_offset  ## index into actual data object
+      return nil if data_index < 0                ## separator and heading
+      data()[data_index]
+    end
+
+    ## returns the current row as a hash with column name as key.
+    def current_row_as_hash
+      data = current_row_as_array
+      return nil unless data
+      columns = @tabular.columns
+      hash = columns.zip(data).to_h
+    end
+
+    ## delegate calls to the tabular object
+    def_delegators :@tabular, :headings=, :columns= , :add, :add_row, :<< , :column_width, :align_column, :column_hide, :convert_value_to_text, :separator, :to_string, :x=, :y=
     def_delegators :@tabular, :columns , :numbering
 
   end # class 
