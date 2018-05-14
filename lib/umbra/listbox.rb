@@ -5,7 +5,7 @@ require 'umbra/multiline'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-10 11:11
+#  Last update: 2018-05-14 14:32
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -24,8 +24,8 @@ module Umbra
     attr_accessor :selection_allowed           # does this class allow row selection (should be class level)
     attr_accessor :selection_key               # key used to select a row
     attr_accessor :selected_index              # row selected, may change to plural
-    attr_accessor :selected_color_pair         # row selected color_pair
-    attr_accessor :selected_attr               # row selected color_pair
+    attr_property :selected_color_pair         # row selected color_pair
+    attr_property :selected_attr               # row selected color_pair
     attr_accessor :selected_mark               # row selected character
     attr_accessor :unselected_mark             # row unselected character (usually blank)
     attr_accessor :current_mark                # row current character (default is >)
@@ -73,6 +73,18 @@ module Umbra
       fire_handler :LIST_SELECTION_EVENT, self   # use selected_index to know which one
     end
 
+    ## listbox adds a mark on the side, whether a row is selected or not, and whether it is current.
+    def paint_row(win, row, col, line, ctr, state)
+
+      f = _format_value(line, ctr, state)
+
+      mark = _format_mark(ctr, state)
+      ff = "#{mark}#{f}"
+
+      ff = _truncate_to_width( ff )   ## truncate and handle panning
+
+      _print_row(win, row, col, ff, ctr, state)
+    end
 
     def state_of_row ix
       _st = super
@@ -95,7 +107,7 @@ module Umbra
     end
     alias :mark_of_row :_format_mark 
 
-    def _format_value line, ctr, state
+    def OLD_format_value line, ctr, state
       mark = _format_mark(ctr, state)
       line = "#{mark}#{line}"
     end
