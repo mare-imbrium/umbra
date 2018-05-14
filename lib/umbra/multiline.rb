@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-10 11:20
+#  Last update: 2018-05-14 14:19
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -51,7 +51,12 @@ class Multiline < Widget
     @repaint_required   = true
     @pstart = @current_index = 0
     @pcol               = 0
+    $log.debug "  before multiline list= CHANGED "
     fire_handler(:CHANGED, self)    ## added 2018-05-08 - 
+  end
+
+  def row_count
+    @list.size
   end
 
 
@@ -96,7 +101,7 @@ class Multiline < Widget
     elsif cur < pstart
       st = cur
     end
-    $log.debug " #{self.class} : cur = #{cur} st = #{st} pstart = #{pstart} pend = #{pend} listsize = #{@list.size} "
+    $log.debug "REPAINT #{self.class} : cur = #{cur} st = #{st} pstart = #{pstart} pend = #{pend} listsize = #{@list.size} "
     y = 0
     ctr = 0
     filler = " "*(@width)
