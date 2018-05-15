@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-11
 #      License: MIT
-#  Last update: 2018-05-14 14:16
+#  Last update: 2018-05-15 18:33
 # ----------------------------------------------------------------------------- #
 #  extab3.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -60,12 +60,17 @@ def view_details(table)
   res = %x{ sqlite3 #{@file} -line "select * from #{@tablename} where rowid = '#{id}'"}
   if res and !res.empty?
     res = res.split("\n")
-    # we need to wrap the plot but it looks bad wrapped in the middle since there are no indents.
-    #  So I am adding it to the end.
     view res
   else
     alert("No row for #{id} in #{@tablename}")
   end
+end
+def get_full_row_as_hash(table)
+  id = table.current_id
+  data, columns, datatypes = get_data(@db, "select * from #{@tablename} where rowid = '#{id}'")
+  hash = columns.zip(data.first).to_h
+  #$log.debug "  HASH == #{hash}"
+  return hash
 end
 def filter_popup lb # {{{
   ## present user with a popup allowing him to select range of rating title, range of year, status etc
@@ -197,11 +202,15 @@ begin
   @order_by = "ORDER BY tourney_date, tourney_name, match_num"
   data, columns, datatypes = get_data(@db, "#{@query} #{@order_by}")
 
-  table = Table.new(columns: columns, data: data)
+  table = Table.new(columns: columns, data: data) do |tt|
+    tt.column_hide(0)
+    tt.column_hide(1)
+    tt.column_width(6, 24)
+  end
+  #table.column_hide(0)
+  #table.column_hide(1)
+  #table.column_width(6, 24)
   box.title = "#{table.row_count} rows"
-  table.column_hide(0)
-  table.column_hide(1)
-  table.column_width(6, 24)
   box.fill table
   tabular = table.tabular
   # this is one way of hiding a column if we don't want to use the hide option.
@@ -224,8 +233,7 @@ begin
       
       arr
     end
-    ## is this being fired ???? XXX
-    table.bind_event(:CHANGED) { |obj| $log.debug "FIRING CHANGED #{obj.row_count}"; box.title = "#{obj.row_count} rows";  }
+    table.bind_event(:CHANGED) { |obj| box.title = "#{obj.row_count} rows";  }
     table.command do |ix|
       #rowid = table.current_id
       data = table.current_row_as_array
@@ -234,8 +242,12 @@ begin
         #t_name = data[2]
         hash = table.current_row_as_hash
         score = hash['score']
+        h1 = get_full_row_as_hash(table)
+        surface = h1['surface']
+        draw = h1['draw_size']
+        level = h1['tourney_level']
         #statusline(win, "#{rowid} | #{t_id} | #{t_name}          ")
-        statusline(win, data[0..4].join("| ") + " | #{score} |" )
+        statusline(win, data[0..4].join("| ") + " | #{score} | #{surface} | #{draw} | #{level} " )
       end
     end
     table.bind_key( 'v', 'view details') { view_details(table) }
