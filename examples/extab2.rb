@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-06 - 11:20
 #      License: MIT
-#  Last update: 2018-05-10 23:37
+#  Last update: 2018-05-15 12:52
 # ----------------------------------------------------------------------------- #
 #  extab2.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -111,8 +111,8 @@ begin
     }
     column_width 1, 10
     #column_width 5, 10   ## testing truncate
-    align_column 1, :right
-    align_column 3, :right
+    column_align 1, :right
+    column_align 3, :right
   end
 
   # testing out coloring different columns in different color
