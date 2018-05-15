@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["kepler"]
   spec.email         = ["githubkepler.50s@gishpuppy.com"]
 
-  spec.summary       = %q{tiny ncurses library for creating simple apps. Stripped version of Canis.}
-  spec.description   = %q{minimal ncurses wrapper/library, provides forms and a few basic widgets. Stripped version of canis gem}
+  spec.summary       = %q{tiny ncurses library for creating simple apps. Stripped version of Canis. 2018}
+  spec.description   = %q{minimal ncurses wrapper/library, provides forms, lists, textareas, tables and a few other basic widgets. Stripped version of canis gem. 2018}
   spec.homepage      = "https://github.com/mare-imbrium/umbra"
   spec.license       = "MIT"
 
