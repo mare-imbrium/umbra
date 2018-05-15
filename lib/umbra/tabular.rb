@@ -10,15 +10,16 @@
   *               :
   * Author        : jkepler
   * Date          : 
-  * Last Update   : 2018-05-12 14:56
+  * Last Update   : 2018-05-15 14:30
   * License       : MIT
 =end
 
-## Todo --------------
-## TODO take care of truncate in format string
+## Todo Section --------------
 ## NOTE: we are setting the ColumnInfo objects but not using them. We are using cw and @calign
 ## What if user wishes to supply formatstring and override ours
-#
+## ---------------------------
+
+
 # A simple tabular data generator. Given table data in arrays and a column heading row in arrays, it 
 # quickely generates tabular data. It only takes left and right alignment of columns into account.
 #   You may specify individual column widths. Else it will take the widths of the column names you supply 
@@ -67,16 +68,16 @@ module Umbra
     # @yield self
     #
     def initialize cols=nil, *args, &block
-      @chash = {}
-      @cw = {}
-      @calign = {}
-      @chide = {}          # columns not to be displayed. usually rowid which we need for detailed data of row or update
-      @skip_columns = {}   # internal, which columns not to calc width of since user has specified
+      @chash            = {}                 # hash of column info, not used
+      @cw               = {}                 # hash of column widths, indexed on col offset starting 0
+      @calign           = {}                 # hash of alighments for column
+      @chide            = {}                 # columns to hide. usually rowid which we need for detailed data of row or update
+      @_skip_columns     = {}                 # internal, which columns not to calc width of since user has specified
       @separ = @columns = @numbering =  nil
       @y = '|'
       @x = '+'
       @use_separator = true
-      @hidden_columns_flag = false
+      @_hidden_columns_flag = false
       self.columns = cols if cols
       if !args.empty?
         self.data = args
@@ -122,7 +123,7 @@ module Umbra
       @cw[colindex] ||= width    ## this is not updating it, if set. why is this. XXX
                                  ## this will carry the value of column headers width
       @cw[colindex] = width      ## 2018-05-06 - setting it, overwriting earlier value
-      @skip_columns[colindex] = true   ## don't calculate col width for this.
+      @_skip_columns[colindex] = true   ## don't calculate col width for this.
       if @chash[colindex].nil?
         @chash[colindex] = ColumnInfo.new("", width) 
       else
@@ -130,18 +131,28 @@ module Umbra
       end
       @chash
     end
+
+    ## These columns should not be shown. e.g. rowid or some other identifier required to link back to record.
     def column_hide *colindexes
-      @hidden_columns_flag = true
+      @_hidden_columns_flag = true
       colindexes.each do |ix|
         @chide[ix] = true
-        @cw[ix] = 0
+        #@cw[ix]    = 0     ## how will we revert
+      end
+    end
+
+    ## Unhide the columns.
+    def column_unhide *colindexes
+      #@_hidden_columns_flag = true
+      colindexes.each do |ix|
+        @chide[ix] = false
       end
     end
 
     # set alignment of given column offset
     # @param [Number] column offset, starting 0
     # @param [Symbol] :left, :right
-    def align_column colindex, lrc
+    def column_align colindex, lrc
       raise ArgumentError, "wrong alignment value sent" if ![:right, :left, :center].include? lrc
       @calign[colindex] ||= lrc
       if @chash[colindex].nil?
@@ -151,6 +162,8 @@ module Umbra
       end
       @chash
     end
+
+    ## return an array of visible columns names
     def visible_column_names
       visible = []
       @columns.each_with_index do |e, ix|
@@ -158,6 +171,9 @@ module Umbra
       end
       visible
     end
+
+
+    ## for the given row, return visible columns as an array
     def visible_columns(row)
       visible = []
       row.each_with_index do |e, ix|
@@ -203,7 +219,7 @@ module Umbra
             buffer << separator
             next
           end
-          if @hidden_columns_flag
+          if @_hidden_columns_flag
             r = visible_columns(r)
           end
           if @numbering
@@ -257,7 +273,7 @@ module Umbra
         next if r == :separator
         r.each_with_index { |c, j|
           ## we need to skip those columns which user has specified
-          next if @skip_columns[j] == true
+          next if @_skip_columns[j] == true
           next if @chide[j]
           x = c.to_s.length
           if @cw[j].nil?
@@ -312,7 +328,7 @@ if __FILE__ == $PROGRAM_NAME
   t << %w{ _why 133 j@gnu.org }
   t << %w{ Jane 1331 jane@gnu.org }
   t.column_width 1, 10
-  t.align_column 1, :right
+  t.column_align 1, :right
   puts t.to_string
   puts
 
