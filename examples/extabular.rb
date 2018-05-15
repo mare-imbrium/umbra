@@ -4,7 +4,7 @@
 #  Description: This file does the following:
 #       Author:  r kumar
 #         Date: ,,D
-#  Last update: 2018-05-11 10:06
+#  Last update: 2018-05-15 12:53
 #      License: MIT License
 # ----------------------------------------------------------------------------- #
 require 'umbra'
@@ -87,7 +87,7 @@ begin
       add_row cols
     }
     column_width 1, 6
-    align_column 1, :right
+    column_align 1, :right
   end
   #t.y = '| '
   #t.x = '+-'
