@@ -23,3 +23,4 @@ bug
 *.rbc
 tmp.*
 *.bak
+*.sqlite
