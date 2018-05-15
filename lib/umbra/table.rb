@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-06 - 09:56
 #      License: MIT
-#  Last update: 2018-05-14 14:22
+#  Last update: 2018-05-15 14:16
 # ----------------------------------------------------------------------------- #
 #  table.rb  Copyright (C) 2018 j kepler
 
@@ -184,7 +184,7 @@ module Umbra
     end
 
     ## delegate calls to the tabular object
-    def_delegators :@tabular, :headings=, :columns= , :add, :add_row, :<< , :column_width, :align_column, :column_hide, :convert_value_to_text, :separator, :to_string, :x=, :y=
+    def_delegators :@tabular, :headings=, :columns= , :add, :add_row, :<< , :column_width, :column_align, :column_hide, :convert_value_to_text, :separator, :to_string, :x=, :y=, :column_unhide
     def_delegators :@tabular, :columns , :numbering
 
   end # class 
