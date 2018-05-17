@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-06 - 11:20
 #      License: MIT
-#  Last update: 2018-05-15 12:52
+#  Last update: 2018-05-16 14:32
 # ----------------------------------------------------------------------------- #
 #  extab2.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -17,19 +17,15 @@ require 'umbra/box'
 require 'umbra/table'
 
 def startup
-  require 'logger'
   require 'date'
 
-    path = File.join(ENV["LOGDIR"] || "./" ,"v.log")
-    file   = File.open(path, File::WRONLY|File::TRUNC|File::CREAT) 
-    $log = Logger.new(path)
-    $log.level = Logger::DEBUG
-    today = Date.today
-    $log.info "Started demo table on #{today}"
-    FFI::NCurses.init_pair(10,  FFI::NCurses::BLACK,   FFI::NCurses::GREEN) # statusline
+  $log = create_logger "v.log"
+  #$log.level = Logger::DEBUG
+  today = Date.today
+  $log.info "Started demo table on #{today}"
 end
 def statusline win, str, col = 0
-  win.printstring( FFI::NCurses.LINES-1, col, str, 10)
+  win.printstring( FFI::NCurses.LINES-1, col, str, 5)
 end
 begin
   include Umbra
@@ -147,6 +143,10 @@ begin
   win.wrefresh
 
   y = x = 1
+  loop(@form) do |ch|
+    form.handle_key ch
+    win.wrefresh
+  end
   while (ch = win.getkey) != FFI::NCurses::KEY_CTRL_Q
     next if ch == -1
     form.handle_key ch
@@ -161,6 +161,7 @@ rescue Object => e
   puts e.backtrace.join("\n")
 ensure
   @window.destroy if @window
+  $log.close if $log
   FFI::NCurses.endwin
   puts 
 end
