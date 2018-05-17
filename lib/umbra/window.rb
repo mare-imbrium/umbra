@@ -125,6 +125,19 @@ module Umbra
       return @pointer
     end
 
+    ## create a window and return window, or yield window to block
+    def self.create h=0, w=0, top=0, left=0
+      win = Window.new h, w, top, left
+      return win unless block_given?
+
+      begin
+        yield win
+      ensure
+        win.destroy
+      end
+
+    end
+
     # print string at x, y coordinates. replace this with the original one below
     # @deprecated
     def printstr(str, x=0,y=0)
@@ -255,7 +268,8 @@ module Umbra
     def box
       FFI::NCurses.box(@pointer, 0, 0)
     end
-    # print a centered title on top of window
+    # Print a centered title on top of window.
+    # NOTE : the string is not stored, so it can be overwritten.
     # This should be called after box, or else box will erase the title
     # @param str [String] title to print
     # @param color [Integer] color_pair 
