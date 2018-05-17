@@ -11,6 +11,8 @@ require 'umbra/keymappinghandler'    # for bind_key and process_key
 # NOTE : 2018-03-08 - now using @focusables instead of @widgets in traversal.
 #        active_index is now index into focusables.
 ##  Events: RESIZE (allows listener to reposition objects that have variable widths or heights)
+## NOTE: active_index: 2018-05-17 - is being set to 0 even though no field is active. Thus, first time 
+#    on_enter does not fire. It should only be set after a field is focused and its on_enter has succeeded.
 #
 
 module Umbra
@@ -111,6 +113,21 @@ class Form
     self
   end
 
+  def _focussed_widget fld
+
+    ## leave existing widget if there was one
+    fw =  @_focussed_widget
+    if fw
+      fw.on_leave if fw.respond_to? on_leave
+    end
+
+
+    ## enter given widget
+    ix = @focusables.index fld
+    fld.on_enter if fw.respond_to? on_enter
+    @active_index = ix
+  end
+
 
   # form repaint,calls repaint on each widget which will repaint it only if it has been modified since last call.
   # called after each keypress and on select_field.
@@ -194,6 +211,7 @@ class Form
   # # @param field object
   # @return [0, -1] for success or failure
   # NOTE : catches exception and sets $error_message, check if -1
+  ## 2018-05-17 - NOT CALLED !!!
   def validate_field f=@focusables[@active_index]
     begin
       on_leave f
