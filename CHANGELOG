@@ -1,6 +1,7 @@
 DATE 
   - for 0.1.1
     - cleanup of Messagebox
-	- add attr_property so that repaint will automatically happen on changing
-	properties.
+    - add attr_property so that repaint will automatically happen on changing
+      properties.
+    - add Table widget
 
