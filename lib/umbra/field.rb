@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-04-23 12:23
+#  Last update: 2018-05-17 12:20
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -206,6 +206,9 @@ end # }}}
     # silently restores earlier value without firing handlers, use if exception and you want old value
     # Called when pressing <ESC> or <c-g>.
     def restore_original_value
+      $log.debug "  FIELD: buffer:#{@buffer}. orig:#{@original_value}: "
+      $log.debug "  original value is null " unless @original_value
+      $log.debug "  buffer value is null " unless @buffer
       @buffer = @original_value.dup
       # earlier commented but trying again, since i am getting IndexError in insert 2188
       # Added next 3 lines to fix issue, now it comes back to beginning.
@@ -479,6 +482,8 @@ end # }}}
     def on_enter
       #@original_value = getvalue.dup rescue getvalue
       @original_value = @buffer.dup # getvalue.dup rescue getvalue
+      $log.debug "  FIELD ORIGINAL VALUE is null in on_enter" unless @original_value
+      $log.debug "  on_enter: setting original_value to #{@original_value}"
       super
     end
     ##
