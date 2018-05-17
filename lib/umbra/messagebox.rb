@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-13 - 23:10
 #      License: MIT
-#  Last update: 2018-04-27 19:20
+#  Last update: 2018-05-17 12:33
 # ----------------------------------------------------------------------------- #
 #  messagebox.rb  Copyright (C) 2012-2018 j kepler
 #  BUGS:
@@ -152,6 +152,7 @@ module Umbra
     def run
       repaint
       @form.pack # needs window
+      @form.select_first_field      ## otherwise on_enter of first won't fire
       @form.repaint
       @window.wrefresh
       return handle_keys
@@ -200,6 +201,9 @@ module Umbra
           throw(:close, ix)
         end
       end
+      ## 2018-05-17 - associate RETURN ENTER key with first button (FIXME) should be Ok or Okay or user 
+      ##    should have some say in this. Same for associating ESC with Cancel or Quit.
+      @form.bind_key(10, "Fire Ok button") { @action_buttons.first.fire }
     end
 
     #################################################################################################### 
@@ -342,16 +346,18 @@ module Umbra
         while((ch = @window.getch()) != FFI::NCurses::KEY_F10 )
           break if ch == ?\C-q.getbyte(0) || ch == 2727 # added double esc
           begin
-            # trying out repaint of window also if repaint all asked for. 12 is C-l
-            if ch == 1000 or ch == 12
-              repaint
+            # trying out repaint of window also if repaint all asked for. 18 is C-r
+            if ch == 1000 or ch == 18
+              repaint_all_widgets
             end
             @form.handle_key(ch)
             @window.wrefresh
           rescue => err
-            $log.debug( err) if err
-            $log.debug(err.backtrace.join("\n")) if err
-            #textdialog ["Error in Messagebox: #{err} ", *err.backtrace], :title => "Exception" # TODO
+            if $log
+              $log.debug( err) if err
+              $log.debug(err.backtrace.join("\n")) if err
+            end
+            textdialog ["Error in Messagebox: #{err} ", *err.backtrace], :title => "Exception" 
             @window.refresh # otherwise the window keeps showing (new FFI-ncurses issue)
           ensure
           end
@@ -359,7 +365,7 @@ module Umbra
         end # while loop
       end # close
       $log.debug "MESSAGEBOX: CALLING PROGRAM BEING RETURNED: #{buttonindex} "
-      @window.destroy
+      @window.destroy    ## 2018-05-17 - this should come in ensure block ???
       # added 2014-05-01 - 18:10 hopefully to refresh root_window.
       #Window.refresh_all
       return buttonindex 
