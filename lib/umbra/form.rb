@@ -113,20 +113,39 @@ class Form
     self
   end
 
-  def _focussed_widget fld
+  ## set focussed widget to given fld.
+  ## This ensures that whenever a widget is given focus, the on_leave of the previous widget 
+  ##   is called, and the on_enter of this field is called.
+  ## 2018-05-18 - rewrite of select_field which did not call on_leave
+  def focussed_widget fld
+
+    if fld.is_a? Integer
+      fld = @focusables[fld]
+    end
+
+    return unless fld.focusable
 
     ## leave existing widget if there was one
     fw =  @_focussed_widget
+    return if fw == fld
+
     if fw
-      fw.on_leave if fw.respond_to? on_leave
+      on_leave fw
     end
 
 
     ## enter given widget
+    on_enter fld
+    @_focussed_widget = fld
     ix = @focusables.index fld
-    fld.on_enter if fw.respond_to? on_enter
     @active_index = ix
+
+    @row, @col = fld.rowcol
+    _setrowcol @row, @col 
+    repaint # 2018-03-21 - handle_key calls repaint, is this for cases not involving keypress ?
+    @window.refresh
   end
+  alias :select_field :focussed_widget
 
 
   # form repaint,calls repaint on each widget which will repaint it only if it has been modified since last call.
@@ -155,10 +174,23 @@ class Form
     @window.wrefresh
   end
   # @return [Widget, nil] current field, nil if no focusable field
+  ## NOTE 2018-05-17 - this is called by form in the very beginning when no field is actually focussed
+  ##   but active_index has been set to 0, so the on_enter has not been executed, but the handle_key
+  ##   is invoked.
   def get_current_field
+=begin
     #select_next_field if @active_index == -1
     return nil if @active_index.nil?   # for forms that have no focusable field 2009-01-08 12:22 
     @focusables[@active_index]
+=end
+
+
+    ##  rewrite on 2018-05-18 - so that on_enter is called for first field
+    if @_focussed_widget.nil?             ## when form handle_key first called
+      focussed_widget @focusables.first
+    end
+    return @_focussed_widget
+
   end
   alias :current_widget :get_current_field
   # take focus to first focusable field
@@ -183,7 +215,7 @@ class Form
   # puts focus on the given field/widget index
   # @param index of field in @widgets (or can be a Widget too)
   # XXX if called externally will not run a on_leave of previous field
-  def select_field ix0
+  def OLDselect_field ix0
     if ix0.is_a? Widget
       ix0 = @focusables.index(ix0)
     end
@@ -204,32 +236,21 @@ class Form
       $log.debug "inside select field ENABLED FALSE :   act #{@active_index} ix0 #{ix0}" 
     end
   end
-  ##
-  # run validate_field on a field, usually whatevers current
-  # before transferring control
-  # We should try to automate this so developer does not have to remember to call it.
-  # # @param field object
-  # @return [0, -1] for success or failure
-  # NOTE : catches exception and sets $error_message, check if -1
-  ## 2018-05-17 - NOT CALLED !!!
-  def validate_field f=@focusables[@active_index]
-    begin
-      on_leave f
-    rescue => err
-      $log.error "form: validate_field caught EXCEPTION #{err}"
-      $log.error(err.backtrace.join("\n")) 
-      #        $error_message = "#{err}" # changed 2010  
-      #$error_message.value = "#{err}" # 2018-03-18 - commented off since no Variable any longer
-      FFI::NCurses.beep
-      return -1
-    end
-    return 0
-  end
+
   # put focus on next field
   # will cycle by default, unless navigation policy not :CYCLICAL
   # in which case returns :NO_NEXT_FIELD.
   # 2018-03-07 - UMBRA: let us force user to run validation when he does next field
   def select_next_field
+    return :UNHANDLED if @focusables.nil? || @focusables.empty?
+    index = nil
+    if @_focussed_widget
+       index = @focusables.index @_focussed_widget
+    end
+    index = index ? index+1 : 0
+    index = 0 if index >= @focusables.length # CYCLICAL 2018-03-11 - 
+    focussed_widget @focusables[index]
+=begin
     return :UNHANDLED if @focusables.nil? || @focusables.empty?
     if @active_index.nil?  || @active_index == -1 # needs to be tested out A LOT
       @active_index = 0     
@@ -250,6 +271,7 @@ class Form
     #
     $log.debug "inside sele nxt field : NO NEXT  #{@active_index} WL:#{@widgets.length}" 
     return :NO_NEXT_FIELD
+=end
   end
   ##
   # put focus on previous field
@@ -258,6 +280,17 @@ class Form
   # @return [nil, :NO_PREV_FIELD] nil if cyclical and it finds a field
   #  if not cyclical, and no more fields then :NO_PREV_FIELD
   def select_prev_field
+    return :UNHANDLED if @focusables.nil? or @focusables.empty?
+    index = nil
+    if @_focussed_widget
+       index = @focusables.index @_focussed_widget
+       else
+       index = @focusables.length 
+    end
+    index -= 1
+    index = @focusables.length-1 if index < 0 # CYCLICAL 2018-03-11 - 
+    focussed_widget @focusables[index]
+=begin
     return :UNHANDLED if @focusables.nil? or @focusables.empty?
     #$log.debug "insdie sele prev field :  #{@active_index} WL:#{@widgets.length}" 
     if @active_index.nil?
@@ -276,6 +309,7 @@ class Form
     end
 
     return :NO_PREV_FIELD
+=end
   end
 
   private
