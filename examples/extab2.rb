@@ -72,7 +72,7 @@ begin
     end
     t.tabular.use_separator = false
     # testing out coloring different rows in different colors depending on status
-    def t._format_color index, state
+    def t.color_of_row index, state
       arr = super
       if index == 0                  ## header
         arr = @header_color_pair || [ CP_MAGENTA, REVERSE ]
@@ -116,7 +116,7 @@ begin
   ##   We don't know which columns have come in since scrolling will cut off some columns.
   ##   We need to access pcol to find out which the starting column is, so which know which columns
   ##   we actually have.
-  def table3._print_row(win, row, col, str, index, state)
+  def table3.print_row(win, row, col, str, index, state)
     f = str.split('|')
     attrib = NORMAL
     attrib = BOLD if index == 0
