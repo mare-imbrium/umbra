@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-06 - 09:56
 #      License: MIT
-#  Last update: 2018-05-15 14:16
+#  Last update: 2018-05-18 11:32
 # ----------------------------------------------------------------------------- #
 #  table.rb  Copyright (C) 2018 j kepler
 
@@ -18,7 +18,7 @@
 ## DONE how to format the header
 ## DONE formatting rows
 ## DONE if we want to color specific columns based on values then I think we have to format (render) the row at the last 
-##      moment in _print_row and not in advance
+##      moment in print_row and not in advance
 ## NOTE: we are setting the data in tabular, not list. So calling list() will give nil until a render has happened.
 ##     callers will have to use data() instead of list() which is not consistent.
 ## NOTE: current_index in this object refers to index including header and separator. It is not the offset in the data array.
@@ -86,7 +86,6 @@ module Umbra
     $log.debug "  before table data= CHANGED "
       #fire_handler(:CHANGED, self)    ## added 2018-05-08 - 
     end
-    #alias :list= :data=
 
     ## render the two-dimensional array of data as an array of Strings.
     ## Calculates data_offset which is the row offset from which data starts.
@@ -118,12 +117,12 @@ module Umbra
     ## Override this to have customised row coloring.
     ## @return array of color_pair and attrib.
     def color_of_data_row index, state, data_index
-      _format_color(index, state)         ## calling superclass here
+      color_or_row(index, state)         ## calling superclass here
     end
 
     ## Print the row which could be header or data
     ## @param index [Integer] - index of list, starting with header and separator
-    def _print_row(win, row, col, str, index, state)
+    def print_row(win, row, col, str, index, state)
       if index <= @data_offset - 1
         _print_headings(win, row, col, str, index, state)
       else
