@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-14 14:19
+#  Last update: 2018-05-18 11:17
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -110,11 +110,12 @@ class Multiline < Widget
 
       curpos = ctr if y == cur                                         ## used for setting row_offset
 
-      _state = state_of_row(y)     ## XXX should be move this into paint_row
+      #_state = state_of_row(y)     ## XXX should be move this into paint_row
 
       win.printstring(ctr + r, coffset+c, filler, _color )            ## print filler
 
-      paint_row( win, ctr+r, coffset+c, _f, y, _state)
+      #paint_row( win, ctr+r, coffset+c, _f, y, _state)
+      paint_row( win, ctr+r, coffset+c, _f, y)
 
 
       ctr += 1 
@@ -136,7 +137,7 @@ class Multiline < Widget
   ## Paint given row.  {{{
   ## This is not be be called by user, but may be overridden if caller wishes
   ##  to completely change the presentation of each row. In most cases, it should suffice
-  ##  to override just +_print_row+ or +_format_value+ or +_format_color+.
+  ##  to override just +print_row+ or +value_of_row+ or +_format_color+.
   ##
   ## @param [Window]   window pointer for printing
   ## @param [Integer]  row number to print on
@@ -144,24 +145,23 @@ class Multiline < Widget
   ## @param [String]   line to be printed, usually String. Whatever was passed in to +list+ method.
   ## @param [Integer]  ctr: offset of row starting zero
   ## @param [String]   state: state of row (SELECTED CURRENT HIGHLIGHTED NORMAL)
-  def paint_row(win, row, col, line, ctr, state)
+  def paint_row(win, row, col, line, ctr)
 
-      ff = _format_value(line, ctr, state)
+      state = state_of_row(y)     
 
-      #mark = _format_mark(ctr, state)
-      #ff = "#{mark}#{f}"
+      ff = value_of_row(line, ctr, state)
 
       ff = _truncate_to_width( ff )   ## truncate and handle panning
 
-      _print_row(win, row, col, ff, ctr, state)
+      print_row(win, row, col, ff, ctr, state)
   end
 
 
   # do the actual printing of the row, depending on index and state
   # This method starts with underscore since it is only required to be overriden
   # if an object has special printing needs.
-  def _print_row(win, row, col, str, index, state)
-    arr = _format_color index, state
+  def print_row(win, row, col, str, index, state)
+    arr = color_of_row index, state
     win.printstring(row, col, str, arr[0], arr[1])
   end
 
@@ -173,7 +173,7 @@ class Multiline < Widget
   # returns color, attrib for given row
   # @param index of row in the list
   # @param state of row in the list (see above states)
-  def _format_color index, state
+  def color_of_row index, state
     arr = case state
     #when :SELECTED
       #[@selected_color_pair, @selected_attr]
@@ -189,7 +189,7 @@ class Multiline < Widget
     end
     return arr
   end
-  alias :color_of_row :_format_color 
+  alias :_format_color :color_of_row 
 
 
    
@@ -198,10 +198,10 @@ class Multiline < Widget
   # This is only required to be overridden if the list passed in is not an array of Strings.
   # @param the current row which could be a string or array or whatever was passed in in +list=()+.
   # @return [String] string to print. A String must be returned.
-  def _format_value line, ctr, state
+  def value_of_row line, ctr, state
     line
   end
-  alias :value_of_row :_format_value 
+  alias :_format_value :value_of_row 
   
   def state_of_row ix
       _st = :NORMAL
@@ -334,7 +334,7 @@ class Multiline < Widget
     # @return [String] row the cursor/user is on
     def current_row
       s = @list[@current_index]
-      _format_value s, @current_index, :CURRENT
+      value_of_row s, @current_index, :CURRENT
     end
   # move cursor forward one character, called with KEY_RIGHT action.
   def cursor_forward
