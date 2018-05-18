@@ -5,7 +5,7 @@ require 'umbra/multiline'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-14 14:32
+#  Last update: 2018-05-18 11:30
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -76,14 +76,14 @@ module Umbra
     ## listbox adds a mark on the side, whether a row is selected or not, and whether it is current.
     def paint_row(win, row, col, line, ctr, state)
 
-      f = _format_value(line, ctr, state)
+      f = value_of_row(line, ctr, state)
 
-      mark = _format_mark(ctr, state)
+      mark = mark_of_row(ctr, state)
       ff = "#{mark}#{f}"
 
       ff = _truncate_to_width( ff )   ## truncate and handle panning
 
-      _print_row(win, row, col, ff, ctr, state)
+      print_row(win, row, col, ff, ctr, state)
     end
 
     def state_of_row ix
@@ -95,7 +95,7 @@ module Umbra
     end 
 
 
-    def _format_mark index, state
+    def mark_of_row index, state
       mark = case state
              when :SELECTED
                @selected_mark
@@ -105,15 +105,10 @@ module Umbra
                @unselected_mark
              end
     end
-    alias :mark_of_row :_format_mark 
-
-    def OLD_format_value line, ctr, state
-      mark = _format_mark(ctr, state)
-      line = "#{mark}#{line}"
-    end
+    alias :_format_mark :mark_of_row 
 
 
-    def _format_color index, state
+    def color_of_row index, state
       arr = super
       if state == :SELECTED
         arr = [@selected_color_pair, @selected_attr]
