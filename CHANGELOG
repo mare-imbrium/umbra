@@ -7,4 +7,5 @@ DATE
 	- rewrite of field traversal so that on_enter and on_leave are always
 	executed atomically. There was one case when on_enter was not executed.
 	This invalidates @active_index.
+	- added Table widget
 
