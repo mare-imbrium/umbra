@@ -4,4 +4,7 @@ DATE
     - add attr_property so that repaint will automatically happen on changing
       properties.
     - add Table widget
+	- rewrite of field traversal so that on_enter and on_leave are always
+	executed atomically. There was one case when on_enter was not executed.
+	This invalidates @active_index.
 
