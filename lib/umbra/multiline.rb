@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-18 11:17
+#  Last update: 2018-05-18 12:44
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -147,7 +147,7 @@ class Multiline < Widget
   ## @param [String]   state: state of row (SELECTED CURRENT HIGHLIGHTED NORMAL)
   def paint_row(win, row, col, line, ctr)
 
-      state = state_of_row(y)     
+      state = state_of_row(ctr)     
 
       ff = value_of_row(line, ctr, state)
 
