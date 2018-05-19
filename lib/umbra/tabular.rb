@@ -10,7 +10,7 @@
   *               :
   * Author        : jkepler
   * Date          : 
-  * Last Update   : 2018-05-15 14:30
+  * Last Update   : 2018-05-19 11:11
   * License       : MIT
 =end
 
@@ -49,9 +49,10 @@ module Umbra
 
 
 
-    # an array of column titles
+    ## an array of column titles
     attr_reader :columns
 
+    ## data which is array of arrays: rows and columns
     attr_reader :list
 
     # boolean, does user want lines numbered
@@ -119,7 +120,10 @@ module Umbra
     # set width of a given column, any data beyond this will be truncated at display time.
     # @param [Number] column offset, starting 0
     # @param [Number] width
-    def column_width colindex, width
+    def column_width colindex, width=:NONE
+      if width == :NONE
+        return @cw[colindex]
+      end
       @cw[colindex] ||= width    ## this is not updating it, if set. why is this. XXX
                                  ## this will carry the value of column headers width
       @cw[colindex] = width      ## 2018-05-06 - setting it, overwriting earlier value
@@ -132,6 +136,13 @@ module Umbra
       @chash
     end
 
+    def column_hidden colindex, flag=:NONE
+      if flag == :NONE
+        return @chide[colindex]
+      end
+      @_hidden_columns_flag = true if flag
+      @chide[colindex] = flag
+    end
     ## These columns should not be shown. e.g. rowid or some other identifier required to link back to record.
     def column_hide *colindexes
       @_hidden_columns_flag = true
@@ -152,7 +163,10 @@ module Umbra
     # set alignment of given column offset
     # @param [Number] column offset, starting 0
     # @param [Symbol] :left, :right
-    def column_align colindex, lrc
+    def column_align colindex, lrc=:NONE
+      if lrc == :NONE
+        return @calign[colindex]
+      end
       raise ArgumentError, "wrong alignment value sent" if ![:right, :left, :center].include? lrc
       @calign[colindex] ||= lrc
       if @chash[colindex].nil?
@@ -248,6 +262,24 @@ module Umbra
     def to_string
       render().join "\n"
     end
+
+    def value_at x,y, value=:NONE
+      if value == :NONE
+        return @list[x, y]
+      end
+      @list[x, y] = value
+    end
+    def delete_at ix
+      return unless @list
+      raise ArgumentError, "Argument must be within 0 and #{@list.length}" if ix < 0 or ix >=  @list.length 
+      #fire_dimension_changed
+      #@list.delete_at(ix + @_header_adjustment)
+      @list.delete_at(ix)
+    end
+
+
+
+
     def add_separator
       @list << :separator
     end
@@ -361,3 +393,5 @@ if __FILE__ == $PROGRAM_NAME
   end
   puts s.to_string
 end
+
+#  vim:  comments=sr\:##,mb\:##,el\:#/,\:## :
