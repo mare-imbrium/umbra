@@ -5,7 +5,7 @@ require 'umbra/multiline'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-18 11:30
+#  Last update: 2018-05-18 14:16
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -63,6 +63,7 @@ module Umbra
       super
     end
 
+    ## Toggle current row's selection status.
     def toggle_selection
       @repaint_required = true  
       if @selected_index == @current_index 
@@ -73,28 +74,46 @@ module Umbra
       fire_handler :LIST_SELECTION_EVENT, self   # use selected_index to know which one
     end
 
+    ## Paint the row.
+    ## For any major customization of Listbox output, this method would be overridden.
+    ## This method determines state, mark, slice of line item to show.
     ## listbox adds a mark on the side, whether a row is selected or not, and whether it is current.
-    def paint_row(win, row, col, line, ctr, state)
+    ## @param win - window pointer for printing
+    ## @param [Integer] - row offset on screen
+    ## @param [Integer] - col offset on screen
+    ## @param [String]  - line to print
+    ## @param [Integer] - offset in List array
+    def paint_row(win, row, col, line, index)
 
-      f = value_of_row(line, ctr, state)
+      state = state_of_row(index)     
 
-      mark = mark_of_row(ctr, state)
+      f = value_of_row(line, index, state)
+
+      mark = mark_of_row(index, state)
       ff = "#{mark}#{f}"
 
       ff = _truncate_to_width( ff )   ## truncate and handle panning
 
-      print_row(win, row, col, ff, ctr, state)
+      print_row(win, row, col, ff, index, state)
     end
 
-    def state_of_row ix
+    ## Determine state of the row
+    ## Listbox adds :SELECTED state to Multiline.
+    ## @param [Integer] offset of row in data
+    def state_of_row index
       _st = super
-      if ix == @selected_index
+      if index == @selected_index
         _st = :SELECTED
       end # 
       _st
     end 
 
 
+    ## Determine the mark on the left of the row. 
+    ## The mark depends on the state: :SELECTED :HIGHLIGHTED :CURRENT :NORMAL
+    ## Listbox adds :SELECTED state to Multiline.
+    ## @param [Integer] offset of row in data
+    ## @return character to be displayed inside left margin
     def mark_of_row index, state
       mark = case state
              when :SELECTED
@@ -108,6 +127,12 @@ module Umbra
     alias :_format_mark :mark_of_row 
 
 
+    ## Determine color and attribute of row.
+    ## Overriding this allows application to have customized row colors based on data
+    ##  which can be determined using +index+.
+    ## Listbox adds :SELECTED state to +Multiline+.
+    ## @param [Integer] offset of row in data
+    ## @return [Array] color_pair and attrib constant
     def color_of_row index, state
       arr = super
       if state == :SELECTED
