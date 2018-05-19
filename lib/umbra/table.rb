@@ -4,13 +4,15 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-06 - 09:56
 #      License: MIT
-#  Last update: 2018-05-18 11:32
+#  Last update: 2018-05-19 12:07
 # ----------------------------------------------------------------------------- #
 #  table.rb  Copyright (C) 2018 j kepler
 
 ##--------- Todo section ---------------
+## TODO w - next column, b - previous column
+## TODO paint lines as column separators. issue is panning.
 ## TODO starting visual column (required when scrolling)
-## TODO change a value value_at(x,y, value)
+## TODO change a value value_at(x,y, value) ; << ; delete_at 
 ## TODO change column width interactively, hide column , move column
 ## TODO maybe even column_color(n, color_pair, attr)
 ## TODO sort on column/s.
@@ -185,6 +187,9 @@ module Umbra
     ## delegate calls to the tabular object
     def_delegators :@tabular, :headings=, :columns= , :add, :add_row, :<< , :column_width, :column_align, :column_hide, :convert_value_to_text, :separator, :to_string, :x=, :y=, :column_unhide
     def_delegators :@tabular, :columns , :numbering
+    def_delegators :@tabular, :column_hidden, :delete_at, :value_at
 
   end # class 
 end # module
+
+#  vim:  comments=sr\:##,mb\:##,el\:#/,\:## :
