@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-11
 #      License: MIT
-#  Last update: 2018-05-15 18:33
+#  Last update: 2018-05-19 11:52
 # ----------------------------------------------------------------------------- #
 #  extab3.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -46,7 +46,7 @@ def statusline win, str, column = 1
     column += s.length+1
   }
 end   # }}}
-def get_data db, sql # {{{
+def fetch_data db, sql # {{{
   $log.debug "SQL: #{sql} "
   columns, *rows = db.execute2(sql)
   content = rows
@@ -67,7 +67,7 @@ def view_details(table)
 end
 def get_full_row_as_hash(table)
   id = table.current_id
-  data, columns, datatypes = get_data(@db, "select * from #{@tablename} where rowid = '#{id}'")
+  data, columns, datatypes = fetch_data(@db, "select * from #{@tablename} where rowid = '#{id}'")
   hash = columns.zip(data.first).to_h
   #$log.debug "  HASH == #{hash}"
   return hash
@@ -75,7 +75,7 @@ end
 def filter_popup lb # {{{
   ## present user with a popup allowing him to select range of rating title, range of year, status etc
   ##  for querying.
-  #rowdata = get_data(@db, "select title, actors, director, imdbrating, language, genre , metascore, imdbvotes from #{@tablename} WHERE rowid = #{id}")
+  #rowdata = fetch_data(@db, "select title, actors, director, imdbrating, language, genre , metascore, imdbvotes from #{@tablename} WHERE rowid = #{id}")
   data = []
   _columns = ["tourney_name", "winner_name", "loser_name", "surface", "Year >", "Year <", "round", "level", "best_of"]
   _columns.each {|c| data << "" }
@@ -200,11 +200,11 @@ begin
   #box.expand_down(-1)
   @query = "SELECT rowid, tourney_id, tourney_name, tourney_date, winner_name, loser_name, score, round FROM matches "
   @order_by = "ORDER BY tourney_date, tourney_name, match_num"
-  data, columns, datatypes = get_data(@db, "#{@query} #{@order_by}")
+  data, columns, datatypes = fetch_data(@db, "#{@query} #{@order_by}")
 
   table = Table.new(columns: columns, data: data) do |tt|
-    tt.column_hide(0)
-    tt.column_hide(1)
+    tt.column_hidden(0, true)
+    tt.column_hidden(1, true)
     tt.column_width(6, 24)
   end
   #table.column_hide(0)
