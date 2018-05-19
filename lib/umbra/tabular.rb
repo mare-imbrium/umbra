@@ -10,12 +10,11 @@
   *               :
   * Author        : jkepler
   * Date          : 
-  * Last Update   : 2018-05-19 11:11
+  * Last Update   : 2018-05-19 19:08
   * License       : MIT
 =end
 
 ## Todo Section --------------
-## NOTE: we are setting the ColumnInfo objects but not using them. We are using cw and @calign
 ## What if user wishes to supply formatstring and override ours
 ## ---------------------------
 
@@ -43,7 +42,7 @@ module Umbra
 
 
     ## stores column info internally: name, width and alignment
-    class ColumnInfo < Struct.new(:name, :width, :align) 
+    class ColumnInfo < Struct.new(:name, :width, :index, :offset, :align, :hidden) 
     end
 
 
@@ -58,7 +57,7 @@ module Umbra
     # boolean, does user want lines numbered
     attr_accessor :numbering
 
-    attr_accessor :use_separator          ## boolean. Use a separator after heading or not.
+    attr_accessor :use_separator          ## boolean. Use a separator line after heading or not.
 
     # x is the + character used a field delim in separators
     # y is the field delim used in data rows, default is pipe or bar
@@ -69,10 +68,7 @@ module Umbra
     # @yield self
     #
     def initialize cols=nil, *args, &block
-      @chash            = {}                 # hash of column info, not used
-      @cw               = {}                 # hash of column widths, indexed on col offset starting 0
-      @calign           = {}                 # hash of alighments for column
-      @chide            = {}                 # columns to hide. usually rowid which we need for detailed data of row or update
+      @chash             = []                 # hash of column info, not used
       @_skip_columns     = {}                 # internal, which columns not to calc width of since user has specified
       @separ = @columns = @numbering =  nil
       @y = '|'
@@ -86,14 +82,19 @@ module Umbra
       yield_or_eval(&block) if block_given?
     end
     #
-    # set columns names 
+    # set columns names .
+    ## NOTE that we are not clearing chash here. In case, someone changes table and columns.
     # @param [Array<String>] column names, preferably padded out to width for column
     def columns=(array)
       #$log.debug "tabular got columns #{array.count} #{array.inspect} " if $log
       @columns = array
-      @columns.each_with_index { |c,i| 
-        @chash[i] = ColumnInfo.new(c, c.to_s.length) 
-        @cw[i] ||= c.to_s.length
+      @columns.each_with_index { |e,i| 
+        #@chash[i] = ColumnInfo.new(c, c.to_s.length) 
+        c = get_column(i)
+        c.name = e
+        c.width = e.to_s.length
+        #@chash[i] = c
+        #@cw[i] ||= c.to_s.length
         #@calign[i] ||= :left # 2011-09-27 prevent setting later on
       }
     end
@@ -117,47 +118,40 @@ module Umbra
     alias :<< :add
     alias :add_row :add
 
+    # retrieve the column info structure for the given offset. The offset
+    # pertains to the visible offset not actual offset in data model. 
+    # These two differ when we move a column.
+    # @return ColumnInfo object containing width align color bgcolor attrib hidden
+    def get_column index
+      return @chash[index] if @chash[index]
+      # create a new entry since none present
+      c = ColumnInfo.new
+      c.index = index
+      @chash[index] = c
+      return c
+    end
     # set width of a given column, any data beyond this will be truncated at display time.
     # @param [Number] column offset, starting 0
     # @param [Number] width
     def column_width colindex, width=:NONE
       if width == :NONE
-        return @cw[colindex]
+        #return @cw[colindex]
+        return get_column(colindex).width
       end
-      @cw[colindex] ||= width    ## this is not updating it, if set. why is this. XXX
-                                 ## this will carry the value of column headers width
-      @cw[colindex] = width      ## 2018-05-06 - setting it, overwriting earlier value
       @_skip_columns[colindex] = true   ## don't calculate col width for this.
-      if @chash[colindex].nil?
-        @chash[colindex] = ColumnInfo.new("", width) 
-      else
-        @chash[colindex].width = width
-      end
-      @chash
+      get_column(colindex).width = width
+      self
     end
 
     def column_hidden colindex, flag=:NONE
       if flag == :NONE
-        return @chide[colindex]
+        return get_column(colindex).hidden
+        #return @chide[colindex]
       end
       @_hidden_columns_flag = true if flag
-      @chide[colindex] = flag
-    end
-    ## These columns should not be shown. e.g. rowid or some other identifier required to link back to record.
-    def column_hide *colindexes
-      @_hidden_columns_flag = true
-      colindexes.each do |ix|
-        @chide[ix] = true
-        #@cw[ix]    = 0     ## how will we revert
-      end
-    end
-
-    ## Unhide the columns.
-    def column_unhide *colindexes
-      #@_hidden_columns_flag = true
-      colindexes.each do |ix|
-        @chide[ix] = false
-      end
+      #@chide[colindex] = flag
+      get_column(colindex).hidden = flag
+      self
     end
 
     # set alignment of given column offset
@@ -165,35 +159,53 @@ module Umbra
     # @param [Symbol] :left, :right
     def column_align colindex, lrc=:NONE
       if lrc == :NONE
-        return @calign[colindex]
+        return get_column(colindex).align
+        #return @calign[colindex]
       end
       raise ArgumentError, "wrong alignment value sent" if ![:right, :left, :center].include? lrc
-      @calign[colindex] ||= lrc
-      if @chash[colindex].nil?
-        @chash[colindex] = ColumnInfo.new("", nil, lrc)
-      else
-        @chash[colindex].align = lrc
-      end
-      @chash
+      get_column(colindex).align = lrc
+      self
     end
 
     ## return an array of visible columns names
     def visible_column_names
       visible = []
-      @columns.each_with_index do |e, ix|
-        visible << e if !@chide[ix]
+      @chash.each_with_index do |c, ix|
+        if !c.hidden
+          if block_given?
+            yield c.name, ix 
+          else
+            visible << c.name
+          end
+        end
       end
-      visible
+      return visible unless block_given?
     end
 
+    # yields non-hidden columns (ColumnInfo) and the offset/index
+    # This is the order in which columns are to be printed
+    def each_column
+      @chash.each_with_index { |c, i| 
+        next if c.hidden
+        yield c,i if block_given?
+      }
+    end
 
     ## for the given row, return visible columns as an array
+    ## @yield column and index
     def visible_columns(row)
       visible = []
       row.each_with_index do |e, ix|
-        visible << e if !@chide[ix]
+        hid = @chash[ix].hidden
+        if !hid
+          if block_given?
+            yield e, ix
+          else
+            visible << e 
+          end
+        end
       end
-      visible
+      return visible if !block_given?
     end
 
     # 
@@ -283,13 +295,17 @@ module Umbra
     def add_separator
       @list << :separator
     end
+
+    ## This refers to a separator line after the heading  and not a field separator.
+    ## Badly named !
     def separator
       return @separ if @separ
       str = ""
       if @numbering
         str = "-"*(rows+1)+@x
       end
-      @cw.each_pair { |k,v| 
+      each_column { | c, ix|
+        v = c.width
         next if v == 0     ## hidden column
         str << "-" * (v+1) + @x 
       }
@@ -306,12 +322,14 @@ module Umbra
         r.each_with_index { |c, j|
           ## we need to skip those columns which user has specified
           next if @_skip_columns[j] == true
-          next if @chide[j]
+          #next if @chide[j]
+          next if @chash[j].hidden
           x = c.to_s.length
-          if @cw[j].nil?
-            @cw[j] = x
+          w = @chash[j].width
+          if !w
+            @chash[j].width = x
           else
-            @cw[j] = x if x > @cw[j]      ## here we are overwriting if user has specified XXX FIXME
+            @chash[j].width = x if x > w
           end
         }
       }
@@ -323,17 +341,11 @@ module Umbra
     def _prepare_format  #:nodoc:
       fmstr = nil
       fmt = []
-      @cw.each_with_index { |c, i| 
+      each_column { |c, i|
         ## trying a zero for hidden columns
         ## worked but an extra space is added below and the sep
-        if @chide[i]
-          #w = 0
-          #fmt << "%#{w}.#{w}s"
-          next
-        else
-          w = @cw[i]
-        end
-        case @calign[i]
+        w = c.width
+        case c.align
         when :right
           #fmt << "%.#{w}s "
           fmt << "%#{w}.#{w}s "
