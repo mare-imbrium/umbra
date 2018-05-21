@@ -1,22 +1,35 @@
 require 'ffi-ncurses'
 require 'ffi-ncurses/widechars'
 
+## NOTE: conflict between KEY_RESIZE and wtimeout or halfdelay.
+##  Setting a timeout or delay allows an application to respond to updates without a keypress,
+##   such as continuous updates.
+##   However, this means that KEY_RESIZE will not work unless a key is pressed.
+## If resizing is important, then caller may set $ncurses_timeout to -1.
+
+
+
+
 module Umbra
 
-  # attribute constants, use them to specify an attrib for a widget or window.
-  BOLD = FFI::NCurses::A_BOLD
-  REVERSE = FFI::NCurses::A_REVERSE
-  UNDERLINE = FFI::NCurses::A_UNDERLINE
-  NORMAL = FFI::NCurses::A_NORMAL
+  ## attribute constants, use them to specify an attrib for a widget or window.
+  BOLD                  = FFI::NCurses::A_BOLD
+  REVERSE               = FFI::NCurses::A_REVERSE
+  UNDERLINE             = FFI::NCurses::A_UNDERLINE
+  NORMAL                = FFI::NCurses::A_NORMAL
 
-  # color constants, use these when creating a color
-  COLOR_BLACK = FFI::NCurses::BLACK
-  COLOR_WHITE = FFI::NCurses::WHITE
-  COLOR_BLUE = FFI::NCurses::BLUE
-  COLOR_RED = FFI::NCurses::RED
-  COLOR_GREEN = FFI::NCurses::GREEN
-  COLOR_CYAN = FFI::NCurses::CYAN
-  COLOR_MAGENTA = FFI::NCurses::MAGENTA
+  ## color constants, use these when creating a color
+  COLOR_BLACK           = FFI::NCurses::BLACK
+  COLOR_WHITE           = FFI::NCurses::WHITE
+  COLOR_BLUE            = FFI::NCurses::BLUE
+  COLOR_RED             = FFI::NCurses::RED
+  COLOR_GREEN           = FFI::NCurses::GREEN
+  COLOR_CYAN            = FFI::NCurses::CYAN
+  COLOR_MAGENTA         = FFI::NCurses::MAGENTA
+
+  ## key constants
+  KEY_ENTER             = 13  ## FFI::NCurses::KEY_ENTER is 343 ???
+  KEY_RETURN            = 10  ## already defined by ffi
 
   # Initialize ncurses before any program.
   # Reduce the value of $ncurses_timeout if you want a quicker response to Escape keys or continuous updates.
@@ -266,6 +279,7 @@ module Umbra
     end # }}}
     # make a box around the window. Just a wrapper
     def box
+      @box = true
       FFI::NCurses.box(@pointer, 0, 0)
     end
     # Print a centered title on top of window.
@@ -275,10 +289,26 @@ module Umbra
     # @param color [Integer] color_pair 
     # @param att [Integer] attribute constant
     def title str, color=0, att=BOLD
+      ## save so we can repaint if required
+      @title_data = [str, color, att]
       strl = str.length
       col = (@width - strl)/2
       printstring(0,col, str, color, att)
     end
+
+    ## repaints windows objects like title and box.
+    ## To be called from form on pressing redraw, and SIGWINCH
+    def repaint
+      curses.wclear(@pointer)
+      if @box
+        self.box
+      end
+      if @title_data
+        str, color, att = @title_data
+        self.title str, color, att
+      end
+    end
+
 
   end # window 
 end # module
