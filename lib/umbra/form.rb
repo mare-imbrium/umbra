@@ -449,36 +449,42 @@ class Form
       #  dialogs where there is blank space. only widgets are painted.
       # testing out 12 is C-l, 18 is C-r
       $log.debug " form REFRESH_ALL repaint_all HK #{ch} #{self}, #{@name} "
+      FFI::NCurses.endwin
+      @window.wrefresh    ## endwin must be followed by refresh
+      @window.repaint
       repaint_all_widgets
+      @window.wrefresh
       return 0
     when FFI::NCurses::KEY_RESIZE  # SIGWINCH # UNTESTED XXX
       ## NOTE: this works but boxes are not resized since hardcoded height and width were given.
       ## 2018-05-13 - only if a layout is used, can a recalc happen.
       # note that in windows that have dialogs or text painted on window such as title or 
       #  box, the clear call will clear it out. these are not redrawn.
+      
+      # next line may be causing flicker, can we do without.
+      FFI::NCurses.endwin
+      @window.wrefresh
+      @window.wclear
       lines = FFI::NCurses.LINES
       cols = FFI::NCurses.COLS
       #x = FFI::NCurses.stdscr.getmaxy
       x = @window.getmaxy
       #y = FFI::NCurses.stdscr.getmaxx
       y = @window.getmaxx
-      $log.debug " form RESIZE HK #{ch} #{self}, #{@name}, #{ch}, x #{x} y #{y}  lines #{lines} , cols: #{cols} "
+      @window.wresize(x,y)
+      $log.debug " form RESIZE SIGWINCH HK #{ch} #{self}, #{@name}, #{ch}, x #{x} y #{y}  lines #{lines} , cols: #{cols} "
       #alert "SIGWINCH WE NEED TO RECALC AND REPAINT resize #{lines}, #{cols}: #{x}, #{y} "
 
-      # next line may be causing flicker, can we do without.
-      FFI::NCurses.endwin
-      @window.wrefresh
-      @window.wclear
+      repaint_all_widgets
       #if @layout_manager
         #@layout_manager.do_layout
         ## we need to redo statusline and others that layout ignores
       #else
-        #@widgets.each { |e| e.repaint_all(true) } # trying out
-        @widgets.each { |e| e.repaint_required=(true) } # trying out
       #end
       ## added RESIZE on 2012-01-5 
       ## stuff that relies on last line such as statusline dock etc will need to be redrawn.
       fire_handler :RESIZE, self 
+      @window.wrefresh
     else
       field =  get_current_field
       handled = :UNHANDLED 
