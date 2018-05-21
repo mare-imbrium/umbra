@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-11
 #      License: MIT
-#  Last update: 2018-05-19 11:52
+#  Last update: 2018-05-21 12:51
 # ----------------------------------------------------------------------------- #
 #  extab3.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -25,12 +25,15 @@ def startup
     $log.level = Logger::DEBUG
     today = Date.today
     $log.info "Started demo table #{$0} on #{today}"
+    $log.info "RETURN is #{curses::KEY_RETURN} "
+    $log.info "ENTER is #{curses::KEY_ENTER} "
     path = File.dirname(__FILE__)
     $log.info "PATH: #{path}"
     FFI::NCurses.init_pair(10,  FFI::NCurses::BLACK,   FFI::NCurses::GREEN) # statusline
     @file = "#{path}/data/tennis.sqlite"
     @db = SQLite3::Database.new(@file)
     @tablename = "matches"
+    $ncurses_timeout = -1
 end
 def ORIGstatusline win, str, col = 0
   win.printstring( FFI::NCurses.LINES-1, col, str, 10)
@@ -190,6 +193,7 @@ begin
   title = Label.new( :text => "Tennis Query", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
                     :justify => :center, :color_pair => 0, :attr => REVERSE)
 
+  #win.title "Tennis Query", 3, REVERSE
   form = Form.new win
   form.add_widget title
 
@@ -234,6 +238,7 @@ begin
       arr
     end
     table.bind_event(:CHANGED) { |obj| box.title = "#{obj.row_count} rows";  }
+    table.bind_event(:PRESS) { |obj| alert( " Pressed on #{obj.current_index} :: #{obj.curpos} ") }
     table.command do |ix|
       #rowid = table.current_id
       data = table.current_row_as_array
