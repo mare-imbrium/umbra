@@ -4,15 +4,15 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-06 - 09:56
 #      License: MIT
-#  Last update: 2018-05-19 12:07
+#  Last update: 2018-05-21 11:30
 # ----------------------------------------------------------------------------- #
 #  table.rb  Copyright (C) 2018 j kepler
 
 ##--------- Todo section ---------------
-## TODO w - next column, b - previous column
+## DONE w - next column, b - previous column
 ## TODO paint lines as column separators. issue is panning.
 ## TODO starting visual column (required when scrolling)
-## TODO change a value value_at(x,y, value) ; << ; delete_at 
+## DONE change a value value_at(x,y, value) ; << ; delete_at 
 ## TODO change column width interactively, hide column , move column
 ## TODO maybe even column_color(n, color_pair, attr)
 ## TODO sort on column/s.
@@ -33,8 +33,7 @@ require 'umbra/multiline'
 module Umbra
   ##
   ## A table of columnar data.
-  ## This is not truly a table. This is a quick rough take - it contains a tabular object, and  
-  ##  extends Multiline.
+  ## This uses Tabular as a table model and extends Multiline.
   #
   class Table < Multiline
 
@@ -50,7 +49,7 @@ module Umbra
 
     attr_accessor :rendered                 ## boolean, if data has changed, we need to re-render
 
-    
+
     ## Create a Table object passing either a Tabular object or columns and list
     ## e.g. Table.new tabular: tabular
     ##      Table.new columns: cols, list: mylist
@@ -69,6 +68,9 @@ module Umbra
       @rendered = nil
       super
 
+      bind_key(?w, "next column") { self.next_column }
+      bind_key(?b, "prev column") { self.prev_column }
+      bind_key(KEY_RETURN, :fire_action_event)
       ## NOTE: a tabular object should be existing at this point.
     end
 
@@ -85,7 +87,7 @@ module Umbra
       self.focusable = true
       @pstart = @current_index = 0
       @pcol               = 0
-    $log.debug "  before table data= CHANGED "
+      #$log.debug "  before table data= CHANGED "
       #fire_handler(:CHANGED, self)    ## added 2018-05-08 - 
     end
 
@@ -182,6 +184,69 @@ module Umbra
       return nil unless data
       columns = @tabular.columns
       hash = columns.zip(data).to_h
+    end
+
+    ## Move cursor to next column
+    def next_column
+      @coffsets = @tabular._calculate_column_offsets unless @coffsets
+      #c = @column_pointer.next
+      current_column = current_column_offset() +1
+      if current_column > @tabular.column_count-1
+        current_column = 0
+      end
+      cp = @coffsets[current_column] 
+      @curpos = cp if cp
+      $log.debug " next_column #{@coffsets} :::: #{cp}, curpos=#{@curpos} "
+      set_col_offset @curpos
+      #down() if c < @column_pointer.last_index
+      #fire_column_event :ENTER_COLUMN
+    end
+
+    ## Move cursor to previous column
+    def prev_column
+      @coffsets = @tabular._calculate_column_offsets unless @coffsets
+      #c = @column_pointer.next
+      current_column = current_column_offset() -1
+      if current_column < 0 # 
+        current_column = @tabular.column_count-1
+      end
+      cp = @coffsets[current_column] 
+      @curpos = cp if cp
+      $log.debug " next_column #{@coffsets} :::: #{cp}, curpos=#{@curpos} "
+      set_col_offset @curpos
+      #down() if c < @column_pointer.last_index
+      #fire_column_event :ENTER_COLUMN
+    end
+
+    # Convert current cursor position to a table column
+    # calculate column based on curpos since user may not have
+    # used w and b keys (:next_column)
+    # @return [Integer] column index base 0
+    def current_column_offset
+      _calculate_column_offsets unless @coffsets
+      x = 0
+      @coffsets.each_with_index { |i, ix| 
+        if @curpos < i 
+          break
+        else 
+          x += 1
+        end
+      }
+      x -= 1 # since we start offsets with 0, so first auto becoming 1
+      return x
+    end
+
+    def header_row?
+      @current_index == 0 and @data_offset > 0
+    end
+
+    ## Handle case where ENTER/RETURN pressed on header row (so sorting can be done).
+    def fire_action_event
+      if header_row?
+        # TODO sorting here
+        $log.debug "  PRESSED ENTER on header row, TODO sorting here"
+      end
+      super
     end
 
     ## delegate calls to the tabular object
