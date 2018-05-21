@@ -10,7 +10,7 @@
   *               :
   * Author        : jkepler
   * Date          : 
-  * Last Update   : 2018-05-19 19:08
+  * Last Update   : 2018-05-20 14:24
   * License       : MIT
 =end
 
@@ -73,7 +73,7 @@ module Umbra
       @separ = @columns = @numbering =  nil
       @y = '|'
       @x = '+'
-      @use_separator = true
+      @use_separator = false
       @_hidden_columns_flag = false
       self.columns = cols if cols
       if !args.empty?
@@ -182,6 +182,12 @@ module Umbra
       return visible unless block_given?
     end
 
+    ## returns the count of visible columns based on column names.
+    ## NOTE: what if no column names gives ???
+    def column_count
+      visible_column_names().count
+    end
+
     # yields non-hidden columns (ColumnInfo) and the offset/index
     # This is the order in which columns are to be printed
     def each_column
@@ -217,6 +223,7 @@ module Umbra
       #$log.debug "  render list:1: #{@list} "
       raise "tabular:: columns is nil " unless @columns
       buffer = []
+      @separ = nil
       _guess_col_widths
       rows = @list.size.to_s.length
       #@rows = rows
@@ -312,6 +319,21 @@ module Umbra
       @separ = str.chop
     end
 
+    ## This calculates and stores the offset at which each column starts.
+    ## Used when going to next column or doing a find for a string in the table.
+    def _calculate_column_offsets
+      total = 0
+      coffsets = []
+      ctr = 0
+      ## ix will have gaps in between for hidden fields
+      each_column { | c, ix|
+        v = c.width
+        coffsets[ctr] = total
+        ctr += 1
+        total += v + 2                         ## blank space plus separator
+      }
+      return coffsets
+    end
 
 
     private
