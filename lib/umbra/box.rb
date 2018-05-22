@@ -4,17 +4,19 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-07
 #      License: MIT
-#  Last update: 2018-05-14 15:05
+#  Last update: 2018-05-22 14:44
 # ----------------------------------------------------------------------------- #
 #  box.rb  Copyright (C) 2018 j kepler
 module Umbra
   ##
   # A box is a container around one, maybe more, widgets.
+  ## FIXME box needs to resize components if it's dimensions are changed.
+  ##     Or should components have a link to parent, so they can resize themselves ?
   #
   class Box < Widget 
     attr_property :title
-    attr_property :width
-    attr_property :height
+    #attr_property :width
+    #attr_property :height
     attr_accessor :row_offset     # not used yet
     attr_accessor :col_offset     # not used yet
     attr_property :visible
@@ -26,14 +28,16 @@ module Umbra
       @focusable  = false
       @visible    = true
       super
-      @int_height = @height - 2
-      @int_width  = @width  - 2
+      #@int_height = @height - 2
+      @int_height = self.height - 2
+      #@int_width  = @width  - 2
+      @int_width  = self.width  - 2
       @hlines = []
       @vlines = []
     end
     def repaint
       return unless @visible
-      print_border @row, @col, @height, @width, @color_pair || CP_BLACK, @attr || NORMAL
+      print_border self.row, self.col, self.height, self.width, @color_pair || CP_BLACK, @attr || NORMAL
       print_title @title
       if !@hlines.empty?
         @hlines.each {|e| hline(e.first, e[1]) }
@@ -68,10 +72,10 @@ module Umbra
     def flow *w
       @widgets = w
       num = w.size
-      wid = (@int_width / num).floor
+      wid = (@int_width / num).floor    ## FIXME how to recalc this if RESIZE
       ht  = @int_height 
-      srow = @row + 1
-      scol = @col + 1
+      srow = self.row + 1
+      scol = self.col + 1
       w.each_with_index do |e, ix|
         # unfortunately this is messing with button width calculation
         # maybe field and button should have resizable or expandable ?
@@ -89,16 +93,28 @@ module Umbra
     # use if only one widget will expand into this box
     def fill w
       # should have been nice if I could add widget to form, but then order might get wrong
-      w.row = @row + 1
-      w.col = @col + 1
-      w.width = @width - 2 if w.respond_to? :width
-      w.height = @height - 2 if w.respond_to? :height
+      w.row = self.row + 1
+      w.col = self.col + 1
+      if w.respond_to? :width
+        if @width < 0
+          w.width = @width - 1   ## relative to bottom
+        else
+          w.width = @width - 2   ## absolute
+        end
+      end
+      if w.respond_to? :height
+        if @height < 0
+          w.height = @height - 1   ## relative to bottom
+        else
+          w.height = @height - 2   ## absolute
+        end
+      end
       @widget = w
     end
     def hline row, col
-      return if row >= @row + @height
+      return if row >= self.row + self.height
       $log.debug "  hline: #{row} ... #{@row}   #{@height}  "
-      FFI::NCurses.mvwhline( @graphic.pointer, row, col, FFI::NCurses::ACS_HLINE, @width-2)
+      FFI::NCurses.mvwhline( @graphic.pointer, row, col, FFI::NCurses::ACS_HLINE, self.width()-2)
     end
 
     # print a title over the box on zeroth row
@@ -111,15 +127,16 @@ module Umbra
       when :left
         4
       when :right
-        @width -stitle.size - 3
+        self.width -stitle.size - 3
       else
-        (@width-stitle.size)/2
+        (self.width-stitle.size)/2
       end
       #FFI::NCurses.mvwaddstr(@pointer, 0, col, stitle) 
-      @graphic.printstring(@row, col, stitle)
+      @graphic.printstring(self.row, col, stitle)
     end
 
     private def print_border row, col, height, width, color, att=FFI::NCurses::A_NORMAL
+      $log.debug "  PRINTING border with #{row} #{col} #{height} #{width} INSIDE BOX"
       pointer = @graphic.pointer
       FFI::NCurses.wattron(pointer, FFI::NCurses.COLOR_PAIR(color) | att)
       FFI::NCurses.mvwaddch pointer, row, col, FFI::NCurses::ACS_ULCORNER
