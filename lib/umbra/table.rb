@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-06 - 09:56
 #      License: MIT
-#  Last update: 2018-05-21 11:30
+#  Last update: 2018-05-22 14:46
 # ----------------------------------------------------------------------------- #
 #  table.rb  Copyright (C) 2018 j kepler
 
@@ -121,7 +121,7 @@ module Umbra
     ## Override this to have customised row coloring.
     ## @return array of color_pair and attrib.
     def color_of_data_row index, state, data_index
-      color_or_row(index, state)         ## calling superclass here
+      color_of_row(index, state)         ## calling superclass here
     end
 
     ## Print the row which could be header or data
