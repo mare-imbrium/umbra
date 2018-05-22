@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-11
 #      License: MIT
-#  Last update: 2018-05-21 12:51
+#  Last update: 2018-05-22 11:03
 # ----------------------------------------------------------------------------- #
 #  extab3.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -190,14 +190,18 @@ begin
   win = Window.new
   statusline(win, " "*(win.width-0), 0)
   statusline(win, "Press C-q to quit #{win.height}:#{win.width}", 20)
-  title = Label.new( :text => "Tennis Query", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
+  #title = Label.new( :text => "Tennis Query", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
+  title = Label.new( :text => "Tennis Query", :row => 0, :col => 0 , :width => -1, 
                     :justify => :center, :color_pair => 0, :attr => REVERSE)
 
   #win.title "Tennis Query", 3, REVERSE
   form = Form.new win
   form.add_widget title
 
-  box = Box.new row: 1, col: 0, width: title.width, height: FFI::NCurses.LINES-2
+  ## -1 here suggests that this widget should extend till the end, less one.
+  ##   This is not absolute, it is relative to row or col.
+  box = Box.new row: 1, col: 0, width: -1, height: -2
+  #box = Box.new row: 1, col: 0, width: -1, height: FFI::NCurses.LINES-2
   #form.position_below(box, label)
   #box.below(title)
   #box.expand_right(0).expand_down(-1)
