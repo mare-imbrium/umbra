@@ -76,19 +76,29 @@ module Umbra
     return logg
   end
 
-=begin
-  def loop form, &block
-    win = form.win
+  ## Trying out a key loop to simplify matters for user. NOT TESTED.
+  ## @yield key pressed if block given, else calls form.handle_key(ch).
+  def main_loop form, &block
+    win = form.window
     form.repaint
     win.wrefresh
+    stopping = false
     while true
       catch :close do
-        while( ch == win.getkey) != curses.KEY_CTRL_Q
+        while( ch = win.getkey) != 999
           begin
-            form.handle_key ch
+            if ch == curses::KEY_CTRL_Q
+              stopping = true 
+              break
+            end
+            if block_given?
+              yield ch
+            else
+              form.handle_key ch
+            end
           rescue => err
             if $log
-              $log.debug( "app.rb handle_key rescue reached ")
+              $log.debug( "loop in umbra.rb handle_key rescue reached ")
               $log.debug( err.to_s) 
               $log.debug(err.backtrace.join("\n")) 
             end
@@ -96,13 +106,13 @@ module Umbra
           end
           win.wrefresh
         end
-        #stopping = win.fire_close_handler
-        win.wrefresh
-        #break if stopping.nil? || stopping
+        #stopping = win.fire_close_handler  ## TODO next version
+        #win.wrefresh
+        break if stopping
       end
+      break if stopping
     end
   end
-=end
 
 
 end   # module
