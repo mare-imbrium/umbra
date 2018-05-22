@@ -72,7 +72,7 @@ begin
     form.add_widget box, lb
     form.add_widget tb
     form.pack
-    form.select_first_field
+    form.repaint
     win.wrefresh
 
     y = x = 1
