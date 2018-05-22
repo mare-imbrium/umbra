@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-21 11:20
+#  Last update: 2018-05-22 12:27
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -65,13 +65,14 @@ module Umbra
 
     # Calculate dimensions as late as possible, since we can have some other container such as a box,
     # determine the dimensions after creation.
+    ## This is called by repaint.
     private def _calc_dimensions
       raise "Dimensions not supplied to multiline" if @row.nil? or @col.nil? or @width.nil? or @height.nil?
       @_calc_dimensions = true
-      @int_width  = @width                     # internal width NOT USED ELSEWHERE
-      @int_height = @height                    # internal height  USED HERE ONLy REDUNDANT FIXME
-      @scroll_lines ||= @int_height/2
-      @page_lines = @int_height
+      #@int_width  = self.width                     # internal width NOT USED ELSEWHERE
+      height = self.height                    
+      @scroll_lines ||= height/2
+      @page_lines = height
     end
 
     def getvalue
@@ -87,7 +88,7 @@ module Umbra
       return unless @repaint_required
       return unless @list
       win                 = @graphic
-      r,c                 = @row, @col 
+      r,c                 = self.row, self.col 
       _attr               = @attr || NORMAL
       _color              = @color_pair || CP_WHITE
       curpos              = 1
@@ -95,7 +96,7 @@ module Umbra
 
       rows               = getvalue 
 
-      ht                  = @height
+      ht                  = self.height
       cur                 = @current_index
       st                  = pstart = @pstart           # previous start
       pend = pstart + ht -1                            # previous end
@@ -105,9 +106,10 @@ module Umbra
         st = cur
       end
       $log.debug "REPAINT #{self.class} : cur = #{cur} st = #{st} pstart = #{pstart} pend = #{pend} listsize = #{@list.size} "
+      $log.debug "REPAINT ML : row = #{r} col = #{c} width = #{width}/#{@width},  height = #{ht}/#{@height} ( #{FFI::NCurses.COLS}   #{FFI::NCurses.LINES} "
       y = 0
       ctr = 0
-      filler = " "*(@width)
+      filler = " "*(self.width)
       rows.each_with_index {|_f, y| 
         next if y < st
 
@@ -225,11 +227,12 @@ module Umbra
 
     ## truncate string to width, and handle panning {{{
     def _truncate_to_width ff
+      _width = self.width
       if ff
-        if ff.size > @width
+        if ff.size > _width
           # pcol can be greater than width then we get null
           if @pcol < ff.size
-            ff = ff[@pcol..@pcol+@width-1] 
+            ff = ff[@pcol..@pcol+_width-1] 
           else
             ff = ""
           end
@@ -298,7 +301,7 @@ module Umbra
         @col_offset = blen - @pcol 
         @curpos = blen
         if @pcol > blen
-          @pcol = blen - @int_width
+          @pcol = blen - self.width  ## @int_width 2018-05-22 - 
           @pcol = 0 if @pcol < 0
           @col_offset = blen - @pcol 
         end
@@ -322,11 +325,11 @@ module Umbra
     # This should be consistent with moving the cursor to the end of the row with right arrow
     def cursor_end
       blen = current_row().length
-      if blen < @width
+      if blen < self.width
         set_col_offset blen # just after the last character
         @pcol = 0
       else
-        @pcol = blen-@width #+2  # 2 is due to mark and space XXX could be a problem with textbox
+        @pcol = blen-self.width #+2  # 2 is due to mark and space XXX could be a problem with textbox
         set_col_offset blen # just after the last character
       end
       @curpos = blen # this is position in array where editing or motion is to happen regardless of what you see
@@ -344,7 +347,7 @@ module Umbra
       blen = current_row().size # -1
       if @curpos < blen
         if add_col_offset(1)==-1  # go forward if you can, else scroll
-          #@pcol += 1 if @pcol < @width 
+          #@pcol += 1 if @pcol < self.width 
           @pcol += 1 if @pcol < blen
         end
         @curpos += 1
@@ -371,7 +374,7 @@ module Umbra
     private def add_col_offset num
       x = @col_offset + num
       return -1 if x < 0
-      return -1 if x > @int_width 
+      return -1 if x > self.width  ## @int_width  2018-05-22 - 
       # is it a problem that i am directly changing col_offset ??? XXX
       @col_offset += num 
     end
@@ -382,13 +385,14 @@ module Umbra
       @curpos = x || 0 # NOTE we set the index of cursor here - WHY TWO THINGS ??? XXX
       #return -1 if x < 0
       #return -1 if x > @width
-      if x >= @int_width
-        x = @int_width
-        @col_offset = @int_width 
+      _w = self.width
+      if x >= _w
+        x = _w
+        @col_offset = _w
         return
       end
       @col_offset = x 
-      @col_offset = @int_width if @col_offset > @int_width
+      @col_offset = _w if @col_offset > _w
       return
     end
     def scroll_right ## cursor_forward
