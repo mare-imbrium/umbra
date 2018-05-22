@@ -45,7 +45,8 @@ begin
   # check with long lines
   catch(:close) do
     form = Form.new win
-    box = Box.new row: 2,col: 2, height: 24, width: 80, title: "A box", justify: :left
+    #box = Box.new row: 2,col: 2, height: 24, width: 80, title: "A box", justify: :left
+    box = Box.new row: 1,col: 2, height: -3, width: 80, title: "A box", justify: :left
     win.printstring(3,1,"Just testing that listbox is correctly positioned")
     #lb = Listbox.new list: alist, row: 4, col: 2, width: 70, height: 18
     lb = Listbox.new list: alist
@@ -55,7 +56,7 @@ begin
     win.printstring(box.row+1,0,"XX")
     win.printstring(box.row+1,lb.col+lb.width,"XX")
     win.printstring(box.row+box.height,1,"This prints below the listbox")
-    brow = box.row+box.height+3
+    brow = box.row+box.height+2
     tb = ToggleButton.new onvalue: "Border", offvalue: "No Border", row: brow, col: 10, value: true
     ab = Button.new text: "Processes" , row: brow, col: 30
     logb = Button.new text: "LogFile" , row: brow, col: 50
