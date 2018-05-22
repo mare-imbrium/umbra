@@ -119,6 +119,8 @@ class Form
   ## 2018-05-18 - rewrite of select_field which did not call on_leave
   def focussed_widget fld
 
+    return nil unless fld   ## no focusable
+
     if fld.is_a? Integer
       fld = @focusables[fld]
     end
