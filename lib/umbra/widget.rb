@@ -43,7 +43,8 @@ class Widget
     include EventHandler
     include KeyMappingHandler
   # common interface for text related to a field, label, textview, button etc
-  attr_property :text, :width, :height
+  attr_property :text
+  attr_property   :width, :height   ## FIXME this won't trigger repaint or property !!!
 
   # foreground and background colors when focussed. Currently used with buttons and field
   # Form checks and repaints on entry if these are set.
@@ -51,7 +52,8 @@ class Widget
   attr_property :highlight_attr
 
   # NOTE: 2018-03-04 - user will have to call repaint_required if he changes color or coordinates.
-  attr_accessor  :row, :col                   # location of object
+  attr_accessor  :col                   # location of object
+  attr_writer    :row                   # location of object
   #attr_writer :color, :bgcolor               # normal foreground and background 2018-03-08 - now color_pair
   # moved to a method which calculates color 2011-11-12 
   attr_property  :color_pair                  # instead of colors give just color_pair
@@ -155,7 +157,7 @@ class Widget
   # row and col is where a widget starts. offsets usually take into account borders.
   # the offsets typically are where the cursor should be positioned inside, upon on_enter.
   def rowcol
-    return @row+@row_offset, @col+@col_offset
+    return self.row+@row_offset, self.col+@col_offset
   end
   ## return the value of the widget.
   def getvalue
@@ -173,12 +175,13 @@ class Widget
     r,c = rowcol
     $log.debug("widget repaint : r:#{r} c:#{c} col:#{@color_pair}" )
     value = getvalue_for_paint
-    len = @width || value.length
+    len = self.width || value.length
     acolor = @color_pair 
     @graphic.printstring r, c, "%-*s" % [len, value], acolor, attr()
   end
 
   def destroy
+    raise "what is this dong here still SHOULD Not be CALLED"
     $log.debug "DESTROY : widget #{@name} "
     panel = @window.panel
     Ncurses::Panel.del_panel(panel.pointer) if !panel.nil?   
@@ -245,6 +248,30 @@ class Widget
     #$log.debug "  inside focusable= with #{bool} "
     @focusable = bool
     @_form.update_focusables if @_form
+  end
+
+  ## TODO maybe check for decimal between 0 and 1 which will be percentage of width
+  def width
+    return nil unless @width    ## this is required otherwise checking for nil will fail
+    if @width < 0
+      return ( FFI::NCurses.COLS + @width ) - self.col + 1
+      #return ( FFI::NCurses.COLS + @width ) #- self.col + 1
+    end
+    @width
+  end
+  def height
+    return nil unless @height
+    if @height < 0
+      return ((FFI::NCurses.LINES + @height) - self.row) + 1
+      #return (FFI::NCurses.LINES + @height) 
+    end
+    @height
+  end
+  def row
+    if @row < 0
+      return FFI::NCurses.LINES + @row
+    end
+    @row
   end
   #
   ## ADD HERE WIDGET
