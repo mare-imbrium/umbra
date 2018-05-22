@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-06 - 11:20
 #      License: MIT
-#  Last update: 2018-05-16 14:32
+#  Last update: 2018-05-22 23:05
 # ----------------------------------------------------------------------------- #
 #  extab2.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -143,16 +143,19 @@ begin
   win.wrefresh
 
   y = x = 1
-  loop(@form) do |ch|
+  main_loop(form) do |ch|
+    statusline(win, "Pressed #{ch} on     ", 70)
     form.handle_key ch
     win.wrefresh
   end
+=begin
   while (ch = win.getkey) != FFI::NCurses::KEY_CTRL_Q
     next if ch == -1
     form.handle_key ch
     #statusline(win, "Pressed #{ch} on     ", 70)
     win.wrefresh
   end
+=end
 
 rescue Object => e
   @window.destroy if @window
