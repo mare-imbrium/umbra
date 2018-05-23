@@ -14,7 +14,7 @@ This is a stripped version of `canis` gem (ncurses ruby).
 
 
 ## Gem name
-  `umbra` was taken, so had to change the gem name to `ncumbra` but the packages and structure etc remain umbra.
+  The name `umbra` was taken, so had to change the gem name to `ncumbra` but the packages and structure etc remain umbra.
 
 ## Motivation for yet another ncurses library
 
@@ -23,7 +23,7 @@ This is a stripped version of `canis` gem (ncurses ruby).
 
 ## Future versions
  - Ampersand in Label and Button to signify shortcut/mnemonic.
- - table
+ - table (0.1.1 has it)
  - combo list
  - 256 colors
  - tree (maybe)
