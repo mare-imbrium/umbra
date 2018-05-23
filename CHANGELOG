@@ -1,4 +1,4 @@
-DATE 
+2018-05-23 
   - for 0.1.1
     - cleanup of Messagebox
     - add attr_property so that repaint will automatically happen on changing
@@ -8,4 +8,7 @@ DATE
 	executed atomically. There was one case when on_enter was not executed.
 	This invalidates @active_index.
 	- added Table widget
+	- refactor Label so caller can customize printing
+    - Introduce negative width and height, which will extend till end of
+	screen.
 
