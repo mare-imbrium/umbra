@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-11
 #      License: MIT
-#  Last update: 2018-05-22 11:03
+#  Last update: 2018-05-23 08:34
 # ----------------------------------------------------------------------------- #
 #  extab3.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -38,7 +38,7 @@ end
 def ORIGstatusline win, str, col = 0
   win.printstring( FFI::NCurses.LINES-1, col, str, 10)
 end
-def statusline win, str, column = 1
+def oldstatusline win, str, column = 1
   # LINES-2 prints on second last line so that box can be seen
   win.printstring( FFI::NCurses.LINES-1, 0, " "*(win.width), 6, REVERSE)
   # printing fields in two alternating colors so easier to see
@@ -48,6 +48,9 @@ def statusline win, str, column = 1
     win.printstring( FFI::NCurses.LINES-1, column, s, _color, REVERSE)
     column += s.length+1
   }
+end
+def statusline win, str, column = 1
+  @status.text = str
 end   # }}}
 def fetch_data db, sql # {{{
   $log.debug "SQL: #{sql} "
@@ -188,15 +191,27 @@ begin
   init_curses
   startup
   win = Window.new
-  statusline(win, " "*(win.width-0), 0)
-  statusline(win, "Press C-q to quit #{win.height}:#{win.width}", 20)
+  # by making this is label with -1 as row, it will recalc and redraw when window height is changed.
+  @status = Label .new( text: "Press C-q to quit", row: -1, col: 0, width: -1 )
+  def @status.print_label(win, row, col, format, value, _color, _attr)
+    column = col
+    win.printstring( row, 0, " "*(win.width), 6, REVERSE)
+    value.split("|").each_with_index {|s,ix|
+      _color = 6
+      _color = 5 if ix%2==0
+      win.printstring( row, column, s, _color, REVERSE)
+      column += s.length+1
+    }
+  end
+  #statusline(win, " "*(win.width-0), 0)
+  #statusline(win, "Press C-q to quit #{win.height}:#{win.width}", 20)
   #title = Label.new( :text => "Tennis Query", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
   title = Label.new( :text => "Tennis Query", :row => 0, :col => 0 , :width => -1, 
                     :justify => :center, :color_pair => 0, :attr => REVERSE)
 
   #win.title "Tennis Query", 3, REVERSE
   form = Form.new win
-  form.add_widget title
+  form.add_widget title, @status
 
   ## -1 here suggests that this widget should extend till the end, less one.
   ##   This is not absolute, it is relative to row or col.
