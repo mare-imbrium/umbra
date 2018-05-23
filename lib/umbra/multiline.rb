@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-22 12:27
+#  Last update: 2018-05-23 15:05
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -297,6 +297,8 @@ module Umbra
       fire_handler(:ENTER_ROW, [@current_index])     # 2018-03-26 - improve this
       # if cursor ahead of blen then fix it
       blen = current_row().size-1
+      ## why -1 on above line. Empty lines will give -1
+      blen = 0 if blen < 0
       if @curpos > blen
         @col_offset = blen - @pcol 
         @curpos = blen
