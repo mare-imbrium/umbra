@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-05-22 11:01
+#  Last update: 2018-05-22 23:36
 # ----------------------------------------------------------------------------- #
 #  label.rb  Copyright (C) 2018- j kepler
 #
@@ -77,12 +77,19 @@ class Label < Widget
     end
     ## move this into paint_label or something so we can override.
     # try a block which was passed earlier which gets a string TODO
-    @graphic.printstring r, c, str % [value], acolor, @attr
+    #@graphic.printstring r, c, str % [value], acolor, @attr
+    print_label @graphic, r, c, str , value, acolor, @attr
     if @mnemonic
       ulindex = value.index(@mnemonic) || value.index(@mnemonic.swapcase)
       @graphic.mvchgat(y=r, x=c+ulindex, max=1, BOLD|UNDERLINE, acolor, nil)
     end
     @repaint_required = false
+  end
+
+  ## The mwthod that finally prints the label text.
+  ## Override this to do any customised printing such as multiple colors.
+  def print_label(win, row, col, format, value, _color, _attr)
+    win.printstring row, col, format % [value], _color, _attr
   end
   # Added 2011-10-22 to prevent some naive components from putting focus here.
   def on_enter
