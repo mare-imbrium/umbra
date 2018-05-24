@@ -112,8 +112,8 @@ module Umbra
         else
           @pce.set( self, text, oldvalue, newvalue)
         end
-        fire_handler :PROPERTY_CHANGE, @pce
         @repaint_required = true 
+        fire_handler :PROPERTY_CHANGE, @pce
       end
 
   ## Created and sent to all listeners whenever a property is changed
