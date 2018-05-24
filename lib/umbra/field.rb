@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-05-17 12:20
+#  Last update: 2018-05-24 00:13
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -37,7 +37,7 @@ class InputDataEvent # {{{
   end
 end # }}}
   # Text edit field
-#  TODO :
+#  Todo :
   # NOTE: +width+ is the length of the display whereas +maxlen+ is the maximum size that the value 
   # can take. Thus, +maxlen+ can exceed +width+. Currently, +maxlen+ defaults to +width+ which 
   # defaults to 20.
@@ -45,7 +45,11 @@ end # }}}
   # == Example
   #     f = Field.new  text: "Some value", row: 10, col: 2
   #
-  # Field introduces an event :CHANGE which is fired for each character deleted or inserted
+# Field introduces an event :CHANGE which is fired for each character deleted or inserted.
+##
+# ## Use the :CHANGED event handler for custom validations and throw a +FieldValidationException+ if 
+# ##  the validation fails. This is called in the +on_leave+. You may pass a block to the +command+ method
+## for the same functionality.
   #  
   module Umbra
   class Field < Widget 
@@ -262,15 +266,12 @@ end # }}}
   
 
     public
-  ## Note that some older widgets like Field repaint every time the form.repaint
-  ##+ is called, whether updated or not. I can't remember why this is, but
-  ##+ currently I've not implemented events with these widgets. 2010-01-03 15:00 
 
   def repaint
-    return unless @repaint_required  # 2010-11-20 13:13 its writing over a window i think TESTING
+    return unless @repaint_required
     $log.debug("repaint FIELD: #{name}, r:#{row} c:#{col},wid:#{width},maxlen: #{@maxlen},pcol:#{@pcol},  #{focusable} st: #{@state} ")
     @width = 1 if width == 0
-    printval = getvalue_for_paint().to_s # added 2009-01-06 23:27 
+    printval = getvalue_for_paint().to_s
     printval = mask()*printval.length unless @mask.nil?
     if !printval.nil? 
       if printval.length > width # only show maxlen
@@ -329,8 +330,10 @@ end # }}}
     return if @delete_buffer.nil?
     #oldvalue = @buffer
     @buffer.insert @curpos, @delete_buffer 
-    fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :INSERT, 0, @delete_buffer)     # 2010-09-11 13:01 
+    fire_handler :CHANGE, InputDataEvent.new(@curpos,@curpos+@delete_buffer.length, self, :INSERT, 0, @delete_buffer)     
   end
+
+
   ## 
   # position cursor at start of field
   def cursor_home
@@ -457,6 +460,10 @@ end # }}}
         if !in_range?(val)
           raise FieldValidationException, "Field not matching range #{@valid_range}, above #{@above} or below #{@below}  "
         end
+        
+        ## 2018-05-24 - seems we were not calling the :CHANGED listeners at all.
+        fire_handler :CHANGED, self
+
       end
       # here is where we should set the forms modified to true - 2009-01
       if modified?
