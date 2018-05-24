@@ -60,8 +60,10 @@ or you may not have ncurses installed:
 
 2. Now check that the samples in the `examples` directory are working fine. You can run:
 
-    ruby examples/ex1.rb
-    ruby examples/ex2.rb
+      ruby examples/ex1.rb
+
+
+     ruby examples/ex2.rb
 
   If these are running fine, then you have a working copy of `umbra`. The `examples` folder has working examples of labels, fields, listboxes, textboxes and table. There is also a `tut` folder that has simple examples that are shown below.
 
@@ -126,13 +128,29 @@ In order to pause the screen, the program pauses to accept a keystroke.
 Right now we are not interesting in evaluating the key, we just want the display to pause. Press a key and the window will clear, and you will return to the prompt, and your screen should be clear. In this simple program, we avoided checking for exceptions, which will be included in programs later.
 
 The `getchar` method waits for a keystroke. Usually, the examples use `getkey` (aka `getch`) which does not pause for a keystroke.
-Try replacing `getchar` with `getch` and run the program. The program closes after a second when getch returned a `-1`. This has been used so that forms can have continuous updates without waiting for a keystroke.
+Try replacing `getchar` with `getch` and run the program. The program closes after a second when `getch` returned a `-1`. This has been used so that forms can have continuous updates without waiting for a keystroke.
 
 
 
 One can create color pairs or used some of the pre-created ones from `init_curses` in `window.rb`.
 
     win.printstring( 1, 10, "Hello Ruby", CP_YELLOW, REVERSE).
+
+
+### Important Window methods:
+
+-   `Window.new`
+-   `Window.new 0,0, 80, 20
+-   `Window.create(h, w, top, left) {|win| .... }
+-   `win.destroy`
+-   `win.printstring(row, col, string, color_pair, attribute)
+-   `win.wrefresh`
+-   `win.box`
+-   `win.getch` (alias getkey)
+-   `win.getchar` (waits for keystroke)
+
+In later examples, we will not print using the `window.printstring` method, but will instead create a `label`.
+
 
  See examples directory for code samples.
 
