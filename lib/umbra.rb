@@ -86,6 +86,7 @@ module Umbra
     while true
       catch :close do
         while( ch = win.getkey) != 999
+          next if ch == -1      ## should we put this here ???
           begin
             if ch == curses::KEY_CTRL_Q
               stopping = true 
