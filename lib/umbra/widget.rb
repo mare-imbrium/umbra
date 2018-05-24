@@ -44,7 +44,7 @@ class Widget
     include KeyMappingHandler
   # common interface for text related to a field, label, textview, button etc
   attr_property :text
-  attr_property   :width, :height   ## FIXME this won't trigger repaint or property !!!
+  attr_property   :width, :height   ## width and height of widget
 
   # foreground and background colors when focussed. Currently used with buttons and field
   # Form checks and repaints on entry if these are set.
@@ -54,7 +54,6 @@ class Widget
   # NOTE: 2018-03-04 - user will have to call repaint_required if he changes color or coordinates.
   attr_accessor  :col                   # location of object
   attr_writer    :row                   # location of object
-  #attr_writer :color, :bgcolor               # normal foreground and background 2018-03-08 - now color_pair
   # moved to a method which calculates color 2011-11-12 
   attr_property  :color_pair                  # instead of colors give just color_pair
   attr_property  :attr                        # attribute bold, normal, reverse
@@ -99,7 +98,6 @@ class Widget
     # These are standard events for most widgets which will be fired by 
     # Form. In the case of CHANGED, form fires if it's editable property is set, so
     # it does not apply to all widgets.
-    # 2018-03-18 - proporty change is deprecated since we don't use dsl_property any longer
     register_events( [:ENTER, :LEAVE, :CHANGED, :PROPERTY_CHANGE])
     @repaint_required = true # added 2018-03-20 - so all widgets get it
 
@@ -144,7 +142,6 @@ class Widget
     end
   end
   ## Called when user exits a widget
-  # 2018-03-04 - Are we keeping this at all, can we avoid NOT_SURE
   def on_leave
     @state = :NORMAL    # duplicating since often these are inside containers
     @focussed = false
