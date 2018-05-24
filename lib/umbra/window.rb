@@ -197,7 +197,7 @@ module Umbra
     def getch
       FFI::NCurses.wtimeout(@pointer, $ncurses_timeout || 1000)
       c = FFI::NCurses.wgetch(@pointer)
-      if c == 27
+      if c == 27    ## {{{
 
         # don't wait for another key
         FFI::NCurses.nodelay(@pointer, true)
@@ -227,13 +227,19 @@ module Umbra
           return key
 
         end
-      end
+      end   ## }}}
       #FFI::NCurses.nodelay(@pointer, false) # this works but trying out for continueous updates
       c
     rescue SystemExit, Interrupt 
       3      # is C-c
     rescue StandardError
       -1     # is C-c
+    end
+
+    ## Convenience method for a waiting getch
+    def getchar
+      $ncurses_timeout = -1
+      return self.getch
     end
 
     # this works fine for basic, control and function keys
