@@ -61,7 +61,6 @@ or you may not have ncurses installed:
 2. Now check that the samples in the `examples` directory are working fine. You can run:
 
     ruby examples/ex1.rb
-
     ruby examples/ex2.rb
 
   If these are running fine, then you have a working copy of `umbra`. The `examples` folder has working examples of labels, fields, listboxes, textboxes and table. There is also a `tut` folder that has simple examples that are shown below.
@@ -107,10 +106,12 @@ Dimension  may be specified as follows:
 When windows are created in this manner, it is essential to call `window.destroy` in the ensure block of the program.
 One may also use the block style of creating a window as follows:
 
+```ruby
    Window.create 0,0,0,0 do |win|
        win.printstring 0,0, "Hello World"
        win.getchar
    end
+```
 
 This takes care of destroying the window at the end of the block.
 
