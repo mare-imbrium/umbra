@@ -76,12 +76,12 @@ begin
   end
 
 rescue Object => e
-  @window.destroy if @window
+  win.destroy if win
   FFI::NCurses.endwin
   puts e
   puts e.backtrace.join("\n")
 ensure
-  @window.destroy if @window
+  win.destroy if win
   FFI::NCurses.endwin
   puts 
 end
