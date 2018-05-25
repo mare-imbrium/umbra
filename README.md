@@ -169,7 +169,7 @@ A widget is then added to the Form so it can be displayed. Before we create a wi
 - `repaint` - paints all the registered widgets. In most cases, dimensions are calculated at the time or painting and not at creation time. Note that widgets are only repainted if changed. This minimizes processing and painting.
 - `handle_key(ch)` - the form handles the key for traversal or hands it to the currently focussed field. This is the key that was received by the `window.getkey` method.
 
-There are other form methods that one may or may not use such as `select_first_field`, `select_next_field`, `current_widget` (find out which widget is focussed), put focus on a widget (`select_field` aka `focussed_widget`)
+There are other form methods that one may or may not use such as `select_first_field`, `select_next_field`, `current_widget` (find out which widget is focussed), put focus on a widget (`select_field` aka `select_widget`)
 
 At the time of writing (v 0.1.1), `pack` no longer calls `repaint`. It may do so in the future, if found to always happen.
 
@@ -180,17 +180,62 @@ The simplest widget in `Umbra` is the Label. Labels are used for a single line o
     title = Label.new( :text => "Demo of Labels", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1,
                     :justify => :center, :color_pair => 0)
 
-A `mnemonic` and related widget may be associated with a label. This `mnemonic` is a shortcut or hotkey for jumping directly to another which is specified by `related_widget`. The `related_widget` must be a focusable object such as a `Field` or `Listbox`. The `mnemonic` is displayed with bold and underlined attribute since underline may not work on some terminals. The Alt-<key> is to be pressed to jump directly to the field.
+A `mnemonic` and related widget may be associated with a label. This `mnemonic` is a shortcut or hotkey for jumping directly to another which is specified by `related_widget`. The `related_widget` must be a focusable object such as a `Field` or `Listbox`. The `mnemonic` is displayed with bold and underlined attribute since underline may not work on some terminals. The Alt-key is to be pressed to jump directly to the field.
 
 ```ruby
-    title.mnemonic = "t"
+    title.mnemonic = "n"
     title.related_widget = name
 ```
 
 Modify the previous example and create a label as above. Create a `Form` and use `add_widget` to associate the two.
-The `width` has been specified as the size of the current screen. You may use a value such as `20` or `40`. Stretch the window to increase the width. What happpens ?
+The `width` has been specified as the size of the current screen. You may use a value such as `20` or `40`. Stretch the window to increase the width. What happens ?
 
-Now change the `width` to `-1`. Run the program again and stretch the window's width. What happens ? Negative widths and heights are re-calculated at the time of printing, so a change in width of the screen will immediately reflect in the label's width. A negative value for width or height means that the object must stretch or extend to that row or column.
+Now change the `width` to `-1`. Run the program again and stretch the window's width. What happens ? Negative widths and heights are re-calculated at the time of printing, so a change in width of the screen will immediately reflect in the label's width. A negative value for width or height means that the object must stretch or extend to that row or column from the end. Negative widths are thus relative to the right end of the window. Positive widths are absolute.
+
+The important methods of `Label` are:
+
+- `text` - may be changed at any time, and will immediately reflect
+- `row`
+- `col`
+- `width`
+- `color_pair`
+- `attr` : maybe `BOLD` , `NORMAL` , `REVERSE` or `UNDERLINE`
+- `justify` - `:right`, `:left` or `:center`
+- `mnemonic`
+- `related_widget`
+
+### Field
+
+todo add description here
+
+
+### LabeledField
+
+todo add description here
+
+
+### Listbox
+
+todo add description here
+
+
+
+### Box
+
+todo add description here
+
+
+
+### Textbox
+
+todo add description here
+
+### Table
+
+todo add description here
+
+
+
 
  See examples directory for code samples.
 
