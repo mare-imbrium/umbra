@@ -48,6 +48,8 @@ class Form
     #$error_message ||= Variable.new ""
 
     map_keys unless @keys_mapped
+    $log ||= create_logger '/dev/null'    ## FIXME temporarily adding here. If user has not 
+                                          ##  specified a logger, create a quiet one.
   end
   ##
   # Add given widget to widget list and returns self
@@ -78,6 +80,7 @@ class Form
     @focusables = @widgets.select { |w| w.focusable }
     #$log.debug "2  inside update_focusables #{@focusables.count} "
   end
+
   # Decide layout of objects. User has to call this after creating components
   # More may come here.
   def pack
@@ -117,7 +120,7 @@ class Form
   ## This ensures that whenever a widget is given focus, the on_leave of the previous widget 
   ##   is called, and the on_enter of this field is called.
   ## 2018-05-18 - rewrite of select_field which did not call on_leave
-  def focussed_widget fld
+  def select_widget fld
 
     return nil unless fld   ## no focusable
 
@@ -147,7 +150,7 @@ class Form
     repaint # 2018-03-21 - handle_key calls repaint, is this for cases not involving keypress ?
     @window.refresh
   end
-  alias :select_field :focussed_widget
+  alias :select_field :select_widget
 
 
   # form repaint,calls repaint on each widget which will repaint it only if it has been modified since last call.
@@ -189,7 +192,7 @@ class Form
 
     ##  rewrite on 2018-05-18 - so that on_enter is called for first field
     if @_focussed_widget.nil?             ## when form handle_key first called
-      focussed_widget @focusables.first
+      select_widget @focusables.first
     end
     return @_focussed_widget
 
@@ -251,7 +254,7 @@ class Form
     end
     index = index ? index+1 : 0
     index = 0 if index >= @focusables.length # CYCLICAL 2018-03-11 - 
-    focussed_widget @focusables[index]
+    select_widget @focusables[index]
 =begin
     return :UNHANDLED if @focusables.nil? || @focusables.empty?
     if @active_index.nil?  || @active_index == -1 # needs to be tested out A LOT
@@ -291,7 +294,7 @@ class Form
     end
     index -= 1
     index = @focusables.length-1 if index < 0 # CYCLICAL 2018-03-11 - 
-    focussed_widget @focusables[index]
+    select_widget @focusables[index]
 =begin
     return :UNHANDLED if @focusables.nil? or @focusables.empty?
     #$log.debug "insdie sele prev field :  #{@active_index} WL:#{@widgets.length}" 
@@ -366,37 +369,8 @@ class Form
     f.on_enter if f.respond_to? :on_enter
   end
 
-  def OLD_process_key keycode, object, window
-    return :UNHANDLED if @_key_map.nil?
-    blk = @_key_map[keycode]
-    $log.debug "XXX:  _process key keycode #{keycode} #{blk.class}, #{self.class} "
-    return :UNHANDLED if blk.nil?
-
-    if blk.is_a? Symbol
-      if respond_to? blk
-        return send(blk, *@_key_args[keycode])
-      else
-        ## 2013-03-05 - 19:50 why the hell is there an alert here, nowhere else
-        alert "This ( #{self.class} ) does not respond to #{blk.to_s} [PROCESS-KEY]"
-        # added 2013-03-05 - 19:50 so called can know
-        return :UNHANDLED 
-      end
-    else
-      $log.debug "rwidget BLOCK called _process_key " if $log.debug? 
-      return blk.call object,  *@_key_args[keycode]
-    end
-  end # }}}
 
   public
-  # e.g. process_key ch, self {{{
-  # returns UNHANDLED if no block for it
-  # after form handles basic keys, it gives unhandled key to current field, if current field returns
-  # unhandled, then it checks this map.
-  # Please update widget with any changes here. 
-
-  def OLDprocess_key keycode, object # already there in keymappinghandler
-    return _process_key keycode, object, @window
-  end # }}}
 
   #
   # NOTE: These mappings will only trigger if the current field
