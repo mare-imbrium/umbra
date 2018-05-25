@@ -140,10 +140,10 @@ One can create color pairs or used some of the pre-created ones from `init_curse
 ### Important Window methods:
 
 -   `Window.new`
--   `Window.new 0,0, 80, 20
--   `Window.create(h, w, top, left) {|win| .... }
+-   `Window.new 0,0, 80, 20`
+-   `Window.create(h, w, top, left) {|win| .... }`
 -   `win.destroy`
--   `win.printstring(row, col, string, color_pair, attribute)
+-   `win.printstring(row, col, string, color_pair, attribute)`
 -   `win.wrefresh`
 -   `win.box`
 -   `win.getch` (alias getkey)
@@ -151,6 +151,46 @@ One can create color pairs or used some of the pre-created ones from `init_curse
 
 In later examples, we will not print using the `window.printstring` method, but will instead create a `label`.
 
+### Creating a Form
+
+In order to create a user-interface we need to create a `Form` object. A form manages various widgets or controls such as labels, entry fields, lists, boxes, tables etc. It manages traversal and printing of the same. It handles events. Widgets created must be associated with a form, for them to be operational.
+
+```ruby
+form = Form.new win
+form.add_widget title
+```
+
+The above block creates a `Form` passing a window object. This is required as the Form will use the window for display. This gem does NOT write onto `stdscr`, all writes go to a window.
+A widget is then added to the Form so it can be displayed. Before we create a widget let us visit the important methods of a Form object:
+
+- `add_widget` (or `add`) used to register a widget with the form. May take a comma-separated list of widgets.
+- `remove_widget` - remove given widget (rarely used)
+- `pack` - this method is to be called after creating all the widgets before the screen is to be painted.  IT carries out various functions such as registering shortcuts/hotkeys, creating a list of focusable objects, and laying out objects (layout are in a future version).
+- `repaint` - paints all the registered widgets. In most cases, dimensions are calculated at the time or painting and not at creation time. Note that widgets are only repainted if changed. This minimizes processing and painting.
+- `handle_key(ch)` - the form handles the key for traversal or hands it to the currently focussed field. This is the key that was received by the `window.getkey` method.
+
+There are other form methods that one may or may not use such as `select_first_field`, `select_next_field`, `current_widget` (find out which widget is focussed), put focus on a widget (`select_field` aka `focussed_widget`)
+
+At the time of writing (v 0.1.1), `pack` no longer calls `repaint`. It may do so in the future, if found to always happen.
+
+### Creating a Label
+
+The simplest widget in `Umbra` is the Label. Labels are used for a single line of text . The `text` of a label specifies the text to display. Other methods of a label are row, col, width and justify (alignment). Width is important for clearing space, and for right and center alignment.
+
+    title = Label.new( :text => "Demo of Labels", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1,
+                    :justify => :center, :color_pair => 0)
+
+A `mnemonic` and related widget may be associated with a label. This `mnemonic` is a shortcut or hotkey for jumping directly to another which is specified by `related_widget`. The `related_widget` must be a focusable object such as a `Field` or `Listbox`. The `mnemonic` is displayed with bold and underlined attribute since underline may not work on some terminals. The Alt-<key> is to be pressed to jump directly to the field.
+
+```ruby
+    title.mnemonic = "t"
+    title.related_widget = name
+```
+
+Modify the previous example and create a label as above. Create a `Form` and use `add_widget` to associate the two.
+The `width` has been specified as the size of the current screen. You may use a value such as `20` or `40`. Stretch the window to increase the width. What happpens ?
+
+Now change the `width` to `-1`. Run the program again and stretch the window's width. What happens ? Negative widths and heights are re-calculated at the time of printing, so a change in width of the screen will immediately reflect in the label's width. A negative value for width or height means that the object must stretch or extend to that row or column.
 
  See examples directory for code samples.
 
