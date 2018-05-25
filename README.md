@@ -173,6 +173,10 @@ There are other form methods that one may or may not use such as `select_first_f
 
 At the time of writing (v 0.1.1), `pack` no longer calls `repaint`. It may do so in the future, if found to always happen.
 
+#### Traversal
+
+Traversal between focusable objects may be done using the TAB or Backtab keys. Arrow keys also work.
+
 ### Creating a Label
 
 The simplest widget in `Umbra` is the Label. Labels are used for a single line of text . The `text` of a label specifies the text to display. Other methods of a label are row, col, width and justify (alignment). Width is important for clearing space, and for right and center alignment.
@@ -195,24 +199,54 @@ Now change the `width` to `-1`. Run the program again and stretch the window's w
 The important methods of `Label` are:
 
 - `text` - may be changed at any time, and will immediately reflect
-- `row`
-- `col`
-- `width`
-- `color_pair`
+- `row`  - vertical position on screen (0 to FFI::NCurses.LINES-1). Can be negative for relative position.
+- `col`  - horizontal position on screen (0 to FFI::NCurses.COLS-1)
+- `width` - defaults to length of `text` but can be larger or smaller. Can be negative.
+- `color_pair` - see details for creating colors.
 - `attr` : maybe `BOLD` , `NORMAL` , `REVERSE` or `UNDERLINE`
 - `justify` - `:right`, `:left` or `:center`
-- `mnemonic`
-- `related_widget`
+- `related_widget` - editable or focusable widget associated with this label.
+- `mnemonic` - short-cut used to shift access to `related_widget`
+- `print_label` - override the usual printing of a label. A label usually prints in one colour and attribute (or combination of attributes. However, for any customized printing of a label, one can override this method at the instance level.
 
 ### Field
 
-todo add description here
+This is an entry field. Text may be edited in a `Field`. Various validations are possible. Custom validations may be specified. 
 
+```ruby
+    w = Field.new( :name => "name", :row => 1, :col => 1 , :width => 50)
+    w.color_pair = CP_CYAN
+    w.attr = FFI::NCurses::A_REVERSE
+    w.highlight_color_pair = CP_YELLOW
+    w.highlight_attr = REVERSE
+    w.null_allowed = true
+```
+
+The above example shows creation of an editable field. The field has been further customized to have a different color when it is in focus (highlighted).
+
+
+Other customizations of field are as follows:
+```ruby
+  w.chars_allowed = /[\w\+\.\@]/
+  email.valid_regex = /\w+\@\w+\.\w+/
+  age.valid_range = (18..100)
+  w.type = :integer
+  comment.maxlen = 100
+```
+Validations are executed when the user exits a field, and a failed validation will throw a `FieldValidationException`
+A custom validation can be given as a block to the `:CHANGED` event. More about this in events.
+
+Field (like all focusable widgets) has events such as `:ON_LEAVE` `ON_ENTER` `:CHANGED` `:CHANGE`.
+- `:CHANGE` is called for each character inserted or removed from the buffer. This allows for processing to be attached to each character entered in the field.
+- `:CHANGED` is called upon leaving the field, if the contents were changed.
+- `:PROPERTY_CHANGE` - all widgets have certain properties which when changed result in immediate redrawing of the widget. At the same time, a program may attach processing to that change. A property may be disallowed to change by throwing a `PropertyVetoException`.
 
 ### LabeledField
 
 todo add description here
 
+
+### Buttons
 
 ### Listbox
 
@@ -234,6 +268,20 @@ todo add description here
 
 todo add description here
 
+
+### Colors
+
+
+
+### Event Handling
+
+todo add description here
+- ON_ENTER
+- ON_LEAVE
+- CHANGED
+- PROPERTY_CHANGE
+- ENTER_ROW
+- LEAVE_ROW
 
 
 
