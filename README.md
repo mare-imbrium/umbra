@@ -241,10 +241,41 @@ Field (like all focusable widgets) has events such as `:ON_LEAVE` `ON_ENTER` `:C
 - `:CHANGED` is called upon leaving the field, if the contents were changed.
 - `:PROPERTY_CHANGE` - all widgets have certain properties which when changed result in immediate redrawing of the widget. At the same time, a program may attach processing to that change. A property may be disallowed to change by throwing a `PropertyVetoException`.
 
+Some methods of `Field` are:
+
+- `text` (or `default`) for setting starting value of field.
+- `maxlen` - maximum length allowed
+- `values` - list of valid values
+- `valid_range` - valid numeric range 
+- `above` - lower limit for numeric value
+- `below` - upper limit for numeric value
+- `mask`  - character to show for each character entered
+- `type`  - specify what characters may be entered in the field. Can be:
+     :integer, :float, :alpha, :alnum, Float, Integer, Numeric. A regexp may also be passed in.
+
+Make a program with a label and a field. Do not add any validations or ranges to it. Get it to work.
+
+Try various validations on it. At the time of writing this (0.1.1) on_leave is not triggered as there is only one field. FIXME. So make a second field. What happens when you enter data that fails the validation ?
+
+Add a `rescue` block after the `form.handle_key`. How can you display the error to the user ? See umbra.rb for ways to popup the exception string.
+
+Make a second label and field. Use mnemonics and try out the hotkeys.
+
+A minimal sample is present as tut/field.rb.
+
+
+
 ### LabeledField
 
-todo add description here
+A labeled field associates a label and a field. This helps in printing a label and its associated field side by side. Also, a mnemonic will automatically change focus to its related field. `LabeledField` extends Field and so has all the properties of a `Field`. In addition, it has the following:
 
+- `label` - String to print
+- `lrow` and `lcol` - labels position
+- `label_color_pair`- color pair of label 
+- `label_attr`     - attribute of label
+- `label_highlight_color_pair`     - color pair of label when field is in focus
+- `label_highlight_attr`     - attribute of label when field is in focus.
+- `mnemonic` - shortcut key for moving focus to this field.
 
 ### Buttons
 
