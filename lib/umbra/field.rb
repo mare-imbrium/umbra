@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-05-24 00:13
+#  Last update: 2018-05-26 11:21
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
@@ -86,10 +86,10 @@ end # }}}
     attr_accessor :overwrite_mode              # true or false INSERT OVERWRITE MODE
 
     # column on which field printed, usually the same as +col+ unless +label+ used.
-    # Required by +History+ to popup field history.
+    # Required by +History+ to popup field history. UNUSED.
     attr_reader :field_col                     # column on which field is printed
                                                # required due to labels. Is updated after printing
-    #                                          # so can be nil if accessed early 2011-12-8 
+    #                                          # so can be nil if accessed early 
 
     def initialize config={}, &block
       @buffer = String.new
@@ -438,7 +438,7 @@ end # }}}
       addcol -1 if adjust # move visual cursor back
       @modified = true
     end
-    # upon leaving a field
+    # Upon leaving a field
     # returns false if value not valid as per values or valid_regex
     # 2008-12-22 12:40 if null_allowed, don't validate, but do fire_handlers
     def on_leave
@@ -466,6 +466,7 @@ end # }}}
 
       end
       # here is where we should set the forms modified to true - 2009-01
+      ## 2018-05-26 - what is the point of this ? 
       if modified?
         @modified = true
       end
@@ -495,6 +496,7 @@ end # }}}
     end
     ##
     # overriding widget, check for value change
+    # 2018-05-26 - WHAT IS THE POINT of setting @modified if we have a different logic here
     def modified?
       getvalue() != @original_value
     end
@@ -502,6 +504,8 @@ end # }}}
     def text
       getvalue
     end
+
+    ## set default value of field
     def text=(val)
       return unless val # added 2010-11-17 20:11, dup will fail on nil
       # will bomb on integer or float etc !!
