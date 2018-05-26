@@ -59,7 +59,7 @@ class Widget
   attr_property  :attr                        # attribute bold, normal, reverse
   attr_accessor  :name                        # name to refr to or recall object by_name
   attr_accessor :curpos                       # cursor position inside object - column, not row.
-  attr_reader  :config                        # can be used for popping user objects too. NOTE unused
+  #attr_reader  :config                        # can be used for popping user objects too. NOTE unused
   #attr_accessor  :form                       # made accessor 2008-11-27 22:32 so menu can set
   attr_accessor  :graphic                     # window which should be set by form when adding 2018-03-19
   attr_accessor :state                        # normal, selected, highlighted
@@ -75,8 +75,8 @@ class Widget
 
   #attr_accessor :parent_component  # added 2010-01-12 23:28 BUFFERED - to bubble up
 
-  # NOTE state takes care of this and is set by form. boolean
-  attr_reader :focussed                    # is this widget in focus, so they may paint differently
+  # NOTE state takes care of this and is set by form. boolean 2018-05-26 - commented since unused
+  #attr_reader :focussed                    # is this widget in focus, so they may paint differently
 
   # height percent and width percent used in stacks and flows.
   #attr_accessor :height_pc, :width_pc        # may bring this back
@@ -99,7 +99,7 @@ class Widget
     # Form. In the case of CHANGED, form fires if it's editable property is set, so
     # it does not apply to all widgets.
     register_events( [:ENTER, :LEAVE, :CHANGED, :PROPERTY_CHANGE])
-    @repaint_required = true # added 2018-03-20 - so all widgets get it
+    @repaint_required = true
 
     aconfig.each_pair { |k,v| variable_set(k,v) }
     #instance_eval &block if block_given?
@@ -127,16 +127,13 @@ class Widget
   def modified?
     @modified
   end
-  #def set_modified tf=true
-    #@modified = tf
-  #end
-  #alias :modified :set_modified
 
   # triggered whenever a widget is entered.
   # NOTE should we not fix cursor at this point (on_enter) ?
   def on_enter
+    ## Form has already set this, and set modified to false
     @state = :HIGHLIGHTED    # duplicating since often these are inside containers
-    @focussed = true
+    #@focussed = true
     if @handler && @handler.has_key?(:ENTER)
       fire_handler :ENTER, self
     end
@@ -144,7 +141,7 @@ class Widget
   ## Called when user exits a widget
   def on_leave
     @state = :NORMAL    # duplicating since often these are inside containers
-    @focussed = false
+    #@focussed = false
     if @handler && @handler.has_key?(:LEAVE)
       fire_handler :LEAVE, self
     end
