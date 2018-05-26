@@ -277,6 +277,32 @@ A labeled field associates a label and a field. This helps in printing a label a
 - `label_highlight_attr`     - attribute of label when field is in focus.
 - `mnemonic` - shortcut key for moving focus to this field.
 
+
+
+
+```ruby
+    lf = LabeledField.new( :name => "name", :row => 1, :col => 15 , :width => 20, 
+                         label: "Name: ", :label_highlight_attr => BOLD
+                        )
+```
+
+Create a form with two labeled fields. 
+
+Try out different color_pairs and highlight_color_pairs and attributes for the field and label.
+
+What happens when you specify `lcol` and when you don't ?
+
+Place a label on the bottom of the screen and try printing the number of characters typed in the current field. The number must change as the user types. (Hint 1 below)
+
+Place another label on the screen and print the time on it. The time should update even when the user does not type. (Hint 2 below).
+
+
+Hint 1: Use `:CHANGE` event. It passes an object of class InputDataEvent. You might use `text` or `source` (returns the Field object).
+
+Hint 2: You can do this inside the key loop when ch is -1. Use the `text` method of the Label. Is is not updating ?
+You will need to call `form.repoaint`.
+
+
 ### Buttons
 
 ### Listbox
