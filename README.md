@@ -185,7 +185,7 @@ Traversal between focusable objects may be done using the TAB or Backtab keys. A
 
 Widget is the common superclass of all user-interface controls. It is never instantiated directly.
 
-It's properties include:
+Its properties include:
 
 - `text` - text related to a button, field, label, textbox, etc. May be changed at any time, and will immediately reflect
 - `row`  - vertical position on screen (0 to FFI::NCurses.LINES-1). Can be negative for relative position.
@@ -193,14 +193,18 @@ It's properties include:
 - `width` - defaults to length of `text` but can be larger or smaller. Can be negative.
 - `height` - Height of multiline widgets or boxes. Can be negative.
 - `color_pair` - Combination of foreground and background color. see details for creating colors.
-- `attr` : maybe `BOLD` , `NORMAL` , `REVERSE` or `UNDERLINE`
+- `attr` : visual attribute of text in widget. Can be `BOLD` , `NORMAL` , `REVERSE` or `UNDERLINE`
 - `highlight_color_pair` - color pair to use when the widget gets focus
 - `highlight_attr` - attribute to use when the widget gets focus
 - `focusable` - whether the widget may take focus.
 - `visible` - whether the widget is visible.
 - `state` - :NORMAL or :HIGHLIGHTED. Highlighted refers to focussed.
 
-If `row` is negative, then the position will be recalculated whenever the window is resized. Similarly, if `width` and `height` are negative, then the width is stretched to the end of the window. If the window is resized, this will be recalculated. This enables some simple resizing and placing of screen components. For complex resizing and repositioning the Form's `:RESIZE` event should be used.
+If `row` is negative, then the position will be recalculated whenever the window is resized. Similarly, if `width` and `height` are negative, then the width is stretched to the end of the window. If the window is resized, this will be recalculated. This enables some simple resizing and placing of screen components. For complex resizing and repositioning, the Form's `:RESIZE` event should be used.
+
+#### attr_property
+
+  This is a variation of `attr_accessor`. It refers to attributes of an object that should result in the object being repainted, when the attribute is changed. However, whenever such attributes are modified, a `:PROPERTY_CHANGE` event is also fired, so that processing can be attached to such changes.
 
 ### Creating a Label
 
@@ -377,11 +381,71 @@ This button has an on and off state.
 
 `Widget` the common ancestor to all user-interface controls defined a method `command`, which takes a block. That block is executed when a button is fired. For other widgets, it is fired when the `:CHANGED` event is called.
 
+### Multiline
+
+Multiline is a parent class for all widgets that display multiple rows/lines and allow scrolling. It has the following attributes:
+
+- `current_index` - get the index of row the cursor is on
+- `list`   - get or set the array of String being displayed
+- `row_count` - get size of array
+- `current_row` - get the row having focus
+
+Multiline allows customizing display of each row displayed by the following methods:
+
+- `color_of_row(index, state)` - customize color of row based on index and state
+- `state_of_row(index)` - customize state of row based on index. One may add a new state.
+- `value_of_row(line, index, state)` - if the array contains data other than strings (such as an Array), 
+             then customize how the data is to be converted to text.
+- `print_row` - completely customize the printing of the row if the above are not sufficient.
+
+
+Multiline exposes three events: `:ENTER_ROW`, `:LEAVE_ROW` and `:PRESS`. Press is triggered when the `RETURN` key is pressed on a row. This is not the same as selection. One may get `current_index` and `curpos` (cursor position) from the object.
+
+```ruby
+    obj.command do |o|
+       o.current_index     ## => index under cursor
+       o.current_row       ## => row under cursor (converted to text)
+       o.curpos            ## => position of cursor (if you want to determine word under cursor)
+    end
+```
+
+Passing a code block to the `command` method is identical to attaching it to the `:PRESS` event handler.
+
+The `:CHANGED` event is fired whenever an array is passed to the `list=` method.
+
+#### Traversal
+
+   In addition to arrow keys, one may use "j" and "k" for down and up. Other keys are:
+
+   - "g" - first row
+   - "G" - last row
+   - C-d - scroll down
+   - C-u - scroll up
+   - C-b - scroll backward
+   - C-f - scroll forward
+   - C-a - beginning of row
+   - C-e - end of row
+   - C-l - scroll right
+   - C-j - scroll left (C-h not working ??)
+   - Spacebar - scroll forward (same as C-f)
+
 ### Listbox
 
-todo add description here
+Listbox is an extension of `Multiline` (parent class of all widgets that contain multiple lines of text such as listbox and tree and textbox). It displays an array of Strings, and allows scrolling. It adds the capability of selection to `Multiline`. At present, only single selection is allowed.
 
+It adds various visual elements to `Multiline` such as a mark on the left of the item/line denoting whether an item is selected or not, and whether a item/row is current (focussed) or not. By default, a selected row displays an "x" on the left. The current row displays a greater than symbol "&gt;".
 
+Listbox adds the following attributes to Multiline.
+
+- `selected_index` - index of row selected
+- `selected_mark` - character to be displayed for selected row (default is "x")
+- `unselected_mark` - character to be displayed for other rows (default blank)
+- `current_mark` - character to be displayed for current row (default is "&gt;")
+- `selection_key` -  key that selects current row (currently the default is "s")
+- `selected_color_pair` 
+- `selected_attr` 
+
+Listbox adds the `:LIST_SELECTION_EVENT` which is fired upon selection or deselection of a row. Use `selected_index` to determine which row has been selected. A value of nil implies the current row was deselected.
 
 ### Box
 
