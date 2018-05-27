@@ -173,9 +173,34 @@ There are other form methods that one may or may not use such as `select_first_f
 
 At the time of writing (v 0.1.1), `pack` no longer calls `repaint`. It may do so in the future, if found to always happen.
 
+Form registers only one event `:RESIZE` which is triggered when the window is resized. You may use this to recalculate widgets. For example:
+
+    @form.bind(:RESIZE) {  resize }   ## resize is a user-defined method that recalculates positions and dimensions
+
 #### Traversal
 
 Traversal between focusable objects may be done using the TAB or Backtab keys. Arrow keys also work.
+
+### Widget
+
+Widget is the common superclass of all user-interface controls. It is never instantiated directly.
+
+It's properties include:
+
+- `text` - text related to a button, field, label, textbox, etc. May be changed at any time, and will immediately reflect
+- `row`  - vertical position on screen (0 to FFI::NCurses.LINES-1). Can be negative for relative position.
+- `col`  - horizontal position on screen (0 to FFI::NCurses.COLS-1)
+- `width` - defaults to length of `text` but can be larger or smaller. Can be negative.
+- `height` - Height of multiline widgets or boxes. Can be negative.
+- `color_pair` - Combination of foreground and background color. see details for creating colors.
+- `attr` : maybe `BOLD` , `NORMAL` , `REVERSE` or `UNDERLINE`
+- `highlight_color_pair` - color pair to use when the widget gets focus
+- `highlight_attr` - attribute to use when the widget gets focus
+- `focusable` - whether the widget may take focus.
+- `visible` - whether the widget is visible.
+- `state` - :NORMAL or :HIGHLIGHTED. Highlighted refers to focussed.
+
+If `row` is negative, then the position will be recalculated whenever the window is resized. Similarly, if `width` and `height` are negative, then the width is stretched to the end of the window. If the window is resized, this will be recalculated. This enables some simple resizing and placing of screen components. For complex resizing and repositioning the Form's `:RESIZE` event should be used.
 
 ### Creating a Label
 
@@ -297,13 +322,60 @@ Place a label on the bottom of the screen and try printing the number of charact
 Place another label on the screen and print the time on it. The time should update even when the user does not type. (Hint 2 below).
 
 
-Hint 1: Use `:CHANGE` event. It passes an object of class InputDataEvent. You might use `text` or `source` (returns the Field object).
+Hint 1: Use `:CHANGE` event. It passes an object of class `InputDataEvent`. You might use `text` or `source` (returns the Field object).
 
 Hint 2: You can do this inside the key loop when ch is -1. Use the `text` method of the Label. Is is not updating ?
-You will need to call `form.repoaint`.
+You will need to call `form.repaint`.
+
+
+A minimal sample is present as tut/labfield.rb. You can also see examples/ex21.rb.
 
 
 ### Buttons
+
+Button is a action related widget with a label and an action that fires when a user presses SPACE on it. The `:PRESS` event is associated with the space bar key. A button may also have a mnemonic that fires it's event from anywhere on the form.
+
+In addition to the properties of the `Widget` superclass, button also has:
+
+- `mnemonic`
+- `surround_chars` - the characters on the two sides of the button, by default square brackets.
+
+The button is the superclass of ToggleButton, RadioButton and Checkbox.
+
+### Togglebutton
+
+This button has an on and off state. 
+
+- `onvalue` and `offvalue` - set the values for on and off state
+- `value` - get which of onvalue and offvalue is current (boolean)
+- `checked?` - returns true if onvalue, false if offvalue
+- `checked` - programmatically set value to true or false
+
+
+```ruby
+
+  togglebutton = ToggleButton.new()
+  togglebutton.value = true
+  togglebutton.onvalue = " Toggle Down "
+  togglebutton.offvalue ="  Untoggle   "
+  togglebutton.row = row
+  togglebutton.col = col
+
+  togglebutton.command do
+    if togglebutton.value
+      message_label.text = "Toggle button was pressed"
+    else
+      message_label.text = "UNToggle button was pressed"
+    end
+  end
+    
+  togglebutton.checked(true)    ## simulate keypress
+  togglebutton.checked?         ## => true
+  togglebutton.value            ## => true
+
+```
+
+`Widget` the common ancestor to all user-interface controls defined a method `command`, which takes a block. That block is executed when a button is fired. For other widgets, it is fired when the `:CHANGED` event is called.
 
 ### Listbox
 
@@ -332,23 +404,26 @@ todo add description here
 
 ### Event Handling
 
-todo add description here
-- ON_ENTER
-- ON_LEAVE
-- CHANGED
-- PROPERTY_CHANGE
-- ENTER_ROW
-- LEAVE_ROW
+Various events for an instance of a widget may be subscribed to. A code block attached to the event will be called when the event takes place. Some of the common events are:
 
+- `ON_ENTER`  - executed when focus enters a widget
+- `ON_LEAVE`  - executed when focus leaves a widget
+- `CHANGED`   - executed when the data is changed. In the case of a Field, this is when user exits after changing.
+              In the case of `Multiline` widgets such as `Listbox` and `Table` this is whenever the list if changed.
+- `PROPERTY_CHANGE` - executed whenever a property is changed. Properties are defined using `attr_property`.
+- `ENTER_ROW` - In `Multiline` widgets, whenever user enters a row.
+- `LEAVE_ROW` - In `Multiline` widgets, whenever user leaves a row.
+
+### Key Bindings
+
+For an object, or for the form, keys may be bound to a code block. All functionality in the system is bound to a code block, making it possible to override provided behavior, although that is not recommended. Tab, backtab and Escape may not be over-ridden.
+
+    form.bind_key(KEY_F1, "Help") { help() }
+
+    table.bind_key(?s, "search") { search }
 
 
  See examples directory for code samples.
-
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
