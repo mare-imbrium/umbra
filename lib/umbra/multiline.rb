@@ -6,11 +6,12 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-23 15:05
+#  Last update: 2018-05-27 12:03
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
 ##  TODO search through text and put cursor on next result.
+##  TODO allow setting of current_index programmatically
 #/
 
 
@@ -37,7 +38,7 @@ module Umbra
       map_keys
       @row_offset         = 0
       @pcol               = 0
-      @curpos             = 0  
+      @curpos             = 0     ## Widget defines an accessor on this.
       @repaint_required   = true
     end
 
