@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-07
 #      License: MIT
-#  Last update: 2018-05-22 14:44
+#  Last update: 2018-05-27 16:14
 # ----------------------------------------------------------------------------- #
 #  box.rb  Copyright (C) 2018 j kepler
 module Umbra
@@ -33,7 +33,7 @@ module Umbra
       #@int_width  = @width  - 2
       @int_width  = self.width  - 2
       @hlines = []
-      @vlines = []
+      #@vlines = []   # UNUSED. TODO ???
     end
     def repaint
       return unless @visible
@@ -44,9 +44,10 @@ module Umbra
       end
       # what about asking for painting of widgets
     end
-    # should we take in an array and apportion them 
-    # since we are keeping a row in between as divider, need to adjust heights.
-    # Depending on how many components
+
+    ## 
+    ## Add a variable list of components to a box, which are stacked horizontally by the box.
+    ## @param comma separated list of widgets
     def add *w
       @widgets = w
       num = w.size
@@ -65,8 +66,14 @@ module Umbra
       # FIXME there will be one additional hline in the end.
       w[-1].height -= (num-1)
     end
-    # this is best used for widgets that can be resized.
-    # Prefer not to use for buttons since the looks gets messed (inconsistency betwewn button and highlight).
+    alias :stack :add
+
+
+    ##
+    ##  Horizontally place an array of widgets 
+    ## @param comma separated list of widgets
+    ## NOTE:  this is best used for widgets that can be resized.
+    # Prefer not to use for buttons since the looks gets messed (inconsistency between button and highlight).
     # Therefore now, button calculates its own width which means that this program cannot determine what the width is
     # and thus cannot center it.
     def flow *w
@@ -90,7 +97,11 @@ module Umbra
       # we added 1 to the scol each time, so decrement
       w[-1].width -= (num-1)
     end
-    # use if only one widget will expand into this box
+
+
+    ## Fill out a single widget into the entire box leaving an inset of 1.
+    ## @param [Widget]
+    # NOTE: use if only one widget will expand into this box
     def fill w
       # should have been nice if I could add widget to form, but then order might get wrong
       w.row = self.row + 1
@@ -111,6 +122,10 @@ module Umbra
       end
       @widget = w
     end
+
+    ## paint a horizontal line, as a separator between widgets
+    ## param [Integer] row - row
+    ## param [Integer] col - column
     def hline row, col
       return if row >= self.row + self.height
       $log.debug "  hline: #{row} ... #{@row}   #{@height}  "
@@ -118,7 +133,6 @@ module Umbra
     end
 
     # print a title over the box on zeroth row
-    # TODO right or  left or center align
     private def print_title stitle
       return unless stitle
       stitle = "| #{stitle} |"
