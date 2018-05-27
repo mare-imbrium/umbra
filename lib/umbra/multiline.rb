@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-27 12:03
+#  Last update: 2018-05-27 16:19
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -28,7 +28,6 @@ module Umbra
       @editable           = false
       @pstart             = 0                  # which row does printing start from
       @current_index      = 0                  # index of row on which cursor is
-      #register_events([:LEAVE_ROW, :ENTER_ROW, :LIST_SELECTION_EVENT])
 
       ## PRESS event relates to pressing RETURN/ENTER (10)
       register_events([:LEAVE_ROW, :ENTER_ROW, :PRESS])
