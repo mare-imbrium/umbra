@@ -84,7 +84,7 @@ begin
       message_label.text = "UNToggle button was pressed"
     end
     # we need this since we have done away with dsl_property
-    message_label.repaint_required = true
+    #message_label.repaint_required = true
   end
   form.add_widget togglebutton 
 
