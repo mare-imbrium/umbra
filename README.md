@@ -382,6 +382,10 @@ This button has an on and off state.
 
 `Widget` the common ancestor to all user-interface controls defined a method `command`, which takes a block. That block is executed when a button is fired. For other widgets, it is fired when the `:CHANGED` event is called.
 
+### RadioButton
+
+### Checkbox
+
 ### Multiline
 
 Multiline is a parent class for all widgets that display multiple rows/lines and allow scrolling. It has the following attributes:
@@ -446,11 +450,23 @@ Listbox adds the following attributes to Multiline.
 - `selected_color_pair` 
 - `selected_attr` 
 
-Listbox adds the `:LIST_SELECTION_EVENT` which is fired upon selection or deselection of a row. Use `selected_index` to determine which row has been selected. A value of nil implies the current row was deselected.
+Listbox adds the `:SELECT_ROW` which is fired upon selection or deselection of a row. Use `selected_index` to determine which row has been selected. A value of nil implies the current row was deselected.
 
 ### Box
 
-todo add description here
+A Box is a container for one or more widgets. It paints a border around its periphery, and can place its components horizontally or vertically.
+
+- `visible` - get or set visible property of border
+- `title`   - title to display on top line
+- `justify` - alignment of title
+- `widgets` - returns array of components
+- `widget`  - returns single widget if only one set
+
+Objects are placed inside the box using either of these methods:
+
+- `fill`    - fill the box with given widget (single)
+- `stack`   - stack the given variable list of widgets horizontally (alias `add`)
+- `flow`    - stack the given variable list of widgets vertically
 
 
 
