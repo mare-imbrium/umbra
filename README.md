@@ -282,6 +282,7 @@ Some methods of `Field` are:
 - `type`  - specify what characters may be entered in the field. Can be:
      :integer, :float, :alpha, :alnum, Float, Integer, Numeric. A regexp may also be passed in.
 
+> ##### Exercise
 >Make a program with a label and a field. Do not add any validations or ranges to it. Get it to work.
 >
 >Try various validations on it. At the time of writing this (0.1.1) on_leave is not triggered as there is only one field. FIXME. So make a second field. What happens when you enter data that fails the validation ?
