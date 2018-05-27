@@ -265,7 +265,7 @@ Other customizations of field are as follows:
 Validations are executed when the user exits a field, and a failed validation will throw a `FieldValidationException`
 A custom validation can be given as a block to the `:CHANGED` event. More about this in events.
 
-Field (like all focusable widgets) has events such as `:ON_LEAVE` `ON_ENTER` `:CHANGED` `:CHANGE`.
+Field (like all focusable widgets) has events such as `:ON_LEAVE` `ON_ENTER` `:CHANGED` . Field also has an event`:CHANGE`.
 - `:CHANGE` is called for each character inserted or removed from the buffer. This allows for processing to be attached to each character entered in the field.
 - `:CHANGED` is called upon leaving the field, if the contents were changed.
 - `:PROPERTY_CHANGE` - all widgets have certain properties which when changed result in immediate redrawing of the widget. At the same time, a program may attach processing to that change. A property may be disallowed to change by throwing a `PropertyVetoException`.
@@ -282,15 +282,15 @@ Some methods of `Field` are:
 - `type`  - specify what characters may be entered in the field. Can be:
      :integer, :float, :alpha, :alnum, Float, Integer, Numeric. A regexp may also be passed in.
 
-Make a program with a label and a field. Do not add any validations or ranges to it. Get it to work.
-
-Try various validations on it. At the time of writing this (0.1.1) on_leave is not triggered as there is only one field. FIXME. So make a second field. What happens when you enter data that fails the validation ?
-
-Add a `rescue` block after the `form.handle_key`. How can you display the error to the user ? See umbra.rb for ways to popup the exception string.
-
-Make a second label and field. Use mnemonics and try out the hotkeys.
-
-A minimal sample is present as tut/field.rb.
+>Make a program with a label and a field. Do not add any validations or ranges to it. Get it to work.
+>
+>Try various validations on it. At the time of writing this (0.1.1) on_leave is not triggered as there is only one field. FIXME. So make a second field. What happens when you enter data that fails the validation ?
+>
+>Add a `rescue` block after the `form.handle_key`. How can you display the error to the user ? See umbra.rb for ways to popup the exception string.
+>
+>Make a second label and field. Use mnemonics and try out the hotkeys.
+>
+>A minimal sample is present as tut/field.rb.
 
 
 
