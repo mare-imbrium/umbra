@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-04-07 23:07
+#  Last update: 2018-05-26 23:23
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -26,7 +26,7 @@ module Umbra
       #@hotkey = config.delete(:hotkey)  2018-03-22 - 
       # 2018-03-18 - FORM_ATTACHED deprecated to keep things simple
       register_events([:PRESS])
-      @default_chars = ['> ', ' <'] # a default button is painted differently
+      @default_chars = ['> ', ' <'] # a default button is painted differently. UNUSED. ???
       super
 
 
@@ -37,7 +37,7 @@ module Umbra
     end
     ##
     # set button based on Action
-    # 2018-03-22 - is this still used ?
+    # 2018-03-22 - is this still used ? XXX
     # This allows action objects to be used in multiple places such as buttons, menus, popups etc.
     def action a
       text a.name
@@ -92,13 +92,12 @@ module Umbra
     end
 
     ## command of button (invoked on press, hotkey, space)
-    # added args 2008-12-20 19:22 
-    def command *args, &block
-      bind_event :PRESS, *args, &block
-    end
+    # added args 2008-12-20 19:22  commented as widget already takes care 2018-05-26 
+    #def command *args, &block
+      #bind_event :PRESS, *args, &block
+    #end
     ## fires PRESS event of button
     def fire
-      #$log.debug "firing PRESS #{text}"
       fire_handler :PRESS, ActionEvent.new(self, :PRESS, text)
     end
     # for campatibility with all buttons, will apply to radio buttons mostly
