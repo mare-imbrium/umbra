@@ -6,7 +6,7 @@ require 'umbra/button'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-03-17 - 22:50
 #      License: MIT
-#  Last update: 2018-05-14 14:35
+#  Last update: 2018-05-27 08:34
 # ----------------------------------------------------------------------------- #
 #  togglebutton.rb Copyright (C) 2012-2018 j kepler
 #
@@ -48,20 +48,18 @@ class ToggleButton < Button
   # text for on value and off value
   attr_accessor :onvalue, :offvalue
   # boolean, which value to use currently, onvalue or offvalue
-  attr_accessor :value
+  #attr_accessor :value
+  attr_property :value
   # characters to use for surround, array, default square brackets
-  attr_property :surround_chars 
+  #attr_property :surround_chars  already in button
   # 2018-04-02 - removing variable
-  #attr_accessor :variable    # value linked to this variable which is a boolean
   # background to use when selected, if not set then default
   # 2018-04-02 - unused so commenting off. color_pair is not used here or in checkbox
-  attr_property :selected_color_pair
+  #attr_property :selected_color_pair
 
   def initialize config={}, &block
     super
 
-    #@value ||= (@variable.nil? ? false : @variable.get_value(@name)==true)
-    # TODO may need to do this when this is added to button_group 
   end
   def getvalue
     @value ? @onvalue : @offvalue
@@ -115,24 +113,19 @@ class ToggleButton < Button
   # NOTE i have not brought ItemEvent in here.
   def fire
     checked(!@value)
-    @item_event = ItemEvent.new self, self if @item_event.nil?
-    @item_event.set(@value ? :SELECTED : :DESELECTED)
-    fire_handler :PRESS, @item_event # should the event itself be ITEM_EVENT
+    #@item_event = ItemEvent.new self, self if @item_event.nil?
+    #@item_event.set(@value ? :SELECTED : :DESELECTED)
+    #fire_handler :PRESS, @item_event # should the event itself be ITEM_EVENT
+    ## 2018-05-27 - trying to use self in most cases. Above was not needed.
+    fire_handler :PRESS, self
   end
   ##
   # set the value to true or false
   # user may programmatically want to check or uncheck
+  # ## duplicate of value ??? 2018-05-26 - 
   def checked tf
     @value = tf
-=begin
-    if @variable
-      if @value 
-        @variable.set_value((@onvalue || 1), @name)
-      else
-        @variable.set_value((@offvalue || 0), @name)
-      end
-    end
-=end
+    @repaint_required = true
   end
 end # class 
 end # module
