@@ -105,7 +105,7 @@ begin
     end
     # bind to another event of listbox
     lb.bind_event(:LEAVE_ROW) { |ix| statusline(win, "LEFT ROW #{ix.first}", 50) }
-    lb.bind_event(:LIST_SELECTION_EVENT) { |w| alert("You selected row #{w.selected_index || "none"} ") }
+    lb.bind_event(:SELECT_ROW) { |w| alert("You selected row #{w.selected_index || "none"} ") }
     form.add_widget box, lb
     form.add_widget tb
     form.add_widget ab
