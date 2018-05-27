@@ -41,6 +41,7 @@ class Form
     @active_index = nil
     @row = @col = 0                    # 2018-03-07 - umbra
     @focusables = []                   # focusable components
+    register_events(:RESIZE)
     instance_eval &block if block_given?
     @name ||= ""                       # for debugging 
 
