@@ -5,7 +5,7 @@ require 'umbra/multiline'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-18 14:16
+#  Last update: 2018-05-27 16:18
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -40,7 +40,8 @@ module Umbra
       @selected_mark      = 'x'                # row selected character
       @unselected_mark    = ' '                # row unselected character (usually blank)
       @current_mark       = '>'                # row current character (default is >)
-      register_events([:LIST_SELECTION_EVENT])
+      #register_events([:LIST_SELECTION_EVENT])
+      register_events([:SELECT_ROW])
       super
     end
 
@@ -71,7 +72,7 @@ module Umbra
       else
         @selected_index = @current_index 
       end
-      fire_handler :LIST_SELECTION_EVENT, self   # use selected_index to know which one
+      fire_handler :SELECT_ROW, self   # use selected_index to know which one
     end
 
     ## Paint the row.
