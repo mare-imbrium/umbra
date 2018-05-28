@@ -165,7 +165,7 @@ A widget is then added to the Form so it can be displayed. Before we create a wi
 
 - `add_widget` (or `add`) used to register a widget with the form. May take a comma-separated list of widgets.
 - `remove_widget` - remove given widget (rarely used)
-- `pack` - this method is to be called after creating all the widgets before the screen is to be painted.  IT carries out various functions such as registering shortcuts/hotkeys, creating a list of focusable objects, and laying out objects (layout are in a future version).
+- `pack` - this method is to be called after creating all the widgets before the screen is to be painted.  It carries out various functions such as registering shortcuts/hotkeys, creating a list of focusable objects, and laying out objects (layout are in a future version).
 - `repaint` - paints all the registered widgets. In most cases, dimensions are calculated at the time or painting and not at creation time. Note that widgets are only repainted if changed. This minimizes processing and painting.
 - `handle_key(ch)` - the form handles the key for traversal or hands it to the currently focussed field. This is the key that was received by the `window.getkey` method.
 
@@ -273,16 +273,19 @@ Field (like all focusable widgets) has events such as `:ON_LEAVE` `ON_ENTER` `:C
 Some methods of `Field` are:
 
 - `text` (or `default`) for setting starting value of field.
-- `maxlen` - maximum length allowed
+- `maxlen` - maximum length allowed during entry
 - `values` - list of valid values
 - `valid_range` - valid numeric range 
-- `above` - lower limit for numeric value
-- `below` - upper limit for numeric value
-- `mask`  - character to show for each character entered
+- `valid_regex` - valid regular expression for text entered
+- `above` - lower limit for numeric value (value should be above this)
+- `below` - upper limit for numeric value (value should be below this)
+- `mask`  - character to show for each character entered (useful for password entry)
+- `null_allowed` - true or false. Can field be left blank.
 - `type`  - specify what characters may be entered in the field. Can be:
      :integer, :float, :alpha, :alnum, Float, Integer, Numeric. A regexp may also be passed in.
 
 > ##### Exercise
+>
 >Make a program with a label and a field. Do not add any validations or ranges to it. Get it to work.
 >
 >Try various validations on it. At the time of writing this (0.1.1) on_leave is not triggered as there is only one field. FIXME. So make a second field. What happens when you enter data that fails the validation ?
@@ -316,24 +319,26 @@ A labeled field associates a label and a field. This helps in printing a label a
                         )
 ```
 
-Create a form with two labeled fields. 
-
-Try out different color_pairs and highlight_color_pairs and attributes for the field and label.
-
-What happens when you specify `lcol` and when you don't ?
-
-Place a label on the bottom of the screen and try printing the number of characters typed in the current field. The number must change as the user types. (Hint 1 below)
-
-Place another label on the screen and print the time on it. The time should update even when the user does not type. (Hint 2 below).
-
-
-Hint 1: Use `:CHANGE` event. It passes an object of class `InputDataEvent`. You might use `text` or `source` (returns the Field object).
-
-Hint 2: You can do this inside the key loop when ch is -1. Use the `text` method of the Label. Is is not updating ?
-You will need to call `form.repaint`.
-
-
-A minimal sample is present as tut/labfield.rb. You can also see examples/ex21.rb.
+>#### Exercise
+>
+>Create a form with two labeled fields. 
+>
+>Try out different color_pairs and highlight_color_pairs and attributes for the field and label.
+>
+>What happens when you specify `lcol` and when you don't ?
+>
+>Place a label on the bottom of the screen and try printing the number of characters typed in the current field. The number must change as the user types. (Hint 1 below)
+>
+>Place another label on the screen and print the time on it. The time should update even when the user does not type. (Hint 2 below).
+>
+>
+>Hint 1: Use `:CHANGE` event. It passes an object of class `InputDataEvent`. You might use `text` or `source` (returns the Field object).
+>
+>Hint 2: You can do this inside the key loop when ch is -1. Use the `text` method of the Label. Is is not updating ?
+>You will need to call `form.repaint`.
+>
+>
+>A minimal sample is present as tut/labfield.rb. You can also see examples/ex21.rb.
 
 
 ### Buttons
