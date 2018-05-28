@@ -88,14 +88,13 @@ begin
   end
   form.add_widget togglebutton 
 
-  check = Checkbox.new text: "No Frames", value: true, row: row+1, col: col, mnemonic: "N"
+  check =  Checkbox.new text: "No Frames", value: true,  row: row+1, col: col, mnemonic: "N"
   check1 = Checkbox.new text: "Use https", value: false, row: row+2, col: col, mnemonic: "U"
   row += 2
   form.add_widget check, check1
   [ check, check1 ].each do |cb|
     cb.command do 
       message_label.text = "#{cb.text} is now #{cb.value}"
-      message_label.repaint_required = true
     end
   end
 
