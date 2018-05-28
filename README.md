@@ -350,7 +350,19 @@ In addition to the properties of the `Widget` superclass, button also has:
 - `mnemonic`
 - `surround_chars` - the characters on the two sides of the button, by default square brackets.
 
-The button is the superclass of ToggleButton, RadioButton and Checkbox.
+```ruby
+  ok_butt = Button.new( :name => 'ok', :text => 'Ok', :row => 2, :col => 10, :width => 10 , 
+  :color_pair => 0, :mnemonic => 'O')
+```
+
+>Exercise:
+>
+>Create a button with text "Cancel" which closes the window.
+>Attach a code block to the Ok button to write the contents of each field to the log file and then close the window.
+>
+>You may see examples/ex3.rb.
+
+`Button` is the superclass of `ToggleButton,` `RadioButton` and `Checkbox`.
 
 ### Togglebutton
 
@@ -387,9 +399,50 @@ This button has an on and off state.
 
 `Widget` the common ancestor to all user-interface controls defined a method `command`, which takes a block. That block is executed when a button is fired. For other widgets, it is fired when the `:CHANGED` event is called.
 
+### Checkbox
+
+A checkbox is a button containing some text with a square on the left (or right). The square may be checked or unchecked. 
+Checkbox extends `ToggleButton`.
+
+
+It adds the following properties to ToggleButton.
+
+- `align_right` -  boolean, show the button on the right. Default is false.
+
+`value` may be used to set the initial value, or retrieve the value at any time.
+
+```ruby
+    row = 10
+    col = 10
+    check =  Checkbox.new text: "No Frames", value: true,  row: row+1, col: col, mnemonic: "N"
+    check1 = Checkbox.new text: "Use https", value: false, row: row+2, col: col, mnemonic: "U"
+```
+
+A code block may be attached to the clicking of checkboxes either using `command` or binding to `:PRESS`.
+In this example, a previously created label is updated whenever the checkboxes are clicked.
+
+
+```ruby
+  form.add_widget check, check1
+  [ check, check1 ].each do |cb|
+    cb.command do 
+      message_label.text = "#{cb.text} is now #{cb.value}"
+    end
+  end
+```
+
+The above is similar to:
+
+```ruby
+   check.bind_event(:PRESS) { |cb| 
+      message_label.text = "#{cb.text} is now #{cb.value}"
+      }
+```
+
 ### RadioButton
 
-### Checkbox
+
+
 
 ### Multiline
 
