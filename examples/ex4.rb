@@ -66,7 +66,6 @@ begin
         #lb.border false
         box.title = "Untoggled"
       end
-      box.repaint_required = true
     end
     # bind the most common event for a listbox which is ENTER_ROW
     lb.command do |ix|
