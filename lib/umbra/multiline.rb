@@ -6,19 +6,26 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-27 16:19
+#  Last update: 2018-05-30 12:38
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
 ##  TODO search through text and put cursor on next result.
 ##  TODO allow setting of current_index programmatically
+##  TODO is a row visible. visible? row. and make a row visible. programmatically
+##  TODO insert delete a row (if editable)
 #/
 
 
 module Umbra
+
+  ## Base class for widgets that have multiple lines and are scrollable.
+  ## Preferably, use a concrete class such as Listbox, Table or Textbox.
+  ## This is not editable by default. To delete or insert rows, set editable to true.
   class Multiline < Widget 
 
     attr_reader   :list                        # array containing data (usually Strings)
+    attr_reader   :panned_cols                 ## How may columns has widget panned to right
 
     # index of focussed row, starting 0, index into the list supplied
     attr_reader   :current_index
@@ -36,7 +43,8 @@ module Umbra
 
       map_keys
       @row_offset         = 0
-      @pcol               = 0
+      @panned_cols               = 0     ## how many columns the view has panned.
+                                  ## The name means panned_cols
       @curpos             = 0     ## Widget defines an accessor on this.
       @repaint_required   = true
     end
@@ -53,7 +61,7 @@ module Umbra
       @list               = alist
       @repaint_required   = true
       @pstart = @current_index = 0
-      @pcol               = 0
+      @panned_cols               = 0
       $log.debug "  before multiline list= CHANGED "
       fire_handler(:CHANGED, self)    ## added 2018-05-08 - 
     end
@@ -230,15 +238,15 @@ module Umbra
       _width = self.width
       if ff
         if ff.size > _width
-          # pcol can be greater than width then we get null
-          if @pcol < ff.size
-            ff = ff[@pcol..@pcol+_width-1] 
+          # panned_cols can be greater than width then we get null
+          if @panned_cols < ff.size
+            ff = ff[@panned_cols..@panned_cols+_width-1] 
           else
             ff = ""
           end
         else
-          if @pcol < ff.size
-            ff = ff[@pcol..-1]
+          if @panned_cols < ff.size
+            ff = ff[@panned_cols..-1]
           else
             ff = ""
           end
@@ -300,12 +308,12 @@ module Umbra
       ## why -1 on above line. Empty lines will give -1
       blen = 0 if blen < 0
       if @curpos > blen
-        @col_offset = blen - @pcol 
+        @col_offset = blen - @panned_cols 
         @curpos = blen
-        if @pcol > blen
-          @pcol = blen - self.width  ## @int_width 2018-05-22 - 
-          @pcol = 0 if @pcol < 0
-          @col_offset = blen - @pcol 
+        if @panned_cols > blen
+          @panned_cols = blen - self.width  ## @int_width 2018-05-22 - 
+          @panned_cols = 0 if @panned_cols < 0
+          @col_offset = blen - @panned_cols 
         end
       end
       @col_offset = 0 if @col_offset < 0
@@ -320,7 +328,7 @@ module Umbra
     # position cursor at start of field
     def cursor_home
       @curpos  = 0 
-      @pcol    = 0
+      @panned_cols    = 0
       set_col_offset 0
     end
     # goto end of line. 
@@ -329,13 +337,13 @@ module Umbra
       blen = current_row().length
       if blen < self.width
         set_col_offset blen # just after the last character
-        @pcol = 0
+        @panned_cols = 0
       else
-        @pcol = blen-self.width #+2  # 2 is due to mark and space XXX could be a problem with textbox
+        @panned_cols = blen-self.width #+2  # 2 is due to mark and space XXX could be a problem with textbox
         set_col_offset blen # just after the last character
       end
       @curpos = blen # this is position in array where editing or motion is to happen regardless of what you see
-      # regardless of pcol (panning)
+      # regardless of panned_cols (panning)
     end
     # returns current row as String
     # 2018-04-11 - NOTE this may not be a String so we convert it to string before returning
@@ -349,8 +357,8 @@ module Umbra
       blen = current_row().size # -1
       if @curpos < blen
         if add_col_offset(1)==-1  # go forward if you can, else scroll
-          #@pcol += 1 if @pcol < self.width 
-          @pcol += 1 if @pcol < blen
+          #@panned_cols += 1 if @panned_cols < self.width 
+          @panned_cols += 1 if @panned_cols < blen
         end
         @curpos += 1
       end
@@ -362,8 +370,8 @@ module Umbra
         add_col_offset -1
       else
         # cur is on the first col, then scroll left
-        if @pcol > 0
-          @pcol -= 1
+        if @panned_cols > 0
+          @panned_cols -= 1
           @curpos -= 1
         else
           # do nothing
@@ -381,7 +389,7 @@ module Umbra
       @col_offset += num 
     end
     # sets the visual cursor on the window at correct place
-    # NOTE be careful of curpos - pcol being less than 0
+    # NOTE be careful of curpos - panned_cols being less than 0
     # @param [Integer] position in data on the line
     private def set_col_offset x=@curpos
       @curpos = x || 0 # NOTE we set the index of cursor here - WHY TWO THINGS ??? XXX
@@ -399,21 +407,21 @@ module Umbra
     end
     def scroll_right ## cursor_forward
       blen = current_row().size-1
-      @pcol += 1 if @pcol < blen
+      @panned_cols += 1 if @panned_cols < blen
     end
     def scroll_left  ##cursor_backward
-      @pcol -= 1 if @pcol > 0
+      @panned_cols -= 1 if @panned_cols > 0
     end
     # go to start of file (first line)
     def goto_start
       @current_index = 0
-      @pcol = @curpos = 0
+      @panned_cols = @curpos = 0
       set_col_offset 0
     end
     # go to end of file (last line)
     def goto_end
       @current_index = @list.size-1
-      @pcol = @curpos = 0
+      @panned_cols = @curpos = 0
     end
     def scroll_down
       @current_index += @scroll_lines
@@ -435,7 +443,7 @@ module Umbra
     ## @param [Integer] ch: key caught by getch of window
     def handle_key ch
       old_current_index = @current_index
-      old_pcol = @pcol
+      old_panned_cols = @panned_cols
       old_col_offset = @col_offset
 
       ret = super
@@ -451,7 +459,7 @@ module Umbra
         on_enter_row @current_index
         @repaint_required = true  
       end
-      @repaint_required = true if old_pcol != @pcol or old_col_offset != @col_offset
+      @repaint_required = true if old_panned_cols != @panned_cols or old_col_offset != @col_offset
     end
 
     ## convenience method for calling most used event of a widget
@@ -473,6 +481,56 @@ module Umbra
       #fire_handler :PRESS, aev
       fire_handler :PRESS, self
     end
+
+
+##### TO TEST THE REST ############ 
+
+    ## Is the given row visible
+    ## UNTESTED
+    def is_visible? _row
+      j = _row - @pstart
+      j >= 0 && j <= (self.height - 1)
+    end
+
+    # Ensure current row is visible, if not make it first row
+    # NOTE - need to check if its at end and then reduce scroll at rows, check_prow does that
+    # 
+    # @param current_index (default if not given)
+    #
+    ## UNTESTED
+    def ensure_visible _row = @current_index
+      unless is_visible? _row
+        @pstart = _row
+      end
+    end
+
+    ## NOTE what about firing handlers when moving rows, i suppose that these will be called from a binding.
+    ## UNTESTED
+    def goto_line line
+      return if line < 0 or line >= self.row_count
+      @current_index = line
+      ensure_visible line
+    end
+
+    ## UNTESTED
+    def delete_at index
+      return unless @list
+      return unless @editable
+      @repaint_all = true
+      @list.delete_at index
+    end
+
+    ## UNTESTED
+    def insert index, line
+      return unless @list
+      return unless @editable
+      @repaint_all = true
+      @list.insert index, line
+    end
+
+    ## delegate << []= etc but we need to fire CHANGED 
+
   end  # class
 end    # module
 
+#  vim:  comments=sr\:##,mb\:##,el\:#/,\:## :
