@@ -5,7 +5,7 @@ require 'umbra/multiline'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-27 16:18
+#  Last update: 2018-05-30 10:08
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -17,13 +17,14 @@ require 'umbra/multiline'
 module Umbra
 
   ## Display a list of items.
-  ## Adds selection capability to the Scrollable widget.
+  ## Adds selection capability to the Multiline widget.
+  ## Adds event :SELECT_ROW which fires on selection and unselection.
   #
   class Listbox < Multiline 
 
     attr_accessor :selection_allowed           # does this class allow row selection (should be class level)
     attr_accessor :selection_key               # key used to select a row
-    attr_accessor :selected_index              # row selected, may change to plural
+    attr_reader   :selected_index              # row selected, may change to plural
     attr_property :selected_color_pair         # row selected color_pair
     attr_property :selected_attr               # row selected color_pair
     attr_accessor :selected_mark               # row selected character
@@ -65,14 +66,27 @@ module Umbra
     end
 
     ## Toggle current row's selection status.
-    def toggle_selection
+    def toggle_selection _row=@current_index
       @repaint_required = true  
-      if @selected_index == @current_index 
-        @selected_index = nil
+      if @selected_index == _row
+        unselect_row _row
       else
-        @selected_index = @current_index 
+        select_row _row
       end
+    end
+
+    ## select given row
+    def select_row _row=@current_index
+      @selected_index = _row
       fire_handler :SELECT_ROW, self   # use selected_index to know which one
+    end
+    
+    ## unselect given row
+    def unselect_row _row=@current_index
+      if _row == @selected_index
+        @selected_index = nil
+        fire_handler :SELECT_ROW, self   # use selected_index to know which one
+      end
     end
 
     ## Paint the row.
@@ -143,16 +157,7 @@ module Umbra
     end
 
 
-=begin
-    def cursor_forward
-      blen = current_row().size-1
-      @pcol += 1 if @pcol < blen
-    end
-    def cursor_backward
-      @pcol -= 1 if @pcol > 0
-    end
-=end
 
-
-  end 
+  end  # class
 end # module
+#  vim:  comments=sr\:##,mb\:##,el\:#/,\:## :
