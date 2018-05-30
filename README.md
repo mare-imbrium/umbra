@@ -455,14 +455,23 @@ Multiline is a parent class for all widgets that display multiple rows/lines and
 
 Multiline allows customizing display of each row displayed by the following methods:
 
-- `color_of_row(index, state)` - customize color of row based on index and state
 - `state_of_row(index)` - customize state of row based on index. One may add a new state.
+- `color_of_row(index, state)` - customize color of row based on index and state. By default, the current row is highlighted whereas all other rows use NORMAL attribute.
 - `value_of_row(line, index, state)` - if the array contains data other than strings (such as an Array), 
              then customize how the data is to be converted to text.
 - `print_row` - completely customize the printing of the row if the above are not sufficient.
 
 
 Multiline exposes three events: `:ENTER_ROW`, `:LEAVE_ROW` and `:PRESS`. Press is triggered when the `RETURN` key is pressed on a row. This is not the same as selection. One may get `current_index` and `curpos` (cursor position) from the object.
+
+A row may have one of three states.
+
+ - :HIGHLIGHTED - the focus is inside the listbox and the cursor is on this row
+ - :CURRENT     - the focus is NOT inside the listbox but the current row had focus.
+ - :NORMAL      - all other rows
+
+Only one row can have :HIGHLIGHTED or :CURRENT.
+ 
 
 ```ruby
     obj.command do |o|
@@ -500,7 +509,7 @@ It adds various visual elements to `Multiline` such as a mark on the left of the
 
 Listbox adds the following attributes to Multiline.
 
-- `selected_index` - index of row selected
+- `selected_index` - get index of row selected (can be nil)
 - `selected_mark` - character to be displayed for selected row (default is "x")
 - `unselected_mark` - character to be displayed for other rows (default blank)
 - `current_mark` - character to be displayed for current row (default is "&gt;")
@@ -509,6 +518,40 @@ Listbox adds the following attributes to Multiline.
 - `selected_attr` 
 
 Listbox adds the `:SELECT_ROW` which is fired upon selection or deselection of a row. Use `selected_index` to determine which row has been selected. A value of nil implies the current row was deselected.
+
+```ruby
+  alist = []
+  (1..50).each do |i|
+    alist << "#{i} entry"
+  end
+
+  lb = Listbox.new list: alist, row: 1, col: 1, width: 20, col: -2
+
+  form.add_widget lb
+```
+
+Listbox adds the `:SELECTED` state to the existing states a row may have (:CURRENT, :HIGHLIGHTED, :NORMAL).
+
+Listboxes allow further customization of the display of each row through the following:
+
+    - `mark_of_row(index, state)` - this returns the mark to be used for the row offset or state. Typically, this returns a single character. A :SELECTED row by default has an 'X' mark, a :CURRENT row has a '&gt;'.
+
+Listbox adds an attribute for SELECTED rows.
+
+Some of the methods of listboxes are:
+
+- `list=` - supply array of values to populate listbox
+- `select_row(n)` - select given row
+- `unselect_row(n)` - unselect given row
+- `toggle_selection` - toggle selection status of given row
+- `clear_selection`  - clear selected index/es.
+
+Inherited from Multiline:
+
+- `current_index` - get the index of current row
+- `current_row`   - get the value of current row
+          
+
 
 ### Box
 
@@ -526,11 +569,48 @@ Objects are placed inside the box using either of these methods:
 - `stack`   - stack the given variable list of widgets horizontally (alias `add`)
 - `flow`    - stack the given variable list of widgets vertically
 
+Those who have used the `canis` gem, will recall that multiline widgets had the option of drawing their own border. This has been simplified in `umbra` by using the Box widget which does the same thing.
+
+A box is created by giving its four coordinates.
+
+    box = Box.new row: 4, col: 2, width: 80, height: 20
+
+Negative width and height can be given to stretch the box to those many rows or columns from the end.
+In the example below, a listbox has been created without dimensions, since the box will size it.
+
+
+    lb = Listbox.new list: alist
+    box.fill lb
+    
 
 
 ### Textbox
 
-todo add description here
+Textbox extends Multiline and offers simple text display facility. 
+
+It adds `:CURSOR_MOVE` event which reports cursor movement laterally in addition to Multilines vertical movement.
+
+Additional methods:
+
+- `file_name(String) - name of file to load and display
+
+Additional keystrokes:
+
+- `w` - move to next word TODO
+- `b` - move to previous word TODO
+
+Textbox doesn't support row selection, but its always possible to use the :PRESS event as a row selection.
+
+
+```ruby
+    filename = "readme.md"
+    box = Box.new row: 4, col: 2, width: 50, height: 20
+
+    tb = Textbox.new file_name: filename
+
+    box.fill tb
+    box.title = filename
+```
 
 ### Table
 
@@ -549,9 +629,16 @@ Various events for an instance of a widget may be subscribed to. A code block at
 - `ON_LEAVE`  - executed when focus leaves a widget
 - `CHANGED`   - executed when the data is changed. In the case of a Field, this is when user exits after changing.
               In the case of `Multiline` widgets such as `Listbox` and `Table` this is whenever the list if changed.
-- `PROPERTY_CHANGE` - executed whenever a property is changed. Properties are defined using `attr_property`.
+- `PROPERTY_CHANGE` - executed whenever a property is changed. Properties are defined using `attr_property`. Properties such as color_pair, attr, width, title, alignment fire this event when changed _after_ the object is first displayed.
 - `ENTER_ROW` - In `Multiline` widgets, whenever user enters a row.
 - `LEAVE_ROW` - In `Multiline` widgets, whenever user leaves a row.
+
+An object's `bind_event` is used to attach a code block to an event.
+
+    field.bind_event(:CHANGED) { |f| do_some_validation(f) }
+
+    list.bind_event(:ENTER_ROW) { |l| display some data related to current row in status line .... }
+
 
 ### Key Bindings
 
@@ -561,8 +648,12 @@ For an object, or for the form, keys may be bound to a code block. All functiona
 
     table.bind_key(?s, "search") { search }
 
+    list.bind_key(FFI::NCurses::KEY_CTRL_A, 'cursor home')  { cursor_home }
 
- See examples directory for code samples.
+
+## More examples
+
+ See examples directory for code samples for all widgets. Be sure the run all the examples to see the capabilities of the library and the widgets.
 
 ## Contributing
 
