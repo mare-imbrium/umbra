@@ -62,10 +62,11 @@ begin
       else
         box.justify = :left
       end
-      box.repaint_required  = true
+      #box.repaint_required  = true
     end
-    lb.bind_event(:CURSOR_MOVE) {|arr|
-      col_offset , current_index, curpos,  pcol = arr
+    #lb.bind_event(:CURSOR_MOVE) {|arr|
+    lb.bind_event(:CURSOR_MOVE) {|lb|
+      col_offset , current_index, curpos,  pcol = lb.col_offset, lb.current_index, lb.curpos, lb.panned_cols
       blen = lb.current_row().size
       statusline(win, "offset: #{col_offset} , curpos: #{curpos} , currind: #{current_index} , pcol #{pcol}, len:#{blen}.....", 20)
     }
