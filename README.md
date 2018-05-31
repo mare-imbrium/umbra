@@ -23,7 +23,6 @@ This is a stripped version of `canis` gem (ncurses ruby).
 
 ## Future versions
  - Ampersand in Label and Button to signify shortcut/mnemonic.
- - table (0.1.1 has it)
  - combo list
  - 256 colors
  - tree (maybe)
@@ -58,7 +57,7 @@ or you may not have ncurses installed:
 
     brew install ncurses
 
-2. Now check that the samples in the `examples` directory are working fine. You can run:
+2. Now check that the samples in Umbra's `examples` directory are working fine. You can run:
 
       ruby examples/ex1.rb
 
