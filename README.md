@@ -616,6 +616,9 @@ Tabular is a data model, not a widget. It takes an array of arrays. It can rende
 
 ```ruby
   t = Tabular.new(['a', 'b'], [1, 2], [3, 4], [5,6])
+  t.column_width(0, 3)
+  t.column_align(1, :right)
+
   lb = Listbox.new list: t.render
   box.fill lb
 ```
@@ -636,7 +639,7 @@ Tabular allows for customizing columns as follows:
 
 - `column_width(n, w)` - specify width of given column
 - `column_align(n, symbol)` - specify alignment of given column ( `:left` `:right` `:center` )
-- `column_hidden(n, boolean) - hide or unhide given column (true or false)
+- `column_hidden(n, boolean)` - hide or unhide given column (true or false)
 - `column_count` - returns count of visible columns
 - `each_column` - yields visible columns
 - `visible_columns(row)` - yields visible column data for given row
@@ -645,7 +648,7 @@ Tabular allows for customizing columns as follows:
 
 ### Table
 
-Table uses `Tabular` as it's data model, and maintains column header and column data information. Thus, it is is column-aware.
+Table uses `Tabular` as its data model, and maintains column header and column data information. Thus, it is column-aware.
 
 ```ruby
   table = Table.new(columns: ['a', 'b'], data: [[1, 2], [3, 4], [5,6]])
@@ -669,8 +672,6 @@ Table provides the following attributes:
 
 Others:
 - `data` retrieve data portion of table
-- `color_of_data_row(index, state, data_index)` - customize color of data row
-- `color_of_header_row(index, state)` - customize color of header row
 - `row_count` - number of rows of data
 - `current_id` - return identifier of current row (assuming first column is rowid from table)
 - `current_row_as_array` - return current row as array
@@ -678,7 +679,11 @@ Others:
 - `next_column` - moves cursor to next column (mapped to w)
 - `prev_column` - moves cursor to previous column (mapped to b)
 - `header_row?` - is cursor on header row, boolean
+- `color_of_data_row(index, state, data_index)` - customize color of data row
+- `color_of_header_row(index, state)` - customize color of header row
+- `convert_value_to_text(current_row, format_string, index)` - customize conversion of current row to String
 
+Table forwards several methods to its `Tabular` data model such as `add`, `<<`, `column_width`, `column_align` and `column_hidden`.
 
 > ##### Exercise
 > 
@@ -691,6 +696,30 @@ Others:
 
 
 ### Colors
+
+This library defines a few color pairs based on ncurses defaults color constants:
+
+    CP_BLACK    = 0
+    CP_RED      = 1
+    CP_GREEN    = 2
+    CP_YELLOW   = 3
+    CP_BLUE     = 4
+    CP_MAGENTA  = 5
+    CP_CYAN     = 6
+    CP_WHITE    = 7
+
+These color pairs use the color mentioned as the foreground and the terminal background color as the background color.
+This expects the background color to be black or very dark.
+
+Beyond this you may create your color pairs. Usually a color pair is created in this manner.
+
+    FFI::NCurses.init_pair(10,  FFI::NCurses::BLACK, FFI::NCurses::CYAN)
+
+However, there is the option to use the following method to create a color_pair.
+
+      create_color_pair(bgcolor, fgcolor)
+
+This will return an Integer which can be used wherever a color pair is required, such as when specifying color_pair of a widget. It will always return the same Integer for the same combination of two colors. Thus there should be no need for you to cache this.
 
 
 
