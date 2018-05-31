@@ -10,7 +10,7 @@
   *               :
   * Author        : jkepler
   * Date          : 
-  * Last Update   : 2018-05-20 14:24
+  * Last Update   : 2018-05-31 15:21
   * License       : MIT
 =end
 
@@ -268,6 +268,9 @@ module Umbra
     end
 
     ## render_row
+    ## @param [Array] row as Array
+    ## @param [String] format string
+    ## @param [Integer] row offset in data
     def convert_value_to_text r, fmstr, index
       return fmstr % r;  
     end
