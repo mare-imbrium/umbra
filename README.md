@@ -533,7 +533,7 @@ Listbox adds the `:SELECTED` state to the existing states a row may have (:CURRE
 
 Listboxes allow further customization of the display of each row through the following:
 
-    - `mark_of_row(index, state)` - this returns the mark to be used for the row offset or state. Typically, this returns a single character. A :SELECTED row by default has an 'X' mark, a :CURRENT row has a '&gt;'.
+- `mark_of_row(index, state)` - this returns the mark to be used for the row offset or state. Typically, this returns a single character. A :SELECTED row by default has an 'X' mark, a :CURRENT row has a '&gt;'.
 
 Listbox adds an attribute for SELECTED rows.
 
