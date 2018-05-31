@@ -611,10 +611,32 @@ Textbox doesn't support row selection, but its always possible to use the :PRESS
     box.fill tb
     box.title = filename
 ```
+### Tabular
+
+Tabular is a data model, not a widget. It takes an array of arrays. It can render the same as an array of strings and may thus be used to convert a database resultset to a format that may be used as input to a Textbox or even a list.
+
+```ruby
+  t = Tabular.new(['a', 'b'], [1, 2], [3, 4], [5,6])
+  lb = Listbox.new list: t.render
+  box.fill lb
+```
+
+
+```ruby
+  t = Tabular.new ['a', 'b']
+  t << [1, 2]
+  t << [3, 4]
+  t << [4, 6]
+  t << [8, 6]
+  t << [2, 6]
+  lb1 = Textbox.new list: t.render
+  box1.fill lb1
+```
 
 ### Table
 
-todo add description here
+
+TODO add description here
 
 
 ### Colors
@@ -656,6 +678,9 @@ For an object, or for the form, keys may be bound to a code block. All functiona
  See examples directory for code samples for all widgets. Be sure the run all the examples to see the capabilities of the library and the widgets.
 
 ## Contributing
+
+Please go through the source, and suggest improvements to the design and code.
+How can we make this simpler, clearer ?
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/mare-imbrium/umbra.
 
