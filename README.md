@@ -354,7 +354,7 @@ In addition to the properties of the `Widget` superclass, button also has:
   :color_pair => 0, :mnemonic => 'O')
 ```
 
->Exercise:
+> ##### Exercise
 >
 >Create a button with text "Cancel" which closes the window.
 >Attach a code block to the Ok button to write the contents of each field to the log file and then close the window.
@@ -533,7 +533,7 @@ Listbox adds the `:SELECTED` state to the existing states a row may have (:CURRE
 
 Listboxes allow further customization of the display of each row through the following:
 
-- `mark_of_row(index, state)` - this returns the mark to be used for the row offset or state. Typically, this returns a single character. A :SELECTED row by default has an 'X' mark, a :CURRENT row has a '&gt;'.
+- `mark_of_row(index, state)` - this returns the mark to be used for the row offset or state. Typically, this returns a single character. A `:SELECTED` row by default has an 'X' mark, a `:CURRENT` row has a '&gt;'.
 
 Listbox adds an attribute for SELECTED rows.
 
@@ -632,10 +632,62 @@ Tabular is a data model, not a widget. It takes an array of arrays. It can rende
   box1.fill lb1
 ```
 
+Tabular allows for customizing columns as follows:
+
+- `column_width(n, w)` - specify width of given column
+- `column_align(n, symbol)` - specify alignment of given column ( `:left` `:right` `:center` )
+- `column_hidden(n, boolean) - hide or unhide given column (true or false)
+- `column_count` - returns count of visible columns
+- `each_column` - yields visible columns
+- `visible_columns(row)` - yields visible column data for given row
+- `visible_column_names` - yields visible column names or returns array
+- `add` (aliased to `add_row` and `<<`) - add a row to tabular
+
 ### Table
 
+Table uses `Tabular` as it's data model, and maintains column header and column data information. Thus, it is is column-aware.
 
-TODO add description here
+```ruby
+  table = Table.new(columns: ['a', 'b'], data: [[1, 2], [3, 4], [5,6]])
+  box.fill table
+
+  table1 = Table.new columns: ['a', 'b']
+  table1 << [8, 6]
+  table1 << [1, 2]
+  table1 << [3, 4]
+  table1 << [4, 6]
+```
+
+
+Table may either take a pre-created Tabular object using `:tabular`, or else if will create a Tabular object from `columns` and `data` provided.
+
+Table provides the following attributes:
+
+- `tabular` - set a tabular object as the Table's data
+- `header_color_pair` 
+- `header_attr`
+
+Others:
+- `data` retrieve data portion of table
+- `color_of_data_row(index, state, data_index)` - customize color of data row
+- `color_of_header_row(index, state)` - customize color of header row
+- `row_count` - number of rows of data
+- `current_id` - return identifier of current row (assuming first column is rowid from table)
+- `current_row_as_array` - return current row as array
+- `current_row_as_hash` - return current row as hash with column name as key
+- `next_column` - moves cursor to next column (mapped to w)
+- `prev_column` - moves cursor to previous column (mapped to b)
+- `header_row?` - is cursor on header row, boolean
+
+
+> ##### Exercise
+> 
+>Create a window with two tables. Populate one with the output of `ls -l` and another with the process info (using the `ps` command with appropriate options).
+>Create a button which refreshes the processes upon clicking.
+>You may also map a key on the form level (say F5) to refresh the process info.
+>
+>Assign different colors to the columns of the process lister. 
+>Color the rows of the directory lister based on file type, or any other logic (file size).
 
 
 ### Colors
