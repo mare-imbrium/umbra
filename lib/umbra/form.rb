@@ -75,6 +75,8 @@ class Form
     @widgets.delete widget
     @focusables.delete widget
   end
+
+
   # maintain a list of focusable objects so form can traverse between them easily.
   def update_focusables
     #$log.debug "1 inside update_focusables #{@focusables.count} "
@@ -179,17 +181,14 @@ class Form
     end
     @window.wrefresh
   end
+
+
+
   # @return [Widget, nil] current field, nil if no focusable field
   ## NOTE 2018-05-17 - this is called by form in the very beginning when no field is actually focussed
   ##   but active_index has been set to 0, so the on_enter has not been executed, but the handle_key
   ##   is invoked.
   def get_current_field
-=begin
-    #select_next_field if @active_index == -1
-    return nil if @active_index.nil?   # for forms that have no focusable field 2009-01-08 12:22 
-    @focusables[@active_index]
-=end
-
 
     ##  rewrite on 2018-05-18 - so that on_enter is called for first field
     if @_focussed_widget.nil?             ## when form handle_key first called
@@ -199,9 +198,9 @@ class Form
 
   end
   alias :current_widget :get_current_field
+
+
   # take focus to first focusable field
-  # we shoud not send to select_next. have a separate method to avoid bugs.
-  # but check current_field, in case called from anotehr field TODO FIXME
   def select_first_field
     select_field 0
   end
@@ -217,31 +216,6 @@ class Form
 
 
 
-  ##
-  # puts focus on the given field/widget index
-  # @param index of field in @widgets (or can be a Widget too)
-  # XXX if called externally will not run a on_leave of previous field
-  def OLDselect_field ix0
-    if ix0.is_a? Widget
-      ix0 = @focusables.index(ix0)
-    end
-    return if @focusables.nil? or @focusables.empty?
-    $log.debug "inside select_field :  #{ix0} ai #{@active_index}" 
-    f = @focusables[ix0]
-    return if !f.focusable
-    if f.focusable
-      @active_index = ix0
-      @row, @col = f.rowcol
-      on_enter f
-      # the wmove will be overwritten by repaint later, better to set row col
-      _setrowcol @row, @col # 2018-03-21 - maybe this should be set after the repaint
-
-      repaint # 2018-03-21 - handle_key calls repaint, is this for cases not involving keypress ?
-      @window.refresh
-    else
-      $log.debug "inside select field ENABLED FALSE :   act #{@active_index} ix0 #{ix0}" 
-    end
-  end
 
   # put focus on next field
   # will cycle by default, unless navigation policy not :CYCLICAL
@@ -256,29 +230,9 @@ class Form
     index = index ? index+1 : 0
     index = 0 if index >= @focusables.length # CYCLICAL 2018-03-11 - 
     select_widget @focusables[index]
-=begin
-    return :UNHANDLED if @focusables.nil? || @focusables.empty?
-    if @active_index.nil?  || @active_index == -1 # needs to be tested out A LOT
-      @active_index = 0     
-    end
-    f = @focusables[@active_index]
-    # we need to call on_leave of this field or else state will never change back to normal
-    on_leave f
-    #index = @focusables.index(f)
-    index = @active_index
-    index = index ? index+1 : 0
-    #f = @focusables[index]
-    index = 0 if index >= @focusables.length # CYCLICAL 2018-03-11 - 
-    f = @focusables[index]
-    if f
-      select_field f 
-      return 0
-    end
-    #
-    $log.debug "inside sele nxt field : NO NEXT  #{@active_index} WL:#{@widgets.length}" 
-    return :NO_NEXT_FIELD
-=end
   end
+
+
   ##
   # put focus on previous field
   # will cycle by default, unless navigation policy not :CYCLICAL
@@ -296,26 +250,6 @@ class Form
     index -= 1
     index = @focusables.length-1 if index < 0 # CYCLICAL 2018-03-11 - 
     select_widget @focusables[index]
-=begin
-    return :UNHANDLED if @focusables.nil? or @focusables.empty?
-    #$log.debug "insdie sele prev field :  #{@active_index} WL:#{@widgets.length}" 
-    if @active_index.nil?
-      @active_index = @focusables.length 
-    end
-
-    f = @focusables[@active_index]
-    on_leave f
-    index = @active_index
-    index -= 1
-    index = @focusables.length-1 if index < 0 # CYCLICAL 2018-03-11 - 
-    f = @focusables[index]
-    if f
-      select_field f
-      return
-    end
-
-    return :NO_PREV_FIELD
-=end
   end
 
   private
