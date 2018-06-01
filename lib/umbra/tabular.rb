@@ -10,7 +10,7 @@
   *               :
   * Author        : jkepler
   * Date          : 
-  * Last Update   : 2018-05-31 15:21
+  * Last Update   : 2018-05-31 16:16
   * License       : MIT
 =end
 
@@ -241,7 +241,7 @@ module Umbra
       buffer << str
       #puts "-" * str.length
       buffer << separator if @use_separator
-      if @list    ## XXX why wasn't this done in _prepare_format ???? FIXME
+      if @list    ## XXX why wasn't numbering done in _prepare_format ???? FIXME
         if @numbering
           fmstr = "%#{rows}d "+ @y + fmstr
         end
