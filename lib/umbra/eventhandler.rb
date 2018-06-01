@@ -73,11 +73,10 @@ module Umbra
               raise pve
             rescue => ex
               ## some don't have name
-              # FIXME this should be displayed somewhere. It just goes into log file quietly.
               $log.error "======= Error ERROR in block event #{self}:  #{event}"
               $log.error ex
               $log.error(ex.backtrace.join("\n")) 
-              alert ex.to_s    # added 2018-04-08 - 08:55 so it shows up
+              alert ex.to_s
               FFI::NCurses.beep    # doesn't do anything, maybe switched off in preferences
             end
           end
