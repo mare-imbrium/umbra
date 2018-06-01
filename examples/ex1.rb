@@ -70,7 +70,6 @@ begin
     when FFI::NCurses::KEY_UP
     when FFI::NCurses::KEY_DOWN
     end
-    #FIXME after scrolling, pointer is showing wrong file here
     statusline(win, "Pressed #{ch} on     ", 70)
     win.wrefresh
   end
