@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-11
 #      License: MIT
-#  Last update: 2018-05-23 08:34
+#  Last update: 2018-06-01 12:26
 # ----------------------------------------------------------------------------- #
 #  extab3.rb  Copyright (C) 2018 j kepler
 require 'umbra'
@@ -127,7 +127,6 @@ def _filter_table(lb, columns, fields)
   $log.debug "  ibv:  #{bind_vars.join ', '} "
   alist = @db.execute( sql, bind_vars)
   if alist #and !alist.empty?
-    #lb.list = alist   ## results in error, FIXME
     lb.data = alist
   else
     #alert "No rows returned. Check your query"
