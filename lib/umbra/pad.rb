@@ -7,10 +7,10 @@
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-04-26 08:29
+  * Last update:  2018-06-01 12:40
 
   == CHANGES
-  == TODO 
+  == Todo 
   - should have option to wrap text
   - / search ?
   NOTE:
@@ -35,7 +35,7 @@ class Pad
     @config = config
     @rows = FFI::NCurses.LINES-1
     @cols = FFI::NCurses.COLS-1
-    @prow = @pcol = 0                        # show many cols we are panning
+    @prow = @pcol = 0                        # how many cols we are panning
     @startrow = 0
     @startcol = 0
     
@@ -76,6 +76,8 @@ class Pad
       self.list=(config[:list])
     end
   end
+
+
   # minimum window creator method, not using a class.
   # However, some methods do require windows width and ht etc
   def create_window h, w, t, l
