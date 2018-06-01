@@ -65,6 +65,7 @@ module Umbra
   end
 
   ## create a logger instance given a path, return the logger
+  ## NOTE: Ideally would like to set $log here to this, but what if user creates multiple.
   def create_logger path, config={}
     require 'logger'
     _path   = File.open(path, File::WRONLY|File::TRUNC|File::CREAT) 
