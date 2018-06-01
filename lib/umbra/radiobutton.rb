@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-02 - 10:37
 #      License: MIT
-#  Last update: 2018-05-14 14:31
+#  Last update: 2018-06-01 12:31
 # ----------------------------------------------------------------------------- #
 #  radiobutton.rb  Copyright (C) 2012-2018 j kepler
 
@@ -27,7 +27,7 @@ module Umbra
     def initialize config={}, &block
       @surround_chars = ['(', ')'] if @surround_chars.nil?
       super
-      $log.warn "XXX: FIXME Please set 'value' for radiobutton. If not sure, try setting it to the same value as 'text'" unless @value
+      $log.warn "XXX: FIXMe Please set 'value' for radiobutton. If not sure, try setting it to the same value as 'text'" unless @value
       @value ||= @text
     end
 
