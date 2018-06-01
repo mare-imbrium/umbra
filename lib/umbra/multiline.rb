@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-05-30 12:38
+#  Last update: 2018-06-01 14:36
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -96,6 +96,7 @@ module Umbra
       return unless @repaint_required
       return unless @list
       win                 = @graphic
+      raise "window nil in multiline" unless win
       r,c                 = self.row, self.col 
       _attr               = @attr || NORMAL
       _color              = @color_pair || CP_WHITE
@@ -284,7 +285,8 @@ module Umbra
       super
       on_enter_row @current_index
       # basically I need to only highlight the current index, not repaint all OPTIMIZE 
-      touch ; repaint
+      #touch ; repaint ## 2018 why was i calling repaint here ??? causing error in messagebox since window nil
+      touch 
     end
 
     # on leave of this multiline
@@ -292,7 +294,8 @@ module Umbra
       super
       on_leave_row @current_index
       # basically I need to only unhighlight the current index, not repaint all OPTIMIZE 
-      touch ; repaint
+      #touch ; repaint
+      touch ##; repaint  ## why repaint here ?? when was this necessary ?
     end
 
     ## called when user leaves a row and when object is exited.
