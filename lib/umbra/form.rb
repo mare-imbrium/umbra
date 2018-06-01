@@ -62,6 +62,7 @@ class Form
       next if @widgets.include? w
       # NOTE: if form created with nil window (messagebox), then this would have to happen later
       w.graphic = @window if @window # 2018-03-19 - prevent widget from needing to call form back
+      $log.warn "Window is nil in form.add_widget" unless @window
       w._form = self    # 2018-04-20 - so that update_focusables can be called.
       @widgets << w
     end
