@@ -262,6 +262,7 @@ class Widget
     @height
   end
   def row
+    return nil unless @row
     if @row < 0
       return FFI::NCurses.LINES + @row
     end
