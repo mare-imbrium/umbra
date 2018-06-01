@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-13
 #      License: MIT
-#  Last update: 2018-04-16 15:20
+#  Last update: 2018-06-01 12:38
 # ----------------------------------------------------------------------------- #
 #  menu.rb  Copyright (C) 2012-2018 j kepler
 
@@ -13,7 +13,7 @@
 # menu will only accept keys or arrow keys or C-c Esc to cancel
 # returns nil if C-c or Esc pressed.
 # Otherwise returns character pressed.
-# == TODO 
+# == Todo 
 # depends on our window class which is minimal.
 # [ ] cursor should show on the row that is highlighted
 # [ ] Can we remove that dependency so this is independent
