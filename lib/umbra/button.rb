@@ -5,36 +5,40 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-05-26 23:23
+#  Last update: 2018-06-01 12:37
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
-#  == TODO 
+#  == Todo 
 #  - mnemonics with highlighting
 #  - default button
 require 'umbra/widget'
 #  ----------------
 module Umbra
+
+
   class Button < Widget 
     attr_accessor :surround_chars   # characters to use to surround the button, def is square brackets
+
     # char to be underlined, and bound to Alt-char
     attr_accessor :mnemonic
+
+
     def initialize config={}, &block
       @focusable = true
       @editable = false
       @highlight_attr = REVERSE
-      # hotkey denotes we should bind the key itself not alt-key (for menulinks)
-      #@hotkey = config.delete(:hotkey)  2018-03-22 - 
-      # 2018-03-18 - FORM_ATTACHED deprecated to keep things simple
+      
       register_events([:PRESS])
       @default_chars = ['> ', ' <'] # a default button is painted differently. UNUSED. ???
       super
-
 
       @surround_chars ||= ['[ ', ' ]'] 
       @col_offset = @surround_chars[0].length 
       @text_offset = 0      # used to determine where underline should fall TODO ???
       map_keys
     end
+
+
     ##
     # set button based on Action
     # 2018-03-22 - is this still used ? XXX
@@ -91,15 +95,11 @@ module Umbra
         @repaint_required = false
     end
 
-    ## command of button (invoked on press, hotkey, space)
-    # added args 2008-12-20 19:22  commented as widget already takes care 2018-05-26 
-    #def command *args, &block
-      #bind_event :PRESS, *args, &block
-    #end
     ## fires PRESS event of button
     def fire
       fire_handler :PRESS, ActionEvent.new(self, :PRESS, text)
     end
+
     # for campatibility with all buttons, will apply to radio buttons mostly
     def selected?; false; end
 
