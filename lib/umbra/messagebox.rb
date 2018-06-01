@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-13 - 23:10
 #      License: MIT
-#  Last update: 2018-05-17 12:33
+#  Last update: 2018-06-01 14:37
 # ----------------------------------------------------------------------------- #
 #  messagebox.rb  Copyright (C) 2012-2018 j kepler
 #  BUGS:
@@ -152,8 +152,8 @@ module Umbra
     def run
       repaint
       @form.pack # needs window
-      @form.select_first_field      ## otherwise on_enter of first won't fire
       @form.repaint
+      @form.select_first_field      ## otherwise on_enter of first won't fire
       @window.wrefresh
       return handle_keys
     end
