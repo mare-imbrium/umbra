@@ -53,6 +53,11 @@ module Umbra
   ## that must repaint the widget whenever updated. They also fire a property change event.
   ## These properties may not show up in the generated RDoc.
   ## This class will not be instantiated by programs, only its subclasses will be.
+  ## Widget registers `:ENTER` `:LEAVE` `:CHANGED` and `:PROPERTY_CHANGE` events.
+  ## Widget defines three states: `:NORMAL` `:HIGHLIGHTED` and `:SELECTED`.
+  ##  `HIGHLIGHTED` refers to the single widget that is focussed. 
+  ##  `SELECTED` is only for Togglebuttons that may be in `SELECTED` state.
+  ##  `NORMAL` state is for all others (the default state).
   class Widget   
     include EventHandler
     include KeyMappingHandler
@@ -90,20 +95,22 @@ module Umbra
 
     attr_reader   :focusable                   # boolean     can this get focus or not.
 
-  attr_accessor :modified                     # boolean, value modified or not
+    attr_accessor :modified                     # boolean, value modified or not
 
   #attr_accessor :parent_component  # added 2010-01-12 23:28 BUFFERED - to bubble up
 
 
-  # @return [String] descriptions for each key set in _key_map, NOT YET displayed TODO
-  attr_reader :key_label
+    # @return [String] descriptions for each key set in _key_map, NOT YET displayed TODO
+    attr_reader :key_label
 
-  # @return [Hash]  event handler hash containing key and block association
-  attr_reader :handler                       
+    # @return [Hash]  event handler hash containing key and block association
+    attr_reader :handler                       
 
-  # @param repaint_required [true, false] is a repaint required or not, boolean
-  attr_accessor  :repaint_required
+    # @param repaint_required [true, false] is a repaint required or not, boolean
+    attr_accessor  :repaint_required
 
+    # @param aconfig [Hash] initialization parameters such as row, col, height, width, color_pair, text.
+    # @yield [Widget] self
   def initialize aconfig={}, &block
     @row_offset ||= 0
     @col_offset ||= 0
@@ -137,9 +144,9 @@ module Umbra
     # since i don't want anyone accidentally overriding
   end
 
-  # widget modified or not.
-  #
-  # typically read will be overridden to check if value changed from what it was on enter.
+  # Widget modified or not.
+  # typically will be overridden to check if value changed from what it was on enter.
+  # @return [true, false] modified since on_enter or not
   def modified?
     @modified
   end
@@ -169,7 +176,8 @@ module Umbra
   ## 
   # Returns row and col is where a widget starts. offsets usually take into account borders.
   # the offsets typically are where the cursor should be positioned inside, upon on_enter.
-  # @return row and col of a widget where painting data actually starts
+  # @return [Integer] row of widget where painting data actually starts
+  # @return [Integer] col of widget where painting data actually starts
   def rowcol
     return self.row+@row_offset, self.col+@col_offset
   end
