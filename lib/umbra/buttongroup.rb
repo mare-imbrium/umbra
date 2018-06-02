@@ -4,7 +4,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-02 - 08:47
 #      License: MIT
-#  Last update: 2018-04-02 23:30
+#  Last update: 2018-06-02 10:20
 # ----------------------------------------------------------------------------- #
 #  buttongroup.rb  Copyright (C) 2012-2018 j kepler
 # This is not a visual class or a widget.
@@ -18,6 +18,7 @@
 #     group.add(r1).add(r2).add(r3)
 #     group.command(somelabel) do |grp, label| label.text = grp.value; end
 #
+module Umbra
 class ButtonGroup 
 
   # Array of buttons that have been added.
@@ -94,3 +95,4 @@ class ButtonGroup
   end
 
 end 
+end  # module
