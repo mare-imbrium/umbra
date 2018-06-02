@@ -4,38 +4,42 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-07
 #      License: MIT
-#  Last update: 2018-05-27 16:14
+#  Last update: 2018-06-02 19:01
 # ----------------------------------------------------------------------------- #
 #  box.rb  Copyright (C) 2018 j kepler
 module Umbra
   ##
-  # A box is a container around one, maybe more, widgets.
+  # A box is a container around one, or more, widgets.
+  # Properties include #visible, #justify and #title.
   ## FIXME box needs to resize components if it's dimensions are changed.
-  ##     Or should components have a link to parent, so they can resize themselves ?
+  ##  Or should components have a link to parent, so they can resize themselves ?
   #
   class Box < Widget 
+    # @param title [String] set and return title of box
     attr_property :title
-    #attr_property :width
-    #attr_property :height
-    attr_accessor :row_offset     # not used yet
-    attr_accessor :col_offset     # not used yet
-    attr_property :visible
-    attr_reader   :widgets
-    attr_reader   :widget
-    attr_property :justify       # right, left or center TODO
+    # @param visible [true, false] set and return border visibility
+    attr_property :visible        # Is the border visible or not
+    # @return [Array<Widget>] return widgets added to this box
+    attr_reader   :widgets        # widgets added to this box
+    # @return [Widget] return widget added to this box
+    attr_reader   :widget         # single widget component
+    # @param justify [Symbol] set and return alignment of box :right :left :center
+    attr_property :justify       
 
     def initialize config={}, &block
       @focusable  = false
       @visible    = true
       super
-      #@int_height = @height - 2
+    
       @int_height = self.height - 2
-      #@int_width  = @width  - 2
+   
       @int_width  = self.width  - 2
       @hlines = []
       #@vlines = []   # UNUSED. TODO ???
     end
-    def repaint
+
+    # paint border and title, called by +Form+.
+    def repaint                                           #:nodoc:
       return unless @visible
       print_border self.row, self.col, self.height, self.width, @color_pair || CP_BLACK, @attr || NORMAL
       print_title @title
@@ -47,7 +51,7 @@ module Umbra
 
     ## 
     ## Add a variable list of components to a box, which are stacked horizontally by the box.
-    ## @param comma separated list of widgets
+    ## @param w [Array<Widget>]  comma separated list of widgets
     def add *w
       @widgets = w
       num = w.size
@@ -71,8 +75,8 @@ module Umbra
 
     ##
     ##  Horizontally place an array of widgets 
-    ## @param comma separated list of widgets
-    ## NOTE:  this is best used for widgets that can be resized.
+    ## @param w [Array<Widget>] comma separated list of widgets
+    ## @note  this is best used for widgets that can be resized.
     # Prefer not to use for buttons since the looks gets messed (inconsistency between button and highlight).
     # Therefore now, button calculates its own width which means that this program cannot determine what the width is
     # and thus cannot center it.
