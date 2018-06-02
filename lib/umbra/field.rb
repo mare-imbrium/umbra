@@ -1,14 +1,15 @@
 # ----------------------------------------------------------------------------- #
 #         File: field.rb
 #  Description: text input field or widget
-#       Author: j kepler  http://github.com/mare-imbrium/canis/
+#       Author: j kepler  http://github.com/mare-imbrium/
 #         Date: 2018-03
 #      License: MIT
-#  Last update: 2018-05-26 11:21
+#  Last update: 2018-06-02 10:26
 # ----------------------------------------------------------------------------- #
 #  field.rb  Copyright (C) 2012-2018 j kepler
 #
 
+module Umbra
 class InputDataEvent # {{{
   attr_accessor :index0, :index1, :source, :type, :row, :text
   def initialize index0, index1, source, type, row, text
@@ -35,7 +36,8 @@ class InputDataEvent # {{{
   def getvalue
     @source.getvalue
   end
-end # }}}
+end # class }}}
+end # module  
   # Text edit field
 #  Todo :
   # NOTE: +width+ is the length of the display whereas +maxlen+ is the maximum size that the value 
