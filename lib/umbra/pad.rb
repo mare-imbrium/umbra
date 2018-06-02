@@ -7,7 +7,7 @@
   * Author:  jkepler
   * Date:    2018-03-28 14:30
   * License: MIT
-  * Last update:  2018-06-01 12:40
+  * Last update:  2018-06-02 10:22
 
   == CHANGES
   == Todo 
@@ -21,6 +21,7 @@
 =end
 require 'ffi-ncurses'
 
+module Umbra
 class Pad
 
   # You may pass height, width, row and col for creating a window otherwise a fullscreen window
@@ -346,3 +347,4 @@ if __FILE__ == $PROGRAM_NAME
     FFI::NCurses.curs_set 1                  # cursor visible again
   end
 end
+end # module
