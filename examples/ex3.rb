@@ -105,7 +105,7 @@ begin
   form.add_widget radio1, radio2
   group.command do
     message_label.text = "#{group.name} #{group.value} has been selected"
-    message_label.repaint_required = true
+    #message_label.repaint_required = true
   end
 
   ok_butt = Button.new( :name => 'ok', :text => 'Ok', :row => row+2, :col => col, :width => 10 , :color_pair => 0, :mnemonic => 'O')
