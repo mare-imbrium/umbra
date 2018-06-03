@@ -440,8 +440,50 @@ The above is similar to:
 
 ### RadioButton
 
+A +ToggleButton+ button that may have an on or off value. Usually, several related radio buttons are created and only one may be +on+.
+Here, we create a +ButtonGroup+ and then `add` radio buttons to it. 
+
+```ruby
+radio1 = RadioButton.new text: "Red", value: "R", row: 5, col: 20
+radio2 = RadioButton.new text: "Green", value: "G", row: 6, col: 20
+group = ButtonGroup.new "Color"
+group.add(radio1).add(radio2)
+form.add_widget radio1, radio2
+```
+
+By default, the button prints the selector or box on the left as `( )`. By setting `align_right` the box will be printed on the right.
+
+A block may be attached to the group which will be called if any of its buttons is clicked.
 
 
+```ruby
+  group.command do
+    message_label.text = "#{group.name} #{group.value} has been selected"
+  end
+```
+
+### ButtonGroup
+
+A ButtonGroup is a collection of RadioButtons. 
+
+        group = ButtonGroup.new "Color"
+
+Methods:
+
+- `add` - add a +RadioButton+ to the group.
+- `selection` - return the button that is selected
+- `value` - get the value of the selected button
+- `select?` - ask if given button is selected
+- `select` - select the given button
+- `elements` - get an array of buttons added
+- `command` - supply a block to be called whenever a button in the group is clicked.
+
+
+```ruby
+  group.command do
+    alert "#{group.name} #{group.value} has been selected"
+  end
+```
 
 ### Multiline
 
