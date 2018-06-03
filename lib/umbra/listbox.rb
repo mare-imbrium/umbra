@@ -5,7 +5,7 @@ require 'umbra/multiline'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-05-30 10:08
+#  Last update: 2018-06-03 10:39
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -25,7 +25,9 @@ module Umbra
     attr_accessor :selection_allowed           # does this class allow row selection (should be class level)
     attr_accessor :selection_key               # key used to select a row
     attr_reader   :selected_index              # row selected, may change to plural
+    # @param selected_color_pair [Integer] color pair of row selected
     attr_property :selected_color_pair         # row selected color_pair
+    # @param selected_attr [Integer] attribute of row selected (default REVERSE)
     attr_property :selected_attr               # row selected color_pair
     attr_accessor :selected_mark               # row selected character
     attr_accessor :unselected_mark             # row unselected character (usually blank)
@@ -47,16 +49,20 @@ module Umbra
     end
 
 
+    # set the list 
+    # @param alist [Array<String>] string array to display as a list
     def list=(alist)
       super
       clear_selection
     end
 
 
+    # clear selected index/indices
     def clear_selection
       @selected_index = nil
     end
 
+    # Binds selection key to +toggle_selection+ if selection enabled. All others pass to parent class.
     def map_keys
       return if @keys_mapped
       if @selection_allowed and @selection_key
@@ -66,6 +72,7 @@ module Umbra
     end
 
     ## Toggle current row's selection status.
+    ## @param _row [Integer] row to toggle, default to current row
     def toggle_selection _row=@current_index
       @repaint_required = true  
       if @selected_index == _row
@@ -75,13 +82,15 @@ module Umbra
       end
     end
 
-    ## select given row
+    ## select given row, and fire SELECT_ROW handler
+    ## @param _row [Integer] row to select, default to current row
     def select_row _row=@current_index
       @selected_index = _row
       fire_handler :SELECT_ROW, self   # use selected_index to know which one
     end
     
-    ## unselect given row
+    ## unselect given row, and fire SELECT_ROW handler
+    ## @param _row [Integer] row to unselect, default to current row
     def unselect_row _row=@current_index
       if _row == @selected_index
         @selected_index = nil
@@ -93,11 +102,11 @@ module Umbra
     ## For any major customization of Listbox output, this method would be overridden.
     ## This method determines state, mark, slice of line item to show.
     ## listbox adds a mark on the side, whether a row is selected or not, and whether it is current.
-    ## @param win - window pointer for printing
-    ## @param [Integer] - row offset on screen
-    ## @param [Integer] - col offset on screen
-    ## @param [String]  - line to print
-    ## @param [Integer] - offset in List array
+    ## @param win [Window] - window pointer for printing
+    ## @param row [Integer] - row offset on screen
+    ## @param col [Integer] - col offset on screen
+    ## @param line [String]  - line to print
+    ## @param index [Integer] - offset in List array
     def paint_row(win, row, col, line, index)
 
       state = state_of_row(index)     
@@ -127,8 +136,9 @@ module Umbra
     ## Determine the mark on the left of the row. 
     ## The mark depends on the state: :SELECTED :HIGHLIGHTED :CURRENT :NORMAL
     ## Listbox adds :SELECTED state to Multiline.
-    ## @param [Integer] offset of row in data
-    ## @return character to be displayed inside left margin
+    ## @param index [Integer] offset of row in data
+    ## @param state [Symbol] state of current row
+    ## @return [String] aracter to be displayed inside left margin
     def mark_of_row index, state
       mark = case state
              when :SELECTED
@@ -147,6 +157,7 @@ module Umbra
     ##  which can be determined using +index+.
     ## Listbox adds :SELECTED state to +Multiline+.
     ## @param [Integer] offset of row in data
+    ## @param state [Symbol] state of current row
     ## @return [Array] color_pair and attrib constant
     def color_of_row index, state
       arr = super
