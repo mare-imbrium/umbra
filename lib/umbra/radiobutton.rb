@@ -1,10 +1,10 @@
 # ----------------------------------------------------------------------------- #
 #         File: radiobutton.rb
 #  Description: a member of a group of buttons, only one can be selected at a time.
-#       Author: j kepler  http://github.com/mare-imbrium/canis/
+#       Author: j kepler  http://github.com/mare-imbrium/
 #         Date: 2018-04-02 - 10:37
 #      License: MIT
-#  Last update: 2018-06-01 12:31
+#  Last update: 2018-06-03 10:06
 # ----------------------------------------------------------------------------- #
 #  radiobutton.rb  Copyright (C) 2012-2018 j kepler
 
@@ -17,10 +17,17 @@ module Umbra
   # +width+ is helpful if placing the brackets to right of text, used to align round brackets
   #   By default, radio buttons place the button on the left of the text.
   #
-  # Typically, the variable's update_command is passed a block to execute whenever any of the 
+  # Typically, the +ButtonGroup+'s `command` is passed a block to execute whenever any of the 
   # radiobuttons of this group is fired.
-
+  # @example
+  #   radio1 = RadioButton.new text: "Red", value: "Red", row: 10, col: 20
+  #   radio2 = RadioButton.new text: "Blue", value: "Blue", row: 11, col: 20
+  #   group = ButtonGroup.new "Color"
+  #   group.add(radio1).add(radio2)
+  #   form.add_widget radio1, radio2
+  #
   class RadioButton < ToggleButton
+    # @param align_right [true, false] set whether button should be on right of text, default false.
     attr_property :align_right    # the button will be on the right 
     attr_accessor :button_group   # group that this button belongs to.
 
