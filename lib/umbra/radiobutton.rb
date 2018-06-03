@@ -4,16 +4,16 @@
 #       Author: j kepler  http://github.com/mare-imbrium/
 #         Date: 2018-04-02 - 10:37
 #      License: MIT
-#  Last update: 2018-06-03 10:06
+#  Last update: 2018-06-03 11:27
 # ----------------------------------------------------------------------------- #
 #  radiobutton.rb  Copyright (C) 2012-2018 j kepler
 
 module Umbra
   ##
-  # A selectable button that has a text value. It is based on a Variable that
-  # is shared by other radio buttons. Only one is selected at a time, unlike checkbox
-  # +text+ is the value to display, which can include an ampersand for a hotkey
-  # +value+ is the value returned if selected, which usually is similar to text (or a short word)
+  # A selectable button that has a text value. It is linked to a +ButtonGroup+ that
+  # is shared by other radio buttons. Only one is selected at a time, unlike +Checkbox+.
+  # +text+ is the value to display, which can include an ampersand for a hotkey.
+  # +value+ is the value returned if selected, which usually is similar to text (or a short word).
   # +width+ is helpful if placing the brackets to right of text, used to align round brackets
   #   By default, radio buttons place the button on the left of the text.
   #
