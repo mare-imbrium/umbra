@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-16 
 #      License: MIT
-#  Last update: 2018-06-01 12:37
+#  Last update: 2018-06-02 19:28
 # ----------------------------------------------------------------------------- #
 #  button.rb  Copyright (C) 2012-2018 j kepler
 #  == Todo 
@@ -16,6 +16,7 @@ require 'umbra/widget'
 module Umbra
 
 
+  ## Widget that has an action associated with `:PRESS` event.
   class Button < Widget 
     attr_accessor :surround_chars   # characters to use to surround the button, def is square brackets
 
@@ -41,7 +42,7 @@ module Umbra
 
     ##
     # set button based on Action
-    # 2018-03-22 - is this still used ? XXX
+    # 2018-03-22 - is this still used ? 
     # This allows action objects to be used in multiple places such as buttons, menus, popups etc.
     def action a
       text a.name
@@ -95,12 +96,13 @@ module Umbra
         @repaint_required = false
     end
 
-    ## fires PRESS event of button
+    ## fires `PRESS` event of button
     def fire
       fire_handler :PRESS, ActionEvent.new(self, :PRESS, text)
     end
 
     # for campatibility with all buttons, will apply to radio buttons mostly
+    # @return [false]
     def selected?; false; end
 
     def map_keys
@@ -108,7 +110,7 @@ module Umbra
       bind_key(32, "fire") { fire } if respond_to? :fire
     end
 
-    # Button
+    # Button's key handler, just calls super
     def handle_key ch
       super
     end
