@@ -5,7 +5,7 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-03-08 - 14:04
 #      License: MIT
-#  Last update: 2018-05-22 23:36
+#  Last update: 2018-06-02 19:25
 # ----------------------------------------------------------------------------- #
 #  label.rb  Copyright (C) 2018- j kepler
 #
@@ -15,7 +15,8 @@ module Umbra
   # when creating use +text=+ to set text. Optionally use +justify+ and +width+.
 class Label < Widget 
 
-  # justify required a display length, esp if center.
+  # @note `justify` requires a display length, esp if center.
+  # @param justify [true, false] aliignment of label :right, :left or :center
   attr_property   :justify        #:right, :left, :center
   attr_accessor   :mnemonic       # alt-key that passes focus to related field 
   attr_accessor   :related_widget # field related to this label. See +mnemonic+.
