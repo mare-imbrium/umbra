@@ -1,3 +1,8 @@
+2018-06-03
+  - for 0.1.3 
+    - YARD Documentation of attr_property
+	- Moved ButtonGroup and ItemEvent to module Umbra.
+
 2018-06-01
   - for 0.1.2 
     - much cleaning up and some renaming of methods and properties
