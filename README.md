@@ -11,9 +11,13 @@ This is a stripped version of `canis` gem (ncurses ruby).
  - should be able to use a file or widget from here (in another application) without having to copy too much
  - should be able to understand one file without having to understand entire library
  - should be easy for others to change as per their needs, or copy parts.
+ - many portions of `Widget` and `Form` have been rewritten and simplified.
+
+Documentation is at: https://www.rubydoc.info/gems/ncumbra
 
 
 ## Gem name
+
   The name `umbra` was taken, so had to change the gem name to `ncumbra` but the packages and structure etc remain umbra.
 
 ## Motivation for yet another ncurses library
@@ -22,6 +26,7 @@ This is a stripped version of `canis` gem (ncurses ruby).
  keeping parts as independent as possible. 
 
 ## Future versions
+
  - Ampersand in Label and Button to signify shortcut/mnemonic.
  - combo list
  - 256 colors
@@ -212,6 +217,11 @@ The simplest widget in `Umbra` is the Label. Labels are used for a single line o
     title = Label.new( :text => "Demo of Labels", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1,
                     :justify => :center, :color_pair => 0)
 
+The next example prints a label on the last line stretching from left to right. It will be used in later examples for printing a message when some event is triggered.
+
+    message_label = Label.new row: -1, col: 0, width: -1, color_pair: CP_CYAN, text: "Messages will come here..."
+
+
 A `mnemonic` and related widget may be associated with a label. This `mnemonic` is a shortcut or hotkey for jumping directly to another which is specified by `related_widget`. The `related_widget` must be a focusable object such as a `Field` or `Listbox`. The `mnemonic` is displayed with bold and underlined attribute since underline may not work on some terminals. The Alt-key is to be pressed to jump directly to the field.
 
 ```ruby
@@ -224,25 +234,28 @@ The `width` has been specified as the size of the current screen. You may use a 
 
 Now change the `width` to `-1`. Run the program again and stretch the window's width. What happens ? Negative widths and heights are re-calculated at the time of printing, so a change in width of the screen will immediately reflect in the label's width. A negative value for width or height means that the object must stretch or extend to that row or column from the end. Negative widths are thus relative to the right end of the window. Positive widths are absolute.
 
-The important methods of `Label` are:
+The important properties of `Label` are:
 
 - `text` - may be changed at any time, and will immediately reflect
 - `row`  - vertical position on screen (0 to FFI::NCurses.LINES-1). Can be negative for relative position.
 - `col`  - horizontal position on screen (0 to FFI::NCurses.COLS-1)
 - `width` - defaults to length of `text` but can be larger or smaller. Can be negative.
-- `color_pair` - see details for creating colors.
+- `color_pair` - see details for creating colors. e.g. `CP_GREEN` `CP_CYAN` `CP_MAGENTA`, etc.
 - `attr` : maybe `BOLD` , `NORMAL` , `REVERSE` or `UNDERLINE`
 - `justify` - `:right`, `:left` or `:center`
 - `related_widget` - editable or focusable widget associated with this label.
 - `mnemonic` - short-cut used to shift access to `related_widget`
-- `print_label` - override the usual printing of a label. A label usually prints in one colour and attribute (or combination of attributes. However, for any customized printing of a label, one can override this method at the instance level.
+
+Label also has the following method/s:
+
+- `print_label` - override the usual printing of a label. A label usually prints in one colour and attribute (or combination of attributes). However, for any customized printing of a label, one can override this method at the instance level. For an example of customized printing, see examples/extab3.rb.
 
 ### Field
 
 This is an entry field. Text may be edited in a `Field`. Various validations are possible. Custom validations may be specified. 
 
 ```ruby
-    w = Field.new( :name => "name", :row => 1, :col => 1 , :width => 50)
+    w = Field.new( name: "name", row: 1, col: 1, width: 50)
     w.color_pair = CP_CYAN
     w.attr = FFI::NCurses::A_REVERSE
     w.highlight_color_pair = CP_YELLOW
@@ -253,7 +266,7 @@ This is an entry field. Text may be edited in a `Field`. Various validations are
 The above example shows creation of an editable field. The field has been further customized to have a different color when it is in focus (highlighted).
 
 
-Other customizations of field are as follows:
+Other examples of customizations of field are as follows:
 ```ruby
   w.chars_allowed = /[\w\+\.\@]/
   email.valid_regex = /\w+\@\w+\.\w+/
@@ -411,10 +424,8 @@ It adds the following properties to ToggleButton.
 `value` may be used to set the initial value, or retrieve the value at any time.
 
 ```ruby
-    row = 10
-    col = 10
-    check =  Checkbox.new text: "No Frames", value: true,  row: row+1, col: col, mnemonic: "N"
-    check1 = Checkbox.new text: "Use https", value: false, row: row+2, col: col, mnemonic: "U"
+    check =  Checkbox.new text: "No Frames", value: true,  row: 11, col: 10, mnemonic: "N"
+    check1 = Checkbox.new text: "Use https", value: false, row: 12, col: 10, mnemonic: "U"
 ```
 
 A code block may be attached to the clicking of checkboxes either using `command` or binding to `:PRESS`.
@@ -440,8 +451,8 @@ The above is similar to:
 
 ### RadioButton
 
-A +ToggleButton+ button that may have an on or off value. Usually, several related radio buttons are created and only one may be +on+.
-Here, we create a +ButtonGroup+ and then `add` radio buttons to it. 
+A `ToggleButton` button that may have an on or off value. Usually, several related radio buttons are created and only one may be _on_.
+Here, we create a `ButtonGroup` and then `add` radio buttons to it. 
 
 ```ruby
 radio1 = RadioButton.new text: "Red", value: "R", row: 5, col: 20
@@ -470,13 +481,13 @@ A ButtonGroup is a collection of RadioButtons.
 
 Methods:
 
-- `add` - add a +RadioButton+ to the group.
+- `add` - add a `RadioButton` to the group.
 - `selection` - return the button that is selected
 - `value` - get the value of the selected button
 - `select?` - ask if given button is selected
-- `select` - select the given button
 - `elements` - get an array of buttons added
 - `command` - supply a block to be called whenever a button in the group is clicked.
+- `select` - select the given button (simulate keypress programmatically)
 
 
 ```ruby
@@ -530,8 +541,8 @@ The `:CHANGED` event is fired whenever an array is passed to the `list=` method.
 
    In addition to arrow keys, one may use "j" and "k" for down and up. Other keys are:
 
-   - "g" - first row
-   - "G" - last row
+   - g - first row
+   - G - last row
    - C-d - scroll down
    - C-u - scroll up
    - C-b - scroll backward
@@ -786,7 +797,7 @@ An object's `bind_event` is used to attach a code block to an event.
 
 ### Key Bindings
 
-For an object, or for the form, keys may be bound to a code block. All functionality in the system is bound to a code block, making it possible to override provided behavior, although that is not recommended. Tab, backtab and Escape may not be over-ridden.
+For an object, or for the form, keys may be bound to a code block. All functionality in this library is bound to a code block, making it possible to override provided behavior, although that is not recommended. Tab, backtab and Escape may not be over-ridden.
 
     form.bind_key(KEY_F1, "Help") { help() }
 
@@ -794,10 +805,19 @@ For an object, or for the form, keys may be bound to a code block. All functiona
 
     list.bind_key(FFI::NCurses::KEY_CTRL_A, 'cursor home')  { cursor_home }
 
+One may bind Control, Alt, Function and Shifted-Function keys in Umbra. However, multiple keys as in vim or emacs may not be bound. If you require mapping key combinations such as "gg" or "Ctrl-x x" then you should look at the canis gem.
+You may also map the first key to a method that takes a second key. In such cases, it is better to popup a menu so the user knows that a second key is pending.
+
+(Note: TAB and BACKTAB are hardcoded in form.rb for traversal, ESCAPE is hardcoded in field.rb. If a widget does not consume the ARROW keys, they may also be used for traversal by form.rb)
 
 ## More examples
 
  See examples directory for code samples for all widgets. Be sure the run all the examples to see the capabilities of the library and the widgets.
+
+## Testing
+
+I have not found a way of automated testing for ncurses applications. Suggestions are welcome.
+My way is of manually testing which is cumbersome, and that discourages rewrites, refactoring, etc.
 
 ## Contributing
 
