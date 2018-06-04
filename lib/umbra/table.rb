@@ -4,28 +4,29 @@
 #       Author: j kepler  http://github.com/mare-imbrium/umbra/
 #         Date: 2018-05-06 - 09:56
 #      License: MIT
-#  Last update: 2018-05-22 14:46
+#  Last update: 2018-06-03 14:43
 # ----------------------------------------------------------------------------- #
 #  table.rb  Copyright (C) 2018 j kepler
 
-##--------- Todo section ---------------
-## DONE w - next column, b - previous column
-## TODO paint lines as column separators. issue is panning.
-## TODO starting visual column (required when scrolling)
-## DONE change a value value_at(x,y, value) ; << ; delete_at 
-## TODO change column width interactively, hide column , move column
-## TODO maybe even column_color(n, color_pair, attr)
-## TODO sort on column/s.
-## TODO selection will have to be added. maybe we should have extended listbox after all. Or made multiline selectable.
-## DONE how to format the header
-## DONE formatting rows
-## DONE if we want to color specific columns based on values then I think we have to format (render) the row at the last 
+=begin
+## --------- Todo section ---------------
+## - TODO paint lines as column separators. issue is panning.
+## - TODO starting visual column (required when scrolling)
+## - DONE change a value value_at(x,y, value) ; << ; delete_at 
+## - TODO change column width interactively, hide column , move column
+## - TODO maybe even column_color(n, color_pair, attr)
+## - TODO sort on column/s.
+## - TODO selection will have to be added. maybe we should have extended listbox after all. Or made multiline selectable.
+## - DONE how to format the header
+## - DONE formatting rows
+## - DONE if we want to color specific columns based on values then I think we have to format (render) the row at the last 
 ##      moment in print_row and not in advance
-## NOTE: we are setting the data in tabular, not list. So calling list() will give nil until a render has happened.
+## - NOTE: we are setting the data in tabular, not list. So calling list() will give nil until a render has happened.
 ##     callers will have to use data() instead of list() which is not consistent.
-## NOTE: current_index in this object refers to index including header and separator. It is not the offset in the data array.
+## - NOTE: current_index in this object refers to index including header and separator. It is not the offset in the data array.
 ##    For that we need to adjust with @data_offset.
-#
+=end
+
 require 'forwardable'
 require 'umbra/tabular'
 require 'umbra/multiline'
