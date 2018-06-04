@@ -4,15 +4,17 @@
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-04-07
 #      License: MIT
-#  Last update: 2018-06-02 19:01
+#  Last update: 2018-06-03 14:50
 # ----------------------------------------------------------------------------- #
 #  box.rb  Copyright (C) 2018 j kepler
 module Umbra
   ##
   # A box is a container around one, or more, widgets.
-  # Properties include #visible, #justify and #title.
+  # Properties include `visible,` `justify` and `title.`
+  # It is not focusable, so no keys can be mapped to it.
+  #
   ## FIXME box needs to resize components if it's dimensions are changed.
-  ##  Or should components have a link to parent, so they can resize themselves ?
+  ## Or should components have a link to parent, so they can resize themselves ?
   #
   class Box < Widget 
     # @param title [String] set and return title of box
@@ -127,9 +129,10 @@ module Umbra
       @widget = w
     end
 
-    ## paint a horizontal line, as a separator between widgets
-    ## param [Integer] row - row
-    ## param [Integer] col - column
+    ## Paint a horizontal line, as a separator between widgets
+    ## Called by `repaint`.
+    ## @param row [Integer] row
+    ## @param col [Integer] column
     def hline row, col
       return if row >= self.row + self.height
       $log.debug "  hline: #{row} ... #{@row}   #{@height}  "
