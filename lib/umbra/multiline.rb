@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-06-01 14:36
+#  Last update: 2018-06-09 12:08
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -26,6 +26,9 @@ module Umbra
 
     attr_reader   :list                        # array containing data (usually Strings)
     attr_reader   :panned_cols                 ## How may columns has widget panned to right
+    ## adjustment for searching for a pattern in a line, if adding text to start of string.
+    ## Example, listbox adds one char to start. One may override and add two.
+    attr_accessor  :search_offset              
 
     # index of focussed row, starting 0, index into the list supplied
     attr_reader   :current_index
@@ -35,6 +38,7 @@ module Umbra
       @editable           = false
       @pstart             = 0                  # which row does printing start from
       @current_index      = 0                  # index of row on which cursor is
+      @search_offset      = 0                  # search has no offset
 
       ## PRESS event relates to pressing RETURN/ENTER (10)
       register_events([:LEAVE_ROW, :ENTER_ROW, :PRESS])
@@ -277,6 +281,7 @@ module Umbra
       ## C-h was not working, so trying C-j
       bind_key(FFI::NCurses::KEY_CTRL_J, 'scroll_left')  { scroll_left }
       bind_key(FFI::NCurses::KEY_CTRL_L, 'scroll_right')  { scroll_right }
+      bind_key(?/, 'ask search')                         { ask_search }
       @keys_mapped = true
     end
 
@@ -514,12 +519,71 @@ module Umbra
       @current_index = line
       ensure_visible line
     end
+    #def each_line
+      #@list.each_with_index do |line, ix|
+        #line = self.value_of_row( line, ix, :NONE)
+        #yield line
+      #end
+    #end
+
+    def ask_search
+      str = "the"
+      ix = next_match str
+      if ix
+        @current_index, @curpos = ix
+        set_col_offset @curpos   ## why do we need to do this also
+        $log.debug "  ask_search ci: #{@current_index}  , #{@curpos} "
+      else
+        alert "Not found: #{str}"
+      end
+    end
+    def next_match str, startline = nil,  _curpos = nil, endline = nil
+      if !startline
+        startline = @current_index
+        _curpos ||= (@curpos + 1)
+        #_pos = @list[startline].index(str, _curpos)
+        _pos = to_searchable(startline).index(str, _curpos)
+        return [startline, _pos + search_offset] if _pos
+        startline += 1
+      end
+      ## loop through array check after startline to eof
+      @list.each_with_index do | line, ix|
+        next if ix < startline
+        break if endline && ix > endline
+
+        #_found = line.index(str)
+        _found = to_searchable(ix).index(str)
+        #$log.debug "  next_match: #{line}: #{_found}  " if _found
+        return [ix, _found + search_offset] if _found
+      end
+      return nil
+    end
+
+
+    ## This needs to be overridden in case of lists that contain something other than 
+    ## `String` as their elements. In such a case, `search_offset` may need to be adjusted also.
+    ## @param index [Integer] offset of row in list
+    ## @return [String] searchable representation of list element at `index`
+    def to_searchable index
+      s = @list[index]
+      case s
+      when String
+        return s                                       ## return the string as is.
+      when Array
+                                                       ## may need to be overridden by caller
+        return s.join(" ")
+      else
+        raise "Don't know how to handle this datatype, please override to_searchable"
+      end
+    end
+
 
     ## UNTESTED
     def delete_at index
       return unless @list
       return unless @editable
-      @repaint_all = true
+      #@repaint_all = true
+      @repaint_required = true
       @list.delete_at index
     end
 
@@ -527,7 +591,8 @@ module Umbra
     def insert index, line
       return unless @list
       return unless @editable
-      @repaint_all = true
+      #@repaint_all = true
+      @repaint_required = true
       @list.insert index, line
     end
 
