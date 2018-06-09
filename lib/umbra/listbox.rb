@@ -5,7 +5,7 @@ require 'umbra/multiline'
 #       Author: j kepler  http://github.com/mare-imbrium/umbra
 #         Date: 2018-03-19 
 #      License: MIT
-#  Last update: 2018-06-03 10:39
+#  Last update: 2018-06-07 09:35
 # ----------------------------------------------------------------------------- #
 #  listbox.rb  Copyright (C) 2012-2018 j kepler
 #  == TODO 
@@ -46,6 +46,7 @@ module Umbra
       #register_events([:LIST_SELECTION_EVENT])
       register_events([:SELECT_ROW])
       super
+      @search_offset      = 1                  # search has offset of 1, due to added mark
     end
 
 
