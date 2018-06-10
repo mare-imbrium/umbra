@@ -6,7 +6,7 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-06-09 12:08
+#  Last update: 2018-06-09 14:54
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
@@ -282,6 +282,7 @@ module Umbra
       bind_key(FFI::NCurses::KEY_CTRL_J, 'scroll_left')  { scroll_left }
       bind_key(FFI::NCurses::KEY_CTRL_L, 'scroll_right')  { scroll_right }
       bind_key(?/, 'ask search')                         { ask_search }
+      bind_key(?n, 'next match ')                        { find_more }
       @keys_mapped = true
     end
 
@@ -526,21 +527,42 @@ module Umbra
       #end
     #end
 
+    ## Ask user for a pattern to look for in lines.
+    ## Put cursor on first match.
     def ask_search
-      str = "the"
+      str = get_string("Search:")
+      return unless str
       ix = next_match str
       if ix
         @current_index, @curpos = ix
         set_col_offset @curpos   ## why do we need to do this also
         $log.debug "  ask_search ci: #{@current_index}  , #{@curpos} "
+        @last_regex = str
       else
-        alert "Not found: #{str}"
+        alert "Pattern not found: #{str}"
       end
     end
+
+    ## find more occurrences of match. This is bound to 'n' key.
+    def find_more
+      return unless @last_regex
+      str = @last_regex
+      $log.debug "  FIND MORE last_regex is : #{@last_regex} "
+      ix = next_match @last_regex
+      #return unless ix
+      if ix
+        @current_index, @curpos = ix
+        set_col_offset @curpos   ## why do we need to do this also
+      else
+        alert "No more matches for: #{str}"
+      end
+    end
+
     def next_match str, startline = nil,  _curpos = nil, endline = nil
+      return unless str
       if !startline
         startline = @current_index
-        _curpos ||= (@curpos + 1)
+        _curpos ||= (@curpos + 1) # FIXME +1 should only happen if a search has already happened
         #_pos = @list[startline].index(str, _curpos)
         _pos = to_searchable(startline).index(str, _curpos)
         return [startline, _pos + search_offset] if _pos
@@ -550,11 +572,14 @@ module Umbra
       @list.each_with_index do | line, ix|
         next if ix < startline
         break if endline && ix > endline
-
+        $log.debug "  searching for #{str} in line #{ix}"
         #_found = line.index(str)
         _found = to_searchable(ix).index(str)
         #$log.debug "  next_match: #{line}: #{_found}  " if _found
         return [ix, _found + search_offset] if _found
+      end
+      if startline > 0
+        #return next_match str, 0, @current_index
       end
       return nil
     end
