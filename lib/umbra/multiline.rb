@@ -6,11 +6,10 @@ require 'umbra/widget'
 #       Author: j kepler  http://github.com/mare-imbrium/canis/
 #         Date: 2018-05-08 - 11:54
 #      License: MIT
-#  Last update: 2018-06-09 14:54
+#  Last update: 2018-06-10 10:50
 # ----------------------------------------------------------------------------- #
 #  multiline.rb Copyright (C) 2012-2018 j kepler
 #
-##  TODO search through text and put cursor on next result.
 ##  TODO allow setting of current_index programmatically
 ##  TODO is a row visible. visible? row. and make a row visible. programmatically
 ##  TODO insert delete a row (if editable)
@@ -558,8 +557,15 @@ module Umbra
       end
     end
 
+    ## find the first or next occurrence of a pattern
+    ## @param str [String] pattern to match
+    ## @param startline [Integer] line to start search on
+    ## @param curpos [Integer] cursor position to start search on
+    ## @param endline [Integer] line to end search on
     def next_match str, startline = nil,  _curpos = nil, endline = nil
       return unless str
+
+      ## check current line for more occurrences.
       if !startline
         startline = @current_index
         _curpos ||= (@curpos + 1) # FIXME +1 should only happen if a search has already happened
@@ -568,17 +574,18 @@ module Umbra
         return [startline, _pos + search_offset] if _pos
         startline += 1
       end
-      ## loop through array check after startline to eof
+      ## Check rest of file
+      ## loop through array, check after startline to eof
       @list.each_with_index do | line, ix|
         next if ix < startline
         break if endline && ix > endline
-        $log.debug "  searching for #{str} in line #{ix}"
         #_found = line.index(str)
         _found = to_searchable(ix).index(str)
         #$log.debug "  next_match: #{line}: #{_found}  " if _found
         return [ix, _found + search_offset] if _found
       end
       if startline > 0
+        # this can get called again since startline was made 1 in above block. FIXME
         #return next_match str, 0, @current_index
       end
       return nil
