@@ -64,6 +64,26 @@ module Umbra
     m.run
   end
 
+  def get_string label, config={}
+    require 'umbra/messagebox'
+    config[:title]             ||= "Entry"
+    config[:buttons]           ||= ["Ok", "Cancel"]
+    fld = nil
+    mb = MessageBox.new config do 
+      add Label.new text: label, row: 2, col: 2
+      fld = Field.new name: "field", row: 3, col: 2
+      add fld
+    end
+    index = mb.run
+    if index == 0
+      return fld.text
+    else
+      return nil
+    end
+  end
+    
+
+
   ## create a logger instance given a path, return the logger
   ## NOTE: Ideally would like to set $log here to this, but what if user creates multiple.
   def create_logger path, config={}
