@@ -15,7 +15,6 @@ This is a stripped version of `canis` gem (ncurses ruby).
 
 Documentation is at: https://www.rubydoc.info/gems/ncumbra
 
-
 ## Gem name
 
   The name `umbra` was taken, so had to change the gem name to `ncumbra` but the packages and structure etc remain umbra.
