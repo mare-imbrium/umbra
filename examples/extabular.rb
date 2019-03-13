@@ -4,7 +4,7 @@
 #  Description: This file does the following:
 #       Author:  r kumar
 #         Date: ,,D
-#  Last update: 2018-05-15 12:53
+#  Last update: 2019-03-11 09:54
 #      License: MIT License
 # ----------------------------------------------------------------------------- #
 require 'umbra'
@@ -19,7 +19,7 @@ def startup
   require 'date'
 
     path = File.join(ENV["LOGDIR"] || "./" ,"v.log")
-    file   = File.open(path, File::WRONLY|File::TRUNC|File::CREAT) 
+    file   = File.open(path, File::WRONLY|File::TRUNC|File::CREAT)
     $log = Logger.new(path)
     $log.level = Logger::DEBUG
     today = Date.today
@@ -36,7 +36,7 @@ begin
   win = Window.new
   statusline(win, " "*(win.width-0), 0)
   statusline(win, "Press Ctrl-q to quit #{win.height}:#{win.width}", 20)
-  title = Label.new( :text => "Demo of Tabular", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1, 
+  title = Label.new( :text => "Demo of Tabular", :row => 0, :col => 0 , :width => FFI::NCurses.COLS-1,
                     :justify => :center, :color_pair => 0)
 
   form = Form.new win
@@ -119,5 +119,5 @@ rescue Object => e
 ensure
   @window.destroy if @window
   FFI::NCurses.endwin
-  puts 
+  puts
 end
