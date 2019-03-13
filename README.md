@@ -1,8 +1,8 @@
 # Umbra
 
 Create ncurses applications using a simple small library.
-The source is small and simple, so easy to hack if need be. 
-This is a stripped version of `canis` gem (ncurses ruby). 
+The source is small and simple, so easy to hack if need be.
+This is a stripped version of `canis` gem (ncurses ruby).
 
  - Minimal functionality
  - Very close to ncurses, should not try to wrap everything
@@ -21,8 +21,8 @@ Documentation is at: https://www.rubydoc.info/gems/ncumbra
 
 ## Motivation for yet another ncurses library
 
- `rbcurse` and `canis` are very large. Too many dependencies on other parts of system. This aims to be small and minimal, 
- keeping parts as independent as possible. 
+ `rbcurse` and `canis` are very large. Too many dependencies on other parts of system. This aims to be small and minimal,
+ keeping parts as independent as possible.
 
 ## Future versions
 
@@ -251,7 +251,7 @@ Label also has the following method/s:
 
 ### Field
 
-This is an entry field. Text may be edited in a `Field`. Various validations are possible. Custom validations may be specified. 
+This is an entry field. Text may be edited in a `Field`. Various validations are possible. Custom validations may be specified.
 
 ```ruby
     w = Field.new( name: "name", row: 1, col: 1, width: 50)
@@ -286,7 +286,7 @@ Some methods of `Field` are:
 - `text` (or `default`) for setting starting value of field.
 - `maxlen` - maximum length allowed during entry
 - `values` - list of valid values
-- `valid_range` - valid numeric range 
+- `valid_range` - valid numeric range
 - `valid_regex` - valid regular expression for text entered
 - `above` - lower limit for numeric value (value should be above this)
 - `below` - upper limit for numeric value (value should be below this)
@@ -315,7 +315,7 @@ A labeled field associates a label and a field. This helps in printing a label a
 
 - `label` - String to print
 - `lrow` and `lcol` - labels position
-- `label_color_pair`- color pair of label 
+- `label_color_pair`- color pair of label
 - `label_attr`     - attribute of label
 - `label_highlight_color_pair`     - color pair of label when field is in focus
 - `label_highlight_attr`     - attribute of label when field is in focus.
@@ -325,14 +325,14 @@ A labeled field associates a label and a field. This helps in printing a label a
 
 
 ```ruby
-    lf = LabeledField.new( :name => "name", :row => 1, :col => 15 , :width => 20, 
+    lf = LabeledField.new( :name => "name", :row => 1, :col => 15 , :width => 20,
                          label: "Name: ", :label_highlight_attr => BOLD
                         )
 ```
 
 >#### Exercise
 >
->Create a form with two labeled fields. 
+>Create a form with two labeled fields.
 >
 >Try out different color_pairs and highlight_color_pairs and attributes for the field and label.
 >
@@ -362,7 +362,7 @@ In addition to the properties of the `Widget` superclass, button also has:
 - `surround_chars` - the characters on the two sides of the button, by default square brackets.
 
 ```ruby
-  ok_butt = Button.new( :name => 'ok', :text => 'Ok', :row => 2, :col => 10, :width => 10 , 
+  ok_butt = Button.new( :name => 'ok', :text => 'Ok', :row => 2, :col => 10, :width => 10 ,
   :color_pair => 0, :mnemonic => 'O')
 ```
 
@@ -377,7 +377,7 @@ In addition to the properties of the `Widget` superclass, button also has:
 
 ### Togglebutton
 
-This button has an on and off state. 
+This button has an on and off state.
 
 - `onvalue` and `offvalue` - set the values for on and off state
 - `value` - get which of onvalue and offvalue is current (boolean)
@@ -401,7 +401,7 @@ This button has an on and off state.
       message_label.text = "UNToggle button was pressed"
     end
   end
-    
+
   togglebutton.checked(true)    ## simulate keypress
   togglebutton.checked?         ## => true
   togglebutton.value            ## => true
@@ -412,7 +412,7 @@ This button has an on and off state.
 
 ### Checkbox
 
-A checkbox is a button containing some text with a square on the left (or right). The square may be checked or unchecked. 
+A checkbox is a button containing some text with a square on the left (or right). The square may be checked or unchecked.
 Checkbox extends `ToggleButton`.
 
 
@@ -434,7 +434,7 @@ In this example, a previously created label is updated whenever the checkboxes a
 ```ruby
   form.add_widget check, check1
   [ check, check1 ].each do |cb|
-    cb.command do 
+    cb.command do
       message_label.text = "#{cb.text} is now #{cb.value}"
     end
   end
@@ -443,7 +443,7 @@ In this example, a previously created label is updated whenever the checkboxes a
 The above is similar to:
 
 ```ruby
-   check.bind_event(:PRESS) { |cb| 
+   check.bind_event(:PRESS) { |cb|
       message_label.text = "#{cb.text} is now #{cb.value}"
       }
 ```
@@ -451,7 +451,7 @@ The above is similar to:
 ### RadioButton
 
 A `ToggleButton` button that may have an on or off value. Usually, several related radio buttons are created and only one may be _on_.
-Here, we create a `ButtonGroup` and then `add` radio buttons to it. 
+Here, we create a `ButtonGroup` and then `add` radio buttons to it.
 
 ```ruby
 radio1 = RadioButton.new text: "Red", value: "R", row: 5, col: 20
@@ -474,7 +474,7 @@ A block may be attached to the group which will be called if any of its buttons 
 
 ### ButtonGroup
 
-A ButtonGroup is a collection of RadioButtons. 
+A ButtonGroup is a collection of RadioButtons.
 
         group = ButtonGroup.new "Color"
 
@@ -508,7 +508,7 @@ Multiline allows customizing display of each row displayed by the following meth
 
 - `state_of_row(index)` - customize state of row based on index. One may add a new state.
 - `color_of_row(index, state)` - customize color of row based on index and state. By default, the current row is highlighted whereas all other rows use NORMAL attribute.
-- `value_of_row(line, index, state)` - if the array contains data other than strings (such as an Array), 
+- `value_of_row(line, index, state)` - if the array contains data other than strings (such as an Array),
              then customize how the data is to be converted to text.
 - `print_row` - completely customize the printing of the row if the above are not sufficient.
 
@@ -522,7 +522,7 @@ A row may have one of three states.
  - :NORMAL      - all other rows
 
 Only one row can have :HIGHLIGHTED or :CURRENT.
- 
+
 
 ```ruby
     obj.command do |o|
@@ -565,8 +565,8 @@ Listbox adds the following attributes to Multiline.
 - `unselected_mark` - character to be displayed for other rows (default blank)
 - `current_mark` - character to be displayed for current row (default is "&gt;")
 - `selection_key` -  key that selects current row (currently the default is "s")
-- `selected_color_pair` 
-- `selected_attr` 
+- `selected_color_pair`
+- `selected_attr`
 
 Listbox adds the `:SELECT_ROW` which is fired upon selection or deselection of a row. Use `selected_index` to determine which row has been selected. A value of nil implies the current row was deselected.
 
@@ -576,7 +576,7 @@ Listbox adds the `:SELECT_ROW` which is fired upon selection or deselection of a
     alist << "#{i} entry"
   end
 
-  lb = Listbox.new list: alist, row: 1, col: 1, width: 20, col: -2
+  lb = Listbox.new list: alist, row: 1, col: 1, width: 20, height: -2
 
   form.add_widget lb
 ```
@@ -601,7 +601,7 @@ Inherited from Multiline:
 
 - `current_index` - get the index of current row
 - `current_row`   - get the value of current row
-          
+
 
 
 ### Box
@@ -632,12 +632,12 @@ In the example below, a listbox has been created without dimensions, since the b
 
     lb = Listbox.new list: alist
     box.fill lb
-    
+
 
 
 ### Textbox
 
-Textbox extends Multiline and offers simple text display facility. 
+Textbox extends Multiline and offers simple text display facility.
 
 It adds `:CURSOR_MOVE` event which reports cursor movement laterally in addition to Multilines vertical movement.
 
@@ -719,7 +719,7 @@ Table may either take a pre-created Tabular object using `:tabular`, or else if 
 Table provides the following attributes:
 
 - `tabular` - set a tabular object as the Table's data
-- `header_color_pair` 
+- `header_color_pair`
 - `header_attr`
 
 Others:
@@ -738,12 +738,12 @@ Others:
 Table forwards several methods to its `Tabular` data model such as `add`, `<<`, `column_width`, `column_align` and `column_hidden`.
 
 > ##### Exercise
-> 
+>
 >Create a window with two tables. Populate one with the output of `ls -l` and another with the process info (using the `ps` command with appropriate options).
 >Create a button which refreshes the processes upon clicking.
 >You may also map a key on the form level (say F5) to refresh the process info.
 >
->Assign different colors to the columns of the process lister. 
+>Assign different colors to the columns of the process lister.
 >Color the rows of the directory lister based on file type, or any other logic (file size).
 
 
